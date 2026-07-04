@@ -436,15 +436,24 @@ details > summary::-webkit-details-marker {
   font-size: 0.95rem;
   font-weight: 600;
   gap: 10px;
-  inline-size: min(420px, calc(100% - 48px));
+  inline-size: min(720px, calc(100% - 48px));
   inset-block-end: 28px;
   inset-inline: 0;
   justify-content: center;
   margin-inline: auto;
-  min-block-size: 64px;
+  min-block-size: 160px;
   position: fixed;
   z-index: 300;
   animation: fade-in var(--t-fast) ease;
+}
+
+/* Restoring is the reverse of archiving: same-sized target, but pinned to the
+   top over the active board instead of down by the archive, so you drag an
+   archived card back up onto the board rather than to the same spot used to
+   archive. */
+.archive-dropzone--restore {
+  inset-block-start: 28px;
+  inset-block-end: auto;
 }
 
 .archive-dropzone--over {

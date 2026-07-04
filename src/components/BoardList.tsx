@@ -69,25 +69,32 @@ const RESTORE_ICON = (
   />
 )
 
-// A drop target that only exists mid-drag, pinned to the bottom of the
-// viewport. Dropping a dragged widget on it archives or restores it.
+// A drop target that only exists mid-drag. The archive zone pins to the bottom
+// of the viewport (drag a card down to tuck it away); the restore zone mirrors
+// it at the top, over the active board, so bringing a card back is the spatial
+// reverse — drag it up onto the board. Dropping on the zone archives or
+// restores the dragged widget.
 const DropZone = ({
   id,
   icon,
   idleLabel,
-  overLabel
+  overLabel,
+  placement
 }: {
   id: string
   icon: ReactNode
   idleLabel: string
   overLabel: string
+  placement: "archive" | "restore"
 }) => {
   const { setNodeRef, isOver } = useDroppable({ id })
 
   return (
     <div
       ref={setNodeRef}
-      className={`archive-dropzone${isOver ? " archive-dropzone--over" : ""}`}
+      className={`archive-dropzone archive-dropzone--${placement}${
+        isOver ? " archive-dropzone--over" : ""
+      }`}
       aria-hidden="true">
       <svg fill="none" height="22" viewBox="0 0 24 24" width="22">
         {icon}
@@ -616,14 +623,16 @@ export const BoardList = ({
             icon={ARCHIVE_ICON}
             idleLabel="Drag here to archive"
             overLabel="Release to archive"
+            placement="archive"
           />
         ) : null}
         {activeId && onRestore ? (
           <DropZone
             id={RESTORE_DROP_ID}
             icon={RESTORE_ICON}
-            idleLabel="Drag here to restore"
+            idleLabel="Drop on the board to restore"
             overLabel="Release to restore"
+            placement="restore"
           />
         ) : null}
         {/* The lifted card follows the cursor in a portal, so it keeps tracking

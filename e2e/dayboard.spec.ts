@@ -1325,7 +1325,7 @@ test("a card dragged toward the archive follows the cursor instead of snapping b
   ).toHaveCount(0)
 })
 
-test("dragging an archived widget onto the restore zone brings it back", async ({
+test("dragging an archived widget up onto the board restores it", async ({
   page,
   extensionId
 }) => {
@@ -1348,12 +1348,12 @@ test("dragging an archived widget onto the restore zone brings it back", async (
     throw new Error("Unable to measure archived card")
   }
 
-  // Drag the archived card (by its frame) down onto the floating restore zone.
+  // Grab the archived card by its frame and nudge it to start the drag.
   await page.mouse.move(box.x + box.width / 2, box.y + 12)
   await page.mouse.down()
   await page.mouse.move(box.x + box.width / 2, box.y + 36, { steps: 6 })
 
-  const zone = page.locator(".archive-dropzone")
+  const zone = page.locator(".archive-dropzone--restore")
   await expect(zone).toBeVisible()
   const zoneBox = await zone.boundingBox()
 
@@ -1361,6 +1361,11 @@ test("dragging an archived widget onto the restore zone brings it back", async (
     throw new Error("Restore zone has no bounds")
   }
 
+  // Restore is the reverse of archive: the target sits above the archived card,
+  // up over the board, rather than in the same bottom spot used to archive.
+  expect(zoneBox.y).toBeLessThan(box.y)
+
+  // Drag the card up into the board area and drop it anywhere across the zone.
   await page.mouse.move(
     zoneBox.x + zoneBox.width / 2,
     zoneBox.y + zoneBox.height / 2,
