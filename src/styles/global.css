@@ -436,24 +436,15 @@ details > summary::-webkit-details-marker {
   font-size: 0.95rem;
   font-weight: 600;
   gap: 10px;
-  inline-size: min(720px, calc(100% - 48px));
+  inline-size: min(420px, calc(100% - 48px));
   inset-block-end: 28px;
   inset-inline: 0;
   justify-content: center;
   margin-inline: auto;
-  min-block-size: 160px;
+  min-block-size: 64px;
   position: fixed;
   z-index: 300;
   animation: fade-in var(--t-fast) ease;
-}
-
-/* Restoring is the reverse of archiving: same-sized target, but pinned to the
-   top over the active board instead of down by the archive, so you drag an
-   archived card back up onto the board rather than to the same spot used to
-   archive. */
-.archive-dropzone--restore {
-  inset-block-start: 28px;
-  inset-block-end: auto;
 }
 
 .archive-dropzone--over {
@@ -896,6 +887,14 @@ details > summary::-webkit-details-marker {
 .board-row--drop-target {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* While an archived card is in flight the whole active board reads as the
+   restore target; the card under the cursor still rings as the precise slot. */
+.board-list--restore-target {
+  border-radius: var(--radius-lg);
+  outline: 2px dashed color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 10px;
 }
 
 /* ── Forms ─────────────────────────────────────────────────────────────── */
@@ -1356,6 +1355,22 @@ select:focus {
   margin: 10px 0 0;
   max-width: 320px;
   line-height: 1.5;
+}
+
+/* An empty board doubles as the restore drop target while an archived card is
+   being dragged, so it lights up like a drop zone instead of sitting inert. */
+.empty-state--restore {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+}
+
+.empty-state--over {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  border-color: var(--accent);
+  border-style: solid;
+}
+
+.empty-state--over h2 {
+  color: var(--accent);
 }
 
 /* ── Reduced Motion ────────────────────────────────────────────────────── */

@@ -240,8 +240,14 @@ export const archiveWidget = (widgets: Widget[], id: string): Widget[] => {
 }
 
 // Restoring drops the widget back in just after the last active widget, so it
-// rejoins the bottom of the board rather than the top.
-export const restoreWidget = (widgets: Widget[], id: string): Widget[] => {
+// rejoins the bottom of the board rather than the top. When `beforeId` names an
+// active widget — the board card an archived one was dropped onto — the widget
+// takes that card's slot instead, pushing it and everything after one step down.
+export const restoreWidget = (
+  widgets: Widget[],
+  id: string,
+  beforeId?: string
+): Widget[] => {
   const target = widgets.find((widget) => widget.id === id)
 
   if (!target || !target.archived) {
@@ -251,12 +257,18 @@ export const restoreWidget = (widgets: Widget[], id: string): Widget[] => {
   const rest = widgets.filter((widget) => widget.id !== id)
   const restored = { ...target, archived: false }
 
-  let insertAt = 0
-  rest.forEach((widget, index) => {
-    if (!widget.archived) {
-      insertAt = index + 1
-    }
-  })
+  let insertAt = beforeId
+    ? rest.findIndex((widget) => widget.id === beforeId && !widget.archived)
+    : -1
+
+  if (insertAt === -1) {
+    insertAt = 0
+    rest.forEach((widget, index) => {
+      if (!widget.archived) {
+        insertAt = index + 1
+      }
+    })
+  }
 
   return [...rest.slice(0, insertAt), restored, ...rest.slice(insertAt)]
 }

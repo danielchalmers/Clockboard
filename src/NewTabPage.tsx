@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 
+import { BoardDnd } from "~/components/BoardDnd"
 import { BoardList } from "~/components/BoardList"
 import { DeleteDialog } from "~/components/DeleteDialog"
 import { ItemDialog } from "~/components/ItemDialog"
@@ -385,125 +386,134 @@ export function NewTabPage() {
             </details>
           </div>
         </header>
-        <BoardList
-          items={activeWidgets}
+        {/* One drag context spans the board and the archived list, so an
+            archived card can be dragged straight into the exact board slot it
+            should take, while an active card heads for the archive drop zone. */}
+        <BoardDnd
           now={now}
-          draggable={state.settings.dragToMove}
-          columns={state.settings.columns}
-          onReorder={reorderList}
-          onWidgetChange={updateWidget}
+          widgets={state.widgets}
           onArchive={(id) => void setWidgets(archiveWidget(state.widgets, id))}
-          renderItemActions={(item, index) => (
-            <>
+          onReorder={reorderList}
+          onRestore={(id, beforeId) =>
+            void setWidgets(restoreWidget(state.widgets, id, beforeId))
+          }>
+          <BoardList
+            items={activeWidgets}
+            now={now}
+            draggable={state.settings.dragToMove}
+            columns={state.settings.columns}
+            restoreTarget
+            onWidgetChange={updateWidget}
+            renderItemActions={(item, index) => (
+              <>
+                <button
+                  aria-label={`Move ${item.title} up`}
+                  className="menu-button"
+                  disabled={index === 0}
+                  onClick={() => reorderItem(item.id, -1)}
+                  role="menuitem"
+                  type="button">
+                  Move up
+                </button>
+                <button
+                  aria-label={`Move ${item.title} down`}
+                  className="menu-button"
+                  disabled={index === activeWidgets.length - 1}
+                  onClick={() => reorderItem(item.id, 1)}
+                  role="menuitem"
+                  type="button">
+                  Move down
+                </button>
+                <button
+                  aria-label={`Edit ${item.title}`}
+                  className="menu-button"
+                  onClick={() => {
+                    closeOpenMenus()
+                    setEditorState({ mode: "edit", item })
+                  }}
+                  role="menuitem"
+                  type="button">
+                  Edit
+                </button>
+                <button
+                  aria-label={`Archive ${item.title}`}
+                  className="menu-button"
+                  onClick={() => archiveItem(item)}
+                  role="menuitem"
+                  type="button">
+                  Archive
+                </button>
+                <button
+                  aria-label={`Delete ${item.title}`}
+                  className="menu-button menu-button--danger"
+                  onClick={() => {
+                    closeOpenMenus()
+                    setItemPendingDelete(item)
+                  }}
+                  role="menuitem"
+                  type="button">
+                  Delete
+                </button>
+              </>
+            )}
+          />
+          {archivedWidgets.length > 0 ? (
+            <section className="archive-section">
               <button
-                aria-label={`Move ${item.title} up`}
-                className="menu-button"
-                disabled={index === 0}
-                onClick={() => reorderItem(item.id, -1)}
-                role="menuitem"
+                aria-expanded={showArchived}
+                className="archive-toggle"
+                onClick={() => setShowArchived((shown) => !shown)}
                 type="button">
-                Move up
+                {showArchived
+                  ? "Hide archived"
+                  : `Show archived (${archivedWidgets.length})`}
               </button>
-              <button
-                aria-label={`Move ${item.title} down`}
-                className="menu-button"
-                disabled={index === activeWidgets.length - 1}
-                onClick={() => reorderItem(item.id, 1)}
-                role="menuitem"
-                type="button">
-                Move down
-              </button>
-              <button
-                aria-label={`Edit ${item.title}`}
-                className="menu-button"
-                onClick={() => {
-                  closeOpenMenus()
-                  setEditorState({ mode: "edit", item })
-                }}
-                role="menuitem"
-                type="button">
-                Edit
-              </button>
-              <button
-                aria-label={`Archive ${item.title}`}
-                className="menu-button"
-                onClick={() => archiveItem(item)}
-                role="menuitem"
-                type="button">
-                Archive
-              </button>
-              <button
-                aria-label={`Delete ${item.title}`}
-                className="menu-button menu-button--danger"
-                onClick={() => {
-                  closeOpenMenus()
-                  setItemPendingDelete(item)
-                }}
-                role="menuitem"
-                type="button">
-                Delete
-              </button>
-            </>
-          )}
-        />
-        {archivedWidgets.length > 0 ? (
-          <section className="archive-section">
-            <button
-              aria-expanded={showArchived}
-              className="archive-toggle"
-              onClick={() => setShowArchived((shown) => !shown)}
-              type="button">
-              {showArchived
-                ? "Hide archived"
-                : `Show archived (${archivedWidgets.length})`}
-            </button>
-            {showArchived ? (
-              <BoardList
-                items={archivedWidgets}
-                now={now}
-                draggable={state.settings.dragToMove}
-                columns={state.settings.columns}
-                onReorder={reorderList}
-                onWidgetChange={updateWidget}
-                onRestore={(id) => void setWidgets(restoreWidget(state.widgets, id))}
-                renderItemActions={(item) => (
-                  <>
-                    <button
-                      aria-label={`Restore ${item.title}`}
-                      className="menu-button"
-                      onClick={() => restoreItem(item)}
-                      role="menuitem"
-                      type="button">
-                      Restore
-                    </button>
-                    <button
-                      aria-label={`Edit ${item.title}`}
-                      className="menu-button"
-                      onClick={() => {
-                        closeOpenMenus()
-                        setEditorState({ mode: "edit", item })
-                      }}
-                      role="menuitem"
-                      type="button">
-                      Edit
-                    </button>
-                    <button
-                      aria-label={`Delete ${item.title}`}
-                      className="menu-button menu-button--danger"
-                      onClick={() => {
-                        closeOpenMenus()
-                        setItemPendingDelete(item)
-                      }}
-                      role="menuitem"
-                      type="button">
-                      Delete
-                    </button>
-                  </>
-                )}
-              />
-            ) : null}
-          </section>
-        ) : null}
+              {showArchived ? (
+                <BoardList
+                  items={archivedWidgets}
+                  now={now}
+                  draggable={state.settings.dragToMove}
+                  columns={state.settings.columns}
+                  onWidgetChange={updateWidget}
+                  renderItemActions={(item) => (
+                    <>
+                      <button
+                        aria-label={`Restore ${item.title}`}
+                        className="menu-button"
+                        onClick={() => restoreItem(item)}
+                        role="menuitem"
+                        type="button">
+                        Restore
+                      </button>
+                      <button
+                        aria-label={`Edit ${item.title}`}
+                        className="menu-button"
+                        onClick={() => {
+                          closeOpenMenus()
+                          setEditorState({ mode: "edit", item })
+                        }}
+                        role="menuitem"
+                        type="button">
+                        Edit
+                      </button>
+                      <button
+                        aria-label={`Delete ${item.title}`}
+                        className="menu-button menu-button--danger"
+                        onClick={() => {
+                          closeOpenMenus()
+                          setItemPendingDelete(item)
+                        }}
+                        role="menuitem"
+                        type="button">
+                        Delete
+                      </button>
+                    </>
+                  )}
+                />
+              ) : null}
+            </section>
+          ) : null}
+        </BoardDnd>
       </main>
       <ItemDialog
         isOpen={Boolean(editorState)}

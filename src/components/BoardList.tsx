@@ -1,19 +1,7 @@
-import {
-  DndContext,
-  DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  closestCenter,
-  useDroppable,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragStartEvent
-} from "@dnd-kit/core"
+import { useDndContext, useDroppable } from "@dnd-kit/core"
 import {
   SortableContext,
   rectSortingStrategy,
-  sortableKeyboardCoordinates,
   useSortable,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
@@ -31,6 +19,7 @@ import {
   type ReactNode
 } from "react"
 
+import { BOARD_DROP_ID } from "~/components/BoardDnd"
 import { BoardRow } from "~/components/BoardRow"
 import type { BoardColumns, Widget } from "~/lib/types"
 
@@ -39,67 +28,47 @@ interface BoardListProps {
   now: Date
   draggable?: boolean
   columns?: BoardColumns
+  // Marks this list as the place archived cards land when dragged back: the
+  // grid highlights while a foreign card is in flight, and the empty state
+  // becomes a drop target of its own.
+  restoreTarget?: boolean
   renderItemActions?: (item: Widget, index: number) => ReactNode
-  onReorder?: (activeId: string, overId: string) => void
   onWidgetChange?: (widget: Widget) => void
-  onArchive?: (id: string) => void
-  onRestore?: (id: string) => void
 }
 
-const ARCHIVE_DROP_ID = "dayboard-archive-dropzone"
-const RESTORE_DROP_ID = "dayboard-restore-dropzone"
+// With no cards on the board there is no slot to aim an archived card at, so
+// the empty-state placeholder itself doubles as the restore target while a
+// drag is under way.
+const EmptyState = ({ restoreTarget }: { restoreTarget: boolean }) => {
+  const { active } = useDndContext()
+  const { setNodeRef, isOver } = useDroppable({
+    id: BOARD_DROP_ID,
+    disabled: !restoreTarget
+  })
 
-const ARCHIVE_ICON = (
-  <path
-    d="M4 7.5h16M4 7.5 5.2 19a1.5 1.5 0 0 0 1.5 1.4h10.6a1.5 1.5 0 0 0 1.5-1.4L20 7.5M9 7.5V5.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5.5v2M10 11.5v5M14 11.5v5"
-    stroke="currentColor"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    strokeWidth="1.7"
-  />
-)
+  const isRestoreReady = restoreTarget && Boolean(active)
 
-const RESTORE_ICON = (
-  <path
-    d="M12 20V8M12 8 7 13M12 8l5 5M5 4h14"
-    stroke="currentColor"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    strokeWidth="1.8"
-  />
-)
-
-// A drop target that only exists mid-drag. The archive zone pins to the bottom
-// of the viewport (drag a card down to tuck it away); the restore zone mirrors
-// it at the top, over the active board, so bringing a card back is the spatial
-// reverse — drag it up onto the board. Dropping on the zone archives or
-// restores the dragged widget.
-const DropZone = ({
-  id,
-  icon,
-  idleLabel,
-  overLabel,
-  placement
-}: {
-  id: string
-  icon: ReactNode
-  idleLabel: string
-  overLabel: string
-  placement: "archive" | "restore"
-}) => {
-  const { setNodeRef, isOver } = useDroppable({ id })
+  const className = [
+    "empty-state",
+    isRestoreReady ? "empty-state--restore" : "",
+    isRestoreReady && isOver ? "empty-state--over" : ""
+  ]
+    .filter(Boolean)
+    .join(" ")
 
   return (
-    <div
-      ref={setNodeRef}
-      className={`archive-dropzone archive-dropzone--${placement}${
-        isOver ? " archive-dropzone--over" : ""
-      }`}
-      aria-hidden="true">
-      <svg fill="none" height="22" viewBox="0 0 24 24" width="22">
-        {icon}
-      </svg>
-      <span>{isOver ? overLabel : idleLabel}</span>
+    <div className={className} ref={restoreTarget ? setNodeRef : undefined}>
+      {isRestoreReady ? (
+        <>
+          <h2>{isOver ? "Release to restore" : "Drop it here to restore"}</h2>
+          <p>The card leaves the archive and comes back onto the board.</p>
+        </>
+      ) : (
+        <>
+          <h2>Nothing here yet</h2>
+          <p>Use the + button to add a clock, countdown, note, timer, and more.</p>
+        </>
+      )}
     </div>
   )
 }
@@ -490,71 +459,41 @@ export const BoardList = ({
   now,
   draggable = true,
   columns = "auto",
+  restoreTarget = false,
   renderItemActions,
-  onReorder,
-  onWidgetChange,
-  onArchive,
-  onRestore
+  onWidgetChange
 }: BoardListProps) => {
-  const [activeId, setActiveId] = useState<string | null>(null)
   const [openMenu, setOpenMenu] = useState<OpenMenu | null>(null)
   const prefersReducedMotion = usePrefersReducedMotion()
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8
-      }
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates
-    })
-  )
+
+  // The drag context lives in BoardDnd, shared with the other list so cards
+  // can cross between the board and the archive mid-drag.
+  const { active } = useDndContext()
+  const activeId = active ? String(active.id) : null
+
+  // Any open card menu must not linger under a drag (light dismiss only covers
+  // pointer drags, not keyboard-initiated ones).
+  useEffect(() => {
+    if (activeId) {
+      setOpenMenu(null)
+    }
+  }, [activeId])
+
+  // Stable so the memoized rows can skip re-rendering when only the tick changes.
+  const closeMenu = useCallback(() => setOpenMenu(null), [])
 
   if (items.length === 0) {
-    return (
-      <div className="empty-state">
-        <h2>Nothing here yet</h2>
-        <p>Use the + button to add a clock, countdown, note, timer, and more.</p>
-      </div>
-    )
+    return <EmptyState restoreTarget={restoreTarget} />
   }
 
   const itemIds = items.map((item) => item.id)
   const hasActions = Boolean(renderItemActions)
 
-  const handleDragStart = ({ active }: DragStartEvent) => {
-    setActiveId(String(active.id))
-    setOpenMenu(null)
-  }
-
-  const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    setActiveId(null)
-    setOpenMenu(null)
-
-    if (!over || active.id === over.id) {
-      return
-    }
-
-    if (over.id === ARCHIVE_DROP_ID) {
-      onArchive?.(String(active.id))
-      return
-    }
-
-    if (over.id === RESTORE_DROP_ID) {
-      onRestore?.(String(active.id))
-      return
-    }
-
-    onReorder?.(String(active.id), String(over.id))
-  }
-
-  const handleDragCancel = () => {
-    setActiveId(null)
-    setOpenMenu(null)
-  }
-
-  // Stable so the memoized rows can skip re-rendering when only the tick changes.
-  const closeMenu = useCallback(() => setOpenMenu(null), [])
+  // A card lifted from the other list — for the board that means an archived
+  // card is in flight, and this whole grid is where it can land.
+  const isForeignDrag = Boolean(
+    activeId && !items.some((item) => item.id === activeId)
+  )
 
   const handleOpenMenu = useCallback((id: string, x: number, y: number) => {
     document
@@ -568,13 +507,10 @@ export const BoardList = ({
     : null
   const activeMenuIndex = activeMenuItem ? items.indexOf(activeMenuItem) : -1
 
-  const activeItem = activeId
-    ? items.find((item) => item.id === activeId) ?? null
-    : null
-
   const sectionClassName = [
     "board-list",
-    activeId ? "board-list--dragging" : ""
+    activeId ? "board-list--dragging" : "",
+    restoreTarget && isForeignDrag ? "board-list--restore-target" : ""
   ]
     .filter(Boolean)
     .join(" ")
@@ -588,66 +524,29 @@ export const BoardList = ({
 
   return (
     <>
-      <DndContext
-        collisionDetection={closestCenter}
-        onDragCancel={handleDragCancel}
-        onDragEnd={handleDragEnd}
-        onDragStart={handleDragStart}
-        sensors={sensors}>
-        <SortableContext items={itemIds} strategy={rectSortingStrategy}>
-          <section
-            className={sectionClassName}
-            data-columns={columns === "auto" ? undefined : columns}
-            style={sectionStyle}
-            aria-label="Dayboard widgets">
-            {items.map((item) => (
-              <SortableBoardRow
-                activeId={activeId}
-                draggable={draggable}
-                hasActions={hasActions}
-                isMenuOpen={openMenu?.id === item.id}
-                item={item}
-                key={item.id}
-                now={now}
-                onCloseMenu={closeMenu}
-                onOpenMenu={handleOpenMenu}
-                onWidgetChange={onWidgetChange}
-                prefersReducedMotion={prefersReducedMotion}
-              />
-            ))}
-          </section>
-        </SortableContext>
-        {activeId && onArchive ? (
-          <DropZone
-            id={ARCHIVE_DROP_ID}
-            icon={ARCHIVE_ICON}
-            idleLabel="Drag here to archive"
-            overLabel="Release to archive"
-            placement="archive"
-          />
-        ) : null}
-        {activeId && onRestore ? (
-          <DropZone
-            id={RESTORE_DROP_ID}
-            icon={RESTORE_ICON}
-            idleLabel="Drop on the board to restore"
-            overLabel="Release to restore"
-            placement="restore"
-          />
-        ) : null}
-        {/* The lifted card follows the cursor in a portal, so it keeps tracking
-            the pointer even over the archive/restore zones (which sit outside
-            the sortable list) instead of snapping back to its slot. */}
-        <DragOverlay dropAnimation={null}>
-          {activeItem ? (
-            <BoardRow
-              className="board-row--overlay"
-              item={activeItem}
+      <SortableContext items={itemIds} strategy={rectSortingStrategy}>
+        <section
+          className={sectionClassName}
+          data-columns={columns === "auto" ? undefined : columns}
+          style={sectionStyle}
+          aria-label="Dayboard widgets">
+          {items.map((item) => (
+            <SortableBoardRow
+              activeId={activeId}
+              draggable={draggable}
+              hasActions={hasActions}
+              isMenuOpen={openMenu?.id === item.id}
+              item={item}
+              key={item.id}
               now={now}
+              onCloseMenu={closeMenu}
+              onOpenMenu={handleOpenMenu}
+              onWidgetChange={onWidgetChange}
+              prefersReducedMotion={prefersReducedMotion}
             />
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+          ))}
+        </section>
+      </SortableContext>
       {openMenu && activeMenuItem && renderItemActions ? (
         <WidgetContextMenu
           label={`Actions for ${activeMenuItem.title}`}
