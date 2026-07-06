@@ -5,7 +5,7 @@ import { BoardList } from "~/components/BoardList"
 import { DeleteDialog } from "~/components/DeleteDialog"
 import { ItemDialog } from "~/components/ItemDialog"
 import { SettingsDialog } from "~/components/SettingsDialog"
-import { ErrorView, LoadingView } from "~/components/StatusViews"
+import { ErrorView } from "~/components/StatusViews"
 import { useDayboardState } from "~/hooks/useDayboardState"
 import { useNow } from "~/hooks/useNow"
 import { getGreeting } from "~/lib/greeting"
@@ -75,8 +75,10 @@ export function NewTabPage() {
       window.removeEventListener("pointerdown", closeMenusAfterOutsidePointerDown)
   }, [])
 
+  // Only the very first run (no cached board yet) waits on storage; a spinner
+  // would just flash, so stay blank on the page background until it resolves.
   if (isLoading) {
-    return <LoadingView />
+    return null
   }
 
   if (error || !state) {

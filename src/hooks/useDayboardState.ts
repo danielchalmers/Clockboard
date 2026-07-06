@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import {
+  readCachedDayboardState,
   readDayboardState,
   watchDayboardState,
   writeDayboardState
@@ -20,8 +21,10 @@ interface UseDayboardStateResult {
 }
 
 export const useDayboardState = (): UseDayboardStateResult => {
-  const [state, setState] = useState<DayboardState | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  // Hydrate the first render synchronously from the localStorage mirror so the
+  // board paints immediately; the async chrome.storage read reconciles after.
+  const [state, setState] = useState<DayboardState | null>(readCachedDayboardState)
+  const [isLoading, setIsLoading] = useState(state === null)
   const [error, setError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -30,13 +33,15 @@ export const useDayboardState = (): UseDayboardStateResult => {
   stateRef.current = state
 
   const reload = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-
     try {
       setState(await readDayboardState())
+      setError(null)
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load data")
+      // A cached board on screen beats a blocking error page, so only surface
+      // the failure when there is nothing to show.
+      if (!stateRef.current) {
+        setError(cause instanceof Error ? cause.message : "Unable to load data")
+      }
     } finally {
       setIsLoading(false)
     }

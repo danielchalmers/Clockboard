@@ -50,6 +50,7 @@ const stubChromeStorage = () => {
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.resetModules()
+  localStorage.clear()
 })
 
 describe("readDayboardState", () => {
@@ -169,6 +170,43 @@ describe("writeDayboardState", () => {
     await writeDayboardState(sampleState)
 
     expect(store.get(STORAGE_KEY)).toEqual(sampleState)
+  })
+})
+
+describe("readCachedDayboardState", () => {
+  it("returns null before anything has been cached", async () => {
+    stubChromeStorage()
+
+    const { readCachedDayboardState } = await import("./storage")
+
+    expect(readCachedDayboardState()).toBeNull()
+  })
+
+  it("mirrors reads and writes so the next load is synchronous", async () => {
+    const { store } = stubChromeStorage()
+    store.set(STORAGE_KEY, sampleState)
+
+    const { readCachedDayboardState, readDayboardState, writeDayboardState } =
+      await import("./storage")
+
+    await readDayboardState()
+    expect(readCachedDayboardState()).toEqual(sampleState)
+
+    const renamed = {
+      ...sampleState,
+      settings: { ...sampleState.settings, name: "Dan" }
+    }
+    await writeDayboardState(renamed)
+    expect(readCachedDayboardState()).toEqual(renamed)
+  })
+
+  it("returns null when the cached value is corrupt", async () => {
+    stubChromeStorage()
+
+    const { CACHE_KEY, readCachedDayboardState } = await import("./storage")
+    localStorage.setItem(CACHE_KEY, "{ not json")
+
+    expect(readCachedDayboardState()).toBeNull()
   })
 })
 

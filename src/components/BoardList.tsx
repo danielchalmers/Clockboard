@@ -288,6 +288,7 @@ interface SortableBoardRowProps {
   isMenuOpen: boolean
   hasActions: boolean
   draggable: boolean
+  animateEnter: boolean
   prefersReducedMotion: boolean
   onCloseMenu: () => void
   onOpenMenu: (id: string, x: number, y: number) => void
@@ -317,6 +318,7 @@ const areRowsEqual = (
     prev.isMenuOpen === next.isMenuOpen &&
     prev.hasActions === next.hasActions &&
     prev.draggable === next.draggable &&
+    prev.animateEnter === next.animateEnter &&
     prev.prefersReducedMotion === next.prefersReducedMotion &&
     prev.onCloseMenu === next.onCloseMenu &&
     prev.onOpenMenu === next.onOpenMenu &&
@@ -331,6 +333,7 @@ const SortableBoardRow = memo(({
   isMenuOpen,
   hasActions,
   draggable,
+  animateEnter,
   prefersReducedMotion,
   onCloseMenu,
   onOpenMenu,
@@ -351,6 +354,7 @@ const SortableBoardRow = memo(({
   const className = [
     "board-row--sortable",
     draggable ? "board-row--draggable" : "",
+    animateEnter ? "board-row--enter" : "",
     isMenuOpen ? "board-row--menu-open" : "",
     isDragging ? "board-row--dragging" : "",
     activeId && activeId !== item.id && isOver ? "board-row--drop-target" : ""
@@ -482,6 +486,15 @@ export const BoardList = ({
   // Stable so the memoized rows can skip re-rendering when only the tick changes.
   const closeMenu = useCallback(() => setOpenMenu(null), [])
 
+  // Cards on the board at first render must not animate in — the page should
+  // simply be there on a new tab. Only cards that show up later (added,
+  // restored) play the entrance animation.
+  const initialIdsRef = useRef<ReadonlySet<string> | null>(null)
+  if (initialIdsRef.current === null) {
+    initialIdsRef.current = new Set(items.map((item) => item.id))
+  }
+  const initialIds = initialIdsRef.current
+
   if (items.length === 0) {
     return <EmptyState restoreTarget={restoreTarget} />
   }
@@ -533,6 +546,7 @@ export const BoardList = ({
           {items.map((item) => (
             <SortableBoardRow
               activeId={activeId}
+              animateEnter={!initialIds.has(item.id)}
               draggable={draggable}
               hasActions={hasActions}
               isMenuOpen={openMenu?.id === item.id}
