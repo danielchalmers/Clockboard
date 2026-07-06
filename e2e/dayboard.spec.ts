@@ -1325,12 +1325,13 @@ test("a card dragged toward the archive follows the cursor instead of snapping b
   ).toHaveCount(0)
 })
 
-test("dragging an archived widget onto the restore zone brings it back", async ({
+test("dragging an archived widget onto a board card restores it into that slot", async ({
   page,
   extensionId
 }) => {
   // A tall viewport keeps the active board plus the revealed archive on screen,
-  // so the archived card and the floating restore zone are both reachable.
+  // so the archived card and its board target are both reachable without
+  // mid-drag scrolling.
   await page.setViewportSize({ width: 1280, height: 1600 })
   await openNewTab(page, extensionId)
 
@@ -1344,35 +1345,52 @@ test("dragging an archived widget onto the restore zone brings it back", async (
     .filter({ has: page.getByRole("heading", { name: "Tomorrow morning" }) })
   const box = await card.boundingBox()
 
-  if (!box) {
-    throw new Error("Unable to measure archived card")
+  // Aim for the first board card: dropping there must restore into slot one,
+  // not just back onto the board somewhere.
+  const target = page
+    .locator(".board-row")
+    .filter({ has: page.getByRole("heading", { name: "Local time" }) })
+  const targetBox = await target.boundingBox()
+
+  if (!box || !targetBox) {
+    throw new Error("Unable to measure the archived card or its board target")
   }
 
-  // Drag the archived card (by its frame) down onto the floating restore zone.
+  // Grab the archived card by its frame and nudge it to start the drag.
   await page.mouse.move(box.x + box.width / 2, box.y + 12)
   await page.mouse.down()
   await page.mouse.move(box.x + box.width / 2, box.y + 36, { steps: 6 })
 
-  const zone = page.locator(".archive-dropzone")
-  await expect(zone).toBeVisible()
-  const zoneBox = await zone.boundingBox()
+  // The board announces itself as the restore target while the card is up.
+  await expect(page.locator(".board-list--restore-target")).toBeVisible()
 
-  if (!zoneBox) {
-    throw new Error("Restore zone has no bounds")
-  }
-
+  // Carry the card up over the first board card; the hovered card rings as the
+  // slot the drop will take.
   await page.mouse.move(
-    zoneBox.x + zoneBox.width / 2,
-    zoneBox.y + zoneBox.height / 2,
+    targetBox.x + targetBox.width / 2,
+    targetBox.y + targetBox.height / 2,
     { steps: 20 }
   )
-  await expect(page.locator(".archive-dropzone--over")).toBeVisible()
+
+  // The board makes room mid-drag: the card joins the board grid as a dimmed
+  // placeholder (leaving the archived list) while the lifted copy follows the
+  // cursor — the same gap preview a normal reorder shows.
+  await expect(
+    page
+      .locator(".board-list")
+      .first()
+      .locator(".board-row--dragging")
+      .filter({ has: page.getByRole("heading", { name: "Tomorrow morning" }) })
+  ).toBeVisible()
+
+  await expect(page.locator(".board-row--drop-target")).toBeVisible()
   await page.mouse.up()
 
-  // It is back on the board, and the archived section is gone.
-  await expect(
-    page.locator(".board-list").first().getByText("Tomorrow morning")
-  ).toBeVisible()
+  // It is back on the board in the exact slot it was dropped on — ahead of
+  // "Local time" — and the archived section is gone.
+  await expect(page.locator(".board-row h2").first()).toHaveText(
+    "Tomorrow morning"
+  )
   await expect(
     page.getByRole("button", { name: /Show archived/ })
   ).toHaveCount(0)

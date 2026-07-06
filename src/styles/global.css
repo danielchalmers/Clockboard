@@ -812,7 +812,7 @@ details > summary::-webkit-details-marker {
    padded outer ring as the drag handle. Grabbing the border starts a drag while
    the body text — and the empty space between rows — stay non-draggable. */
 .board-row__frame {
-  --frame-ring: 24px;
+  --frame-ring: 12px;
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -887,6 +887,14 @@ details > summary::-webkit-details-marker {
 .board-row--drop-target {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* While an archived card is in flight the whole active board reads as the
+   restore target; the card under the cursor still rings as the precise slot. */
+.board-list--restore-target {
+  border-radius: var(--radius-lg);
+  outline: 2px dashed color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 10px;
 }
 
 /* ── Forms ─────────────────────────────────────────────────────────────── */
@@ -1347,6 +1355,22 @@ select:focus {
   margin: 10px 0 0;
   max-width: 320px;
   line-height: 1.5;
+}
+
+/* An empty board doubles as the restore drop target while an archived card is
+   being dragged, so it lights up like a drop zone instead of sitting inert. */
+.empty-state--restore {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong));
+}
+
+.empty-state--over {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  border-color: var(--accent);
+  border-style: solid;
+}
+
+.empty-state--over h2 {
+  color: var(--accent);
 }
 
 /* ── Reduced Motion ────────────────────────────────────────────────────── */

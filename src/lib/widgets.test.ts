@@ -172,4 +172,29 @@ describe("archiveWidget / restoreWidget", () => {
   it("leaves the list untouched when restoring a non-archived widget", () => {
     expect(restoreWidget(widgets, "alpha")).toBe(widgets)
   })
+
+  it("restores into the slot of the board card it was dropped on", () => {
+    const archived = archiveWidget(widgets, "gamma")
+    const restored = restoreWidget(archived, "gamma", "alpha")
+
+    // Dropped onto "alpha", so it takes alpha's slot and pushes it down.
+    expect(restored.map((widget) => widget.id)).toEqual([
+      "gamma",
+      "alpha",
+      "beta"
+    ])
+    expect(restored.every((widget) => !widget.archived)).toBe(true)
+  })
+
+  it("falls back to the end of the board when the drop target is unknown or archived", () => {
+    const archived = archiveWidget(archiveWidget(widgets, "beta"), "gamma")
+
+    expect(
+      restoreWidget(archived, "gamma", "missing").map((widget) => widget.id)
+    ).toEqual(["alpha", "gamma", "beta"])
+    // Another archived card is not a board slot; it cannot anchor the restore.
+    expect(
+      restoreWidget(archived, "gamma", "beta").map((widget) => widget.id)
+    ).toEqual(["alpha", "gamma", "beta"])
+  })
 })
