@@ -1371,6 +1371,18 @@ test("dragging an archived widget onto a board card restores it into that slot",
     targetBox.y + targetBox.height / 2,
     { steps: 20 }
   )
+
+  // The board makes room mid-drag: the card joins the board grid as a dimmed
+  // placeholder (leaving the archived list) while the lifted copy follows the
+  // cursor — the same gap preview a normal reorder shows.
+  await expect(
+    page
+      .locator(".board-list")
+      .first()
+      .locator(".board-row--dragging")
+      .filter({ has: page.getByRole("heading", { name: "Tomorrow morning" }) })
+  ).toBeVisible()
+
   await expect(page.locator(".board-row--drop-target")).toBeVisible()
   await page.mouse.up()
 

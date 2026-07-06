@@ -162,9 +162,6 @@ export function NewTabPage() {
     setImportError(null)
   }
 
-  const activeWidgets = state.widgets.filter((widget) => !widget.archived)
-  const archivedWidgets = state.widgets.filter((widget) => widget.archived)
-
   return (
     <>
       <main
@@ -388,7 +385,10 @@ export function NewTabPage() {
         </header>
         {/* One drag context spans the board and the archived list, so an
             archived card can be dragged straight into the exact board slot it
-            should take, while an active card heads for the archive drop zone. */}
+            should take, while an active card heads for the archive drop zone.
+            The lists render from BoardDnd's view of the widgets, which mid-drag
+            previews the restore — the dragged card already sitting in its
+            board slot. */}
         <BoardDnd
           now={now}
           widgets={state.widgets}
@@ -397,93 +397,42 @@ export function NewTabPage() {
           onRestore={(id, beforeId) =>
             void setWidgets(restoreWidget(state.widgets, id, beforeId))
           }>
-          <BoardList
-            items={activeWidgets}
-            now={now}
-            draggable={state.settings.dragToMove}
-            columns={state.settings.columns}
-            restoreTarget
-            onWidgetChange={updateWidget}
-            renderItemActions={(item, index) => (
+          {(displayWidgets) => {
+            const activeWidgets = displayWidgets.filter(
+              (widget) => !widget.archived
+            )
+            const archivedWidgets = displayWidgets.filter(
+              (widget) => widget.archived
+            )
+
+            return (
               <>
-                <button
-                  aria-label={`Move ${item.title} up`}
-                  className="menu-button"
-                  disabled={index === 0}
-                  onClick={() => reorderItem(item.id, -1)}
-                  role="menuitem"
-                  type="button">
-                  Move up
-                </button>
-                <button
-                  aria-label={`Move ${item.title} down`}
-                  className="menu-button"
-                  disabled={index === activeWidgets.length - 1}
-                  onClick={() => reorderItem(item.id, 1)}
-                  role="menuitem"
-                  type="button">
-                  Move down
-                </button>
-                <button
-                  aria-label={`Edit ${item.title}`}
-                  className="menu-button"
-                  onClick={() => {
-                    closeOpenMenus()
-                    setEditorState({ mode: "edit", item })
-                  }}
-                  role="menuitem"
-                  type="button">
-                  Edit
-                </button>
-                <button
-                  aria-label={`Archive ${item.title}`}
-                  className="menu-button"
-                  onClick={() => archiveItem(item)}
-                  role="menuitem"
-                  type="button">
-                  Archive
-                </button>
-                <button
-                  aria-label={`Delete ${item.title}`}
-                  className="menu-button menu-button--danger"
-                  onClick={() => {
-                    closeOpenMenus()
-                    setItemPendingDelete(item)
-                  }}
-                  role="menuitem"
-                  type="button">
-                  Delete
-                </button>
-              </>
-            )}
-          />
-          {archivedWidgets.length > 0 ? (
-            <section className="archive-section">
-              <button
-                aria-expanded={showArchived}
-                className="archive-toggle"
-                onClick={() => setShowArchived((shown) => !shown)}
-                type="button">
-                {showArchived
-                  ? "Hide archived"
-                  : `Show archived (${archivedWidgets.length})`}
-              </button>
-              {showArchived ? (
                 <BoardList
-                  items={archivedWidgets}
+                  items={activeWidgets}
                   now={now}
                   draggable={state.settings.dragToMove}
                   columns={state.settings.columns}
+                  restoreTarget
                   onWidgetChange={updateWidget}
-                  renderItemActions={(item) => (
+                  renderItemActions={(item, index) => (
                     <>
                       <button
-                        aria-label={`Restore ${item.title}`}
+                        aria-label={`Move ${item.title} up`}
                         className="menu-button"
-                        onClick={() => restoreItem(item)}
+                        disabled={index === 0}
+                        onClick={() => reorderItem(item.id, -1)}
                         role="menuitem"
                         type="button">
-                        Restore
+                        Move up
+                      </button>
+                      <button
+                        aria-label={`Move ${item.title} down`}
+                        className="menu-button"
+                        disabled={index === activeWidgets.length - 1}
+                        onClick={() => reorderItem(item.id, 1)}
+                        role="menuitem"
+                        type="button">
+                        Move down
                       </button>
                       <button
                         aria-label={`Edit ${item.title}`}
@@ -495,6 +444,14 @@ export function NewTabPage() {
                         role="menuitem"
                         type="button">
                         Edit
+                      </button>
+                      <button
+                        aria-label={`Archive ${item.title}`}
+                        className="menu-button"
+                        onClick={() => archiveItem(item)}
+                        role="menuitem"
+                        type="button">
+                        Archive
                       </button>
                       <button
                         aria-label={`Delete ${item.title}`}
@@ -510,9 +467,65 @@ export function NewTabPage() {
                     </>
                   )}
                 />
-              ) : null}
-            </section>
-          ) : null}
+                {archivedWidgets.length > 0 ? (
+                  <section className="archive-section">
+                    <button
+                      aria-expanded={showArchived}
+                      className="archive-toggle"
+                      onClick={() => setShowArchived((shown) => !shown)}
+                      type="button">
+                      {showArchived
+                        ? "Hide archived"
+                        : `Show archived (${archivedWidgets.length})`}
+                    </button>
+                    {showArchived ? (
+                      <BoardList
+                        items={archivedWidgets}
+                        now={now}
+                        draggable={state.settings.dragToMove}
+                        columns={state.settings.columns}
+                        onWidgetChange={updateWidget}
+                        renderItemActions={(item) => (
+                          <>
+                            <button
+                              aria-label={`Restore ${item.title}`}
+                              className="menu-button"
+                              onClick={() => restoreItem(item)}
+                              role="menuitem"
+                              type="button">
+                              Restore
+                            </button>
+                            <button
+                              aria-label={`Edit ${item.title}`}
+                              className="menu-button"
+                              onClick={() => {
+                                closeOpenMenus()
+                                setEditorState({ mode: "edit", item })
+                              }}
+                              role="menuitem"
+                              type="button">
+                              Edit
+                            </button>
+                            <button
+                              aria-label={`Delete ${item.title}`}
+                              className="menu-button menu-button--danger"
+                              onClick={() => {
+                                closeOpenMenus()
+                                setItemPendingDelete(item)
+                              }}
+                              role="menuitem"
+                              type="button">
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      />
+                    ) : null}
+                  </section>
+                ) : null}
+              </>
+            )
+          }}
         </BoardDnd>
       </main>
       <ItemDialog

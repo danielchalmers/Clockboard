@@ -2,18 +2,21 @@ import {
   DndContext,
   DragOverlay,
   KeyboardSensor,
+  MeasuringStrategy,
   PointerSensor,
   closestCenter,
   useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent
 } from "@dnd-kit/core"
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable"
 import { useState, type ReactNode } from "react"
 
 import { BoardRow } from "~/components/BoardRow"
+import { reorderWidgets, restoreWidget } from "~/lib/widgets"
 import type { Widget } from "~/lib/types"
 
 export const ARCHIVE_DROP_ID = "dayboard-archive-dropzone"
@@ -61,7 +64,9 @@ interface BoardDndProps {
   // `beforeId` is the board card whose slot the restored widget takes; omitted
   // when the drop had no specific target (the empty-board zone).
   onRestore?: (id: string, beforeId?: string) => void
-  children: ReactNode
+  // Render prop: receives the list to display, which mid-drag may be a preview
+  // where the dragged archived card already sits in its board slot.
+  children: (widgets: Widget[]) => ReactNode
 }
 
 // One drag context shared by the active board and the archived list, so a card
@@ -76,6 +81,12 @@ export const BoardDnd = ({
   children
 }: BoardDndProps) => {
   const [activeId, setActiveId] = useState<string | null>(null)
+
+  // While an archived card hovers over the board, this holds the widgets as if
+  // the restore already happened — the card joins the board's sortable list as
+  // a placeholder, so the other cards part to make room exactly like a native
+  // reorder. Dropping commits it; dragging away or cancelling discards it.
+  const [restorePreview, setRestorePreview] = useState<Widget[] | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -95,10 +106,53 @@ export const BoardDnd = ({
     setActiveId(String(active.id))
   }
 
-  const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    setActiveId(null)
+  const handleDragOver = ({ active, over }: DragOverEvent) => {
+    const dragged = widgets.find((widget) => widget.id === active.id)
 
-    if (!over || active.id === over.id) {
+    // Only a restore drag crosses lists; board drags keep native sorting.
+    // Hovering the card's own slot (its archive origin, or its preview
+    // placeholder once slotted in) changes nothing.
+    if (!dragged?.archived || over?.id === active.id) {
+      return
+    }
+
+    if (over?.id === BOARD_DROP_ID) {
+      setRestorePreview(restoreWidget(widgets, dragged.id))
+      return
+    }
+
+    const target = over
+      ? widgets.find((widget) => widget.id === over.id)
+      : undefined
+
+    if (!target || target.archived) {
+      // Back over the archive (or nowhere) — the card returns to its origin.
+      setRestorePreview(null)
+      return
+    }
+
+    // Entering the board: slot the card in before the hovered one. Once it is
+    // a member of the board's sortable list, dnd-kit's own sort transforms
+    // track the cursor, so the preview must not be rebuilt on every hover.
+    setRestorePreview(
+      (preview) => preview ?? restoreWidget(widgets, dragged.id, target.id)
+    )
+  }
+
+  // The preview already encodes the final order; persistence still goes through
+  // restoreWidget, so hand back the card in front of which it was dropped.
+  const commitRestore = (finalOrder: Widget[], draggedId: string) => {
+    const board = finalOrder.filter((widget) => !widget.archived)
+    const index = board.findIndex((widget) => widget.id === draggedId)
+    onRestore?.(draggedId, index === -1 ? undefined : board[index + 1]?.id)
+  }
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    const preview = restorePreview
+    setActiveId(null)
+    setRestorePreview(null)
+
+    if (!over) {
       return
     }
 
@@ -124,7 +178,21 @@ export const BoardDnd = ({
 
     const target = widgets.find((widget) => widget.id === over.id)
 
-    if (!target) {
+    // A restore drop confirms the preview slot, nudged to the final hovered
+    // card if the pointer kept sorting within the board after slotting in.
+    if (dragged.archived && preview) {
+      if (over.id === active.id) {
+        commitRestore(preview, dragged.id)
+        return
+      }
+
+      if (target && !target.archived) {
+        commitRestore(reorderWidgets(preview, dragged.id, target.id), dragged.id)
+        return
+      }
+    }
+
+    if (!target || active.id === over.id) {
       return
     }
 
@@ -143,16 +211,21 @@ export const BoardDnd = ({
 
   const handleDragCancel = () => {
     setActiveId(null)
+    setRestorePreview(null)
   }
 
   return (
     <DndContext
       collisionDetection={closestCenter}
+      // The preview moves a card between lists mid-drag, reshaping the board,
+      // so droppable rects must be re-measured as the layout changes.
+      measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
       onDragCancel={handleDragCancel}
       onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
       onDragStart={handleDragStart}
       sensors={sensors}>
-      {children}
+      {children(restorePreview ?? widgets)}
       {activeItem && !activeItem.archived && onArchive ? (
         <ArchiveDropZone />
       ) : null}
