@@ -1039,16 +1039,19 @@ select:focus {
   letter-spacing: 0.05em;
 }
 
+/* A single non-wrapping row: swatches shrink evenly below their 32px ideal
+   when the dialog is narrower than the full set, instead of spilling over. */
 .color-preset-picker {
+  align-items: center;
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   padding: 6px 0;
 }
 
 .color-swatch {
-  width: 32px;
-  height: 32px;
+  flex: 0 1 32px;
+  min-inline-size: 0;
+  aspect-ratio: 1;
   border-radius: 50%;
   border: 2px solid transparent;
   cursor: pointer;

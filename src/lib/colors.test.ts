@@ -2,22 +2,24 @@ import { describe, expect, it } from "vitest"
 import { COLOR_PRESETS, getPresetById, getPresetCssVars } from "./colors"
 
 describe("colors presets", () => {
-  it("defines exactly 10 accessible presets", () => {
-    expect(COLOR_PRESETS.length).toBe(10)
-    
+  it("defines exactly 12 accessible presets in spectral order", () => {
+    expect(COLOR_PRESETS.length).toBe(12)
+
     const expectedPresetIds = [
       "slate",
       "rose",
-      "amber",
-      "emerald",
-      "sky",
-      "violet",
-      "teal",
       "coral",
+      "amber",
+      "lemon",
+      "mint",
+      "emerald",
+      "teal",
+      "sky",
       "indigo",
-      "mint"
+      "violet",
+      "fuchsia"
     ]
-    
+
     expect(COLOR_PRESETS.map((p) => p.id)).toEqual(expectedPresetIds)
   })
 
@@ -32,16 +34,16 @@ describe("colors presets", () => {
 
   it("generates correct CSS variable custom property mappings", () => {
     const cssVars = getPresetCssVars("emerald")
-    
+
     expect(cssVars).toEqual({
-      "--card-bg-light": "hsl(145, 45%, 98%)",
-      "--card-tint-light": "hsl(150, 45%, 30%)",
-      "--card-border-light": "hsl(145, 30%, 91%)",
-      "--card-accent-light": "hsl(150, 55%, 25%)",
-      "--card-bg-dark": "hsl(150, 35%, 10%)",
-      "--card-tint-dark": "hsl(150, 40%, 65%)",
-      "--card-border-dark": "hsl(150, 25%, 17%)",
-      "--card-accent-dark": "hsl(150, 50%, 70%)"
+      "--card-bg-light": "hsl(158, 70%, 93%)",
+      "--card-tint-light": "hsl(160, 75%, 25%)",
+      "--card-border-light": "hsl(158, 55%, 80%)",
+      "--card-accent-light": "hsl(160, 90%, 32%)",
+      "--card-bg-dark": "hsl(160, 45%, 10%)",
+      "--card-tint-dark": "hsl(158, 55%, 62%)",
+      "--card-border-dark": "hsl(160, 40%, 18%)",
+      "--card-accent-dark": "hsl(158, 80%, 52%)"
     })
   })
 })
