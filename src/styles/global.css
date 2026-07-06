@@ -510,6 +510,11 @@ details > summary::-webkit-details-marker {
     background-color var(--t-fast),
     border-color var(--t-fast),
     box-shadow var(--t-fast);
+}
+
+/* Cards present at page load must simply be there; only cards that appear
+   while the board is on screen (added, restored) get the entrance. */
+.board-row--enter {
   animation: card-enter var(--t-normal) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -1300,20 +1305,6 @@ select:focus {
   min-height: 100vh;
 }
 
-.status-view__spinner {
-  width: 38px;
-  height: 38px;
-  border: 3.5px solid var(--line-strong);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 900ms linear infinite;
-  margin-block-end: 20px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 .status-view__error-badge {
   width: 44px;
   height: 44px;
@@ -1339,7 +1330,6 @@ select:focus {
   margin-block-start: 12px;
   padding: 64px 32px;
   background: color-mix(in srgb, var(--surface) 20%, transparent);
-  animation: card-enter var(--t-normal) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .empty-state h2 {

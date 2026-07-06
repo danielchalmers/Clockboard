@@ -9,6 +9,7 @@ import {
 import { widgetRegistry } from "./widgets"
 
 export const STORAGE_KEY = "dayboard-state"
+export const CACHE_KEY = "dayboard-state-cache"
 
 const hasWidgets = (value: unknown): value is { widgets: unknown[] } =>
   typeof value === "object" &&
@@ -57,10 +58,35 @@ const normalizeState = (value: unknown): DayboardState => {
   }
 }
 
+// chrome.storage.sync reads are async IPC, so every new tab would open blank
+// for a few frames while waiting on them. Mirroring the last-known board into
+// localStorage lets the first render hydrate synchronously; the authoritative
+// sync read then reconciles anything that changed on another device.
+const cacheDayboardState = (state: DayboardState) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(state))
+  } catch {
+    // Best effort — an unavailable or full localStorage only costs speed.
+  }
+}
+
+export const readCachedDayboardState = (): DayboardState | null => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY)
+
+    return cached === null ? null : normalizeState(JSON.parse(cached))
+  } catch {
+    return null
+  }
+}
+
 export const readDayboardState = async (): Promise<DayboardState> => {
   const result = await chrome.storage.sync.get(STORAGE_KEY)
+  const state = normalizeState(result[STORAGE_KEY])
 
-  return normalizeState(result[STORAGE_KEY])
+  cacheDayboardState(state)
+
+  return state
 }
 
 // Pretty-printed JSON for the Export option.
@@ -84,6 +110,7 @@ export const writeDayboardState = async (
   state: DayboardState
 ): Promise<void> => {
   await chrome.storage.sync.set({ [STORAGE_KEY]: state })
+  cacheDayboardState(state)
 }
 
 export const watchDayboardState = (
@@ -102,7 +129,10 @@ export const watchDayboardState = (
       return
     }
 
-    listener(normalizeState(change.newValue))
+    const state = normalizeState(change.newValue)
+
+    cacheDayboardState(state)
+    listener(state)
   }
 
   chrome.storage.onChanged.addListener(handleStorageChange)
