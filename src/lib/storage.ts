@@ -1,5 +1,4 @@
 import {
-  BOARD_COLUMN_CHOICES,
   DEFAULT_SETTINGS,
   createDefaultState,
   type DayboardSettings,
@@ -32,18 +31,7 @@ const normalizeSettings = (value: unknown): DayboardSettings => {
     : {}) as Partial<DayboardSettings>
 
   return {
-    dragToMove:
-      typeof stored.dragToMove === "boolean"
-        ? stored.dragToMove
-        : DEFAULT_SETTINGS.dragToMove,
-    columns: BOARD_COLUMN_CHOICES.includes(stored.columns as never)
-      ? (stored.columns as DayboardSettings["columns"])
-      : DEFAULT_SETTINGS.columns,
-    name: typeof stored.name === "string" ? stored.name : DEFAULT_SETTINGS.name,
-    dockToBottom:
-      typeof stored.dockToBottom === "boolean"
-        ? stored.dockToBottom
-        : DEFAULT_SETTINGS.dockToBottom
+    name: typeof stored.name === "string" ? stored.name : DEFAULT_SETTINGS.name
   }
 }
 

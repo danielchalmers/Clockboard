@@ -17,6 +17,7 @@ import type {
 } from "~/lib/types"
 import { widgetRegistry } from "~/lib/widgets"
 import { ColorPresetPicker } from "~/components/ColorPresetPicker"
+import { WidgetIcon } from "~/components/WidgetIcon"
 
 interface ItemDialogProps {
   isOpen: boolean
@@ -233,12 +234,15 @@ export const ItemDialog = ({
         ref={dialogRef}
         role="dialog"
         tabIndex={-1}>
-        <div className="modal-dialog__header">
-          <div>
-            <h2 className="modal-dialog__title" id="item-dialog-title">
-              {title}
-            </h2>
-          </div>
+        <div className="modal-dialog__header modal-dialog__header--with-badge">
+          <span
+            aria-hidden="true"
+            className={`menu-chip menu-chip--${draft.kind} menu-chip--large`}>
+            <WidgetIcon kind={draft.kind} size={22} />
+          </span>
+          <h2 className="modal-dialog__title" id="item-dialog-title">
+            {title}
+          </h2>
         </div>
 
         <form

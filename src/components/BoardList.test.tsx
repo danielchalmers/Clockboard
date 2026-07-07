@@ -27,8 +27,8 @@ const widgets: Widget[] = [
 
 const renderActions = (item: Widget) => (
   <>
-    <button aria-label={`Move ${item.title} up`} role="menuitem" type="button">
-      Move up
+    <button aria-label={`Move ${item.title} back`} role="menuitem" type="button">
+      Move back
     </button>
     <button aria-label={`Edit ${item.title}`} role="menuitem" type="button">
       Edit
@@ -81,9 +81,9 @@ describe("BoardList", () => {
     render(<BoardList items={[]} now={new Date("2026-01-01T12:30:00.000Z")} />)
 
     expect(
-      screen.getByRole("heading", { name: "Nothing here yet" })
+      screen.getByRole("heading", { name: "A fresh start" })
     ).toBeInTheDocument()
-    expect(screen.getByText(/add a clock, countdown, note, timer/i)).toBeInTheDocument()
+    expect(screen.getByText(/add a clock, a countdown, a note/i)).toBeInTheDocument()
   })
 
   it("makes each widget card draggable", () => {
@@ -101,47 +101,6 @@ describe("BoardList", () => {
     frames.forEach((frame) => {
       expect(frame.closest(".board-row--draggable")).not.toBeNull()
     })
-  })
-
-  it("removes the drag-handle frame when dragging is disabled", () => {
-    const { container } = render(
-      <BoardList
-        items={widgets}
-        now={new Date("2026-01-01T12:30:00.000Z")}
-        draggable={false}
-      />
-    )
-
-    expect(container.querySelectorAll(".board-row__frame")).toHaveLength(0)
-    expect(container.querySelectorAll(".board-row--draggable")).toHaveLength(0)
-  })
-
-  it("applies a fixed column count to the board grid", () => {
-    const { container } = render(
-      <BoardList
-        items={widgets}
-        now={new Date("2026-01-01T12:30:00.000Z")}
-        columns={3}
-      />
-    )
-
-    const board = container.querySelector(".board-list") as HTMLElement
-    expect(board).toHaveAttribute("data-columns", "3")
-    expect(board.style.getPropertyValue("--board-columns")).toBe("3")
-  })
-
-  it("leaves the responsive grid in place for the auto column setting", () => {
-    const { container } = render(
-      <BoardList
-        items={widgets}
-        now={new Date("2026-01-01T12:30:00.000Z")}
-        columns="auto"
-      />
-    )
-
-    const board = container.querySelector(".board-list") as HTMLElement
-    expect(board).not.toHaveAttribute("data-columns")
-    expect(board.style.getPropertyValue("--board-columns")).toBe("")
   })
 
   it("opens a free-form popover menu under the cursor on right click", () => {
@@ -217,7 +176,7 @@ describe("BoardList", () => {
 
     openMenu(container, { clientX: 10, clientY: 10 })
 
-    expect(document.activeElement).toBe(screen.getByLabelText("Move Local time up"))
+    expect(document.activeElement).toBe(screen.getByLabelText("Move Local time back"))
   })
 
   it("moves focus between items with the arrow keys, Home, and End", () => {
@@ -225,7 +184,7 @@ describe("BoardList", () => {
 
     openMenu(container, { clientX: 10, clientY: 10 })
 
-    const moveUp = screen.getByLabelText("Move Local time up")
+    const moveUp = screen.getByLabelText("Move Local time back")
     const edit = screen.getByLabelText("Edit Local time")
     const panel = screen.getByLabelText("Actions for Local time")
 

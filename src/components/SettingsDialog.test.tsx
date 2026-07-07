@@ -18,76 +18,18 @@ describe("SettingsDialog", () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it("toggles drag-to-move through the switch", () => {
-    const onChange = vi.fn()
+  it("keeps the options minimal — no layout knobs to fiddle with", () => {
     render(
       <SettingsDialog
         isOpen
         settings={DEFAULT_SETTINGS}
-        onChange={onChange}
+        onChange={() => {}}
         onClose={() => {}}
       />
     )
 
-    fireEvent.click(screen.getByRole("switch", { name: "Drag to rearrange" }))
-
-    expect(onChange).toHaveBeenCalledWith({ ...DEFAULT_SETTINGS, dragToMove: false })
-  })
-
-  it("changes the column count through the select", () => {
-    const onChange = vi.fn()
-    render(
-      <SettingsDialog
-        isOpen
-        settings={DEFAULT_SETTINGS}
-        onChange={onChange}
-        onClose={() => {}}
-      />
-    )
-
-    fireEvent.change(screen.getByLabelText("Columns"), { target: { value: "2" } })
-
-    expect(onChange).toHaveBeenCalledWith({ ...DEFAULT_SETTINGS, columns: 2 })
-  })
-
-  it("returns to the auto column setting", () => {
-    const onChange = vi.fn()
-    render(
-      <SettingsDialog
-        isOpen
-        settings={{ dragToMove: true, columns: 3, name: "", dockToBottom: false }}
-        onChange={onChange}
-        onClose={() => {}}
-      />
-    )
-
-    fireEvent.change(screen.getByLabelText("Columns"), { target: { value: "auto" } })
-
-    expect(onChange).toHaveBeenCalledWith({
-      dragToMove: true,
-      columns: "auto",
-      name: "",
-      dockToBottom: false
-    })
-  })
-
-  it("toggles dock to bottom", () => {
-    const onChange = vi.fn()
-    render(
-      <SettingsDialog
-        isOpen
-        settings={DEFAULT_SETTINGS}
-        onChange={onChange}
-        onClose={() => {}}
-      />
-    )
-
-    fireEvent.click(screen.getByRole("switch", { name: "Dock to bottom" }))
-
-    expect(onChange).toHaveBeenCalledWith({
-      ...DEFAULT_SETTINGS,
-      dockToBottom: true
-    })
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument()
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument()
   })
 
   it("edits the greeting name", () => {
@@ -146,6 +88,21 @@ describe("SettingsDialog", () => {
     expect(
       screen.getByText("That file is not a Dayboard board.")
     ).toBeInTheDocument()
+  })
+
+  it("links to the project on GitHub", () => {
+    render(
+      <SettingsDialog
+        isOpen
+        settings={DEFAULT_SETTINGS}
+        onChange={() => {}}
+        onClose={() => {}}
+      />
+    )
+
+    expect(
+      screen.getByRole("link", { name: /Dayboard on GitHub/ })
+    ).toHaveAttribute("href", "https://github.com/danielchalmers/Dayboard")
   })
 
   it("closes from the Done button", () => {

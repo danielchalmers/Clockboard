@@ -48,7 +48,9 @@ export const DeleteDialog = ({
               Delete {widgetDefinition.kind}?
             </h2>
             <p className="modal-dialog__subtitle">
-              This removes {item.title} from your board.
+              {item.archived
+                ? `This removes ${item.title} for good.`
+                : `This removes ${item.title} for good. If you might want it back, archive it instead.`}
             </p>
           </div>
         </div>

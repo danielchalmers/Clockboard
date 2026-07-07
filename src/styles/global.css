@@ -7,39 +7,41 @@
   /* Fonts */
   --font-sans: "Outfit", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  /* Base Light System Colors (Fallbacks) */
-  --bg: #fafafa;
-  --text: #171717;
-  --muted: #6f6f6f;
-  --quiet: #9b9b9b;
-  --line: rgba(0, 0, 0, 0.08);
-  --line-strong: rgba(0, 0, 0, 0.14);
+  /* Warm paper neutrals (light fallbacks) — a touch of warmth instead of the
+     flat gray of a stock new tab. */
+  --bg: hsl(40, 30%, 97%);
+  --text: hsl(240, 12%, 10%);
+  --muted: hsl(240, 6%, 42%);
+  --quiet: hsl(240, 5%, 62%);
+  --line: rgba(30, 25, 15, 0.08);
+  --line-strong: rgba(30, 25, 15, 0.14);
   --surface: #ffffff;
-  --surface-strong: #f3f3f3;
+  --surface-strong: hsl(40, 20%, 94%);
   --accent: Highlight;
   --accent-text: HighlightText;
   --danger: #e03131;
 
   /* Shadows */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
-  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.03), 0 2px 4px rgba(0, 0, 0, 0.02);
-  --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-card: 0 4px 16px rgba(30, 25, 15, 0.04), 0 2px 4px rgba(30, 25, 15, 0.03);
+  --shadow-card-hover: 0 12px 32px rgba(30, 25, 15, 0.07), 0 4px 12px rgba(30, 25, 15, 0.04);
   --shadow-panel: 0 10px 30px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
   --shadow-dialog: 0 24px 60px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.04);
 
   /* Focus ring */
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
 
-  /* Border Radius */
-  --radius-sm: 8px;
-  --radius: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  /* Border Radius — a rounder, friendlier shape language. */
+  --radius-sm: 10px;
+  --radius: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
 
-  /* Transitions */
+  /* Motion — calm, decelerating curves; no overshoot anywhere. */
   --t-micro: 100ms cubic-bezier(0.4, 0, 0.2, 1);
   --t-fast: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --t-normal: 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @supports (color: AccentColor) {
@@ -51,15 +53,15 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #09090b;
-    --text: #f4f4f5;
-    --muted: #a1a1aa;
-    --quiet: #52525b;
+    --bg: hsl(240, 14%, 7%);
+    --text: hsl(240, 10%, 96%);
+    --muted: hsl(240, 8%, 66%);
+    --quiet: hsl(240, 6%, 40%);
     --line: rgba(255, 255, 255, 0.06);
     --line-strong: rgba(255, 255, 255, 0.12);
-    --surface: #121214;
-    --surface-strong: #1a1a1e;
-    
+    --surface: hsl(240, 12%, 10%);
+    --surface-strong: hsl(240, 10%, 15%);
+
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
     --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.15);
     --shadow-card-hover: 0 16px 40px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.2);
@@ -89,11 +91,9 @@ html {
   scrollbar-gutter: stable;
 }
 
-/* Anchor the page to the bottom of the viewport so the board sits clear of the
-   omnibox suggestions that drop down over the top of the new tab while typing.
-   The flex column lets `.page` claim its bottom margin as free space when the
-   board is short, and collapse it (scrolling from the top) when the board is
-   tall. */
+/* The flex column lets `.page` center itself vertically when the board is
+   short (both block margins claim the free space evenly), and collapse to a
+   normal top-scrolling document when it grows tall. */
 #root {
   display: flex;
   flex-direction: column;
@@ -156,28 +156,20 @@ a {
 
 /* ── Page Layout ───────────────────────────────────────────────────────── */
 
+/* The board floats in the middle of the viewport: clear of the omnibox
+   suggestions that drop over the top of a new tab, without hugging the bottom.
+   The auto block margins split the free space; when the board outgrows the
+   viewport they collapse to the padding and the page scrolls from the top. */
 .page {
   inline-size: min(1300px, calc(100% - 64px));
-  margin: 0 auto;
-  padding: 80px 0 100px;
-}
-
-/* Opt-in: anchor the board to the bottom of the screen so it stays clear of the
-   omnibox suggestions that drop over the top while typing. The `auto` top margin
-   claims the free space when the board is shorter than the viewport, and
-   collapses to 0 so the top stays reachable when it overflows. */
-.page--dock-bottom {
-  margin-block-start: auto;
-}
-
-.page--narrow {
-  inline-size: min(880px, calc(100% - 32px));
+  margin: auto;
+  padding: 56px 0 64px;
 }
 
 @media (max-width: 720px) {
   .page {
     inline-size: calc(100% - 32px);
-    padding: 40px 0 60px;
+    padding: 32px 0 48px;
   }
 }
 
@@ -188,36 +180,32 @@ a {
   display: flex;
   gap: 24px;
   justify-content: space-between;
-  margin-block-end: 64px;
+  margin-block-end: 48px;
 }
 
-.page-header h1 {
-  font-size: clamp(2.2rem, 4vw, 3rem);
-  font-weight: 800;
-  letter-spacing: -0.04em;
+/* The greeting is the hero — personal beats branded on a page you see all day.
+   Set in the plain text color: quiet confidence, no effects. */
+.page-header__greeting {
+  color: var(--text);
+  font-size: clamp(2.1rem, 4vw, 2.8rem);
+  font-weight: 750;
+  letter-spacing: -0.03em;
   line-height: 1.1;
   margin: 0;
-  /* Clipping the gradient to the text paints it only within the line box, so a
-     tight line-height shears the descender off the "y". Give the box a little
-     room below the baseline (and balance it above) so glyphs render in full. */
-  padding-block: 0.04em 0.12em;
-  background: linear-gradient(135deg, var(--text) 30%, color-mix(in srgb, var(--text) 70%, transparent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+}
+
+.page-header__date {
+  color: var(--muted);
+  font-size: clamp(1rem, 1.6vw, 1.15rem);
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  margin: 6px 0 0;
 }
 
 .page-header__actions {
   align-items: center;
   display: flex;
   gap: 12px;
-}
-
-.page-header__greeting {
-  color: var(--muted);
-  font-size: clamp(1rem, 1.6vw, 1.2rem);
-  font-weight: 550;
-  letter-spacing: -0.01em;
-  margin: 8px 0 0;
 }
 
 /* ── Buttons ───────────────────────────────────────────────────────────── */
@@ -238,23 +226,21 @@ a {
   transition:
     background-color var(--t-fast),
     border-color var(--t-fast),
-    box-shadow var(--t-fast),
-    transform var(--t-micro);
+    box-shadow var(--t-fast);
 }
 
 .primary-button {
   background: var(--accent);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 25%, transparent);
+  box-shadow: var(--shadow-sm);
   color: var(--accent-text);
 }
 
 .primary-button:hover:not(:disabled) {
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 35%, transparent);
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--accent) 90%, var(--text));
 }
 
 .primary-button:active:not(:disabled) {
-  transform: translateY(0);
+  background: color-mix(in srgb, var(--accent) 84%, var(--text));
 }
 
 .secondary-button {
@@ -284,6 +270,7 @@ a {
   aspect-ratio: 1;
   background: var(--surface);
   border: 1px solid var(--line);
+  border-radius: 50%;
   box-shadow: var(--shadow-sm);
   inline-size: 44px;
   min-block-size: 44px;
@@ -294,7 +281,10 @@ a {
 .icon-button:hover:not(:disabled) {
   background: var(--surface-strong);
   border-color: var(--line-strong);
-  color: var(--accent);
+}
+
+.icon-button:active:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 8%, var(--surface-strong));
 }
 
 /* ── Menus (Add widget & Dropdowns) ────────────────────────────────────── */
@@ -326,28 +316,42 @@ details > summary::-webkit-details-marker {
   z-index: 200;
 }
 
+/* Menu panels are the most "product" surface in the app: a translucent card
+   with a hairline border, layered shadow, and an inner highlight along the top
+   edge — the details that read as depth without any color noise. */
 .add-menu__panel,
 .card-menu__panel {
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
   border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-panel);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent),
+    var(--shadow-panel);
   display: grid;
-  gap: 4px;
-  min-inline-size: 220px;
-  padding: 8px;
+  gap: 2px;
+  min-inline-size: 236px;
+  padding: 6px;
   position: absolute;
   z-index: 100;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  animation: scale-up-menu var(--t-fast) cubic-bezier(0.16, 1, 0.3, 1) both;
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  animation: scale-up-menu 160ms var(--ease-out) both;
   transform-origin: top right;
+}
+
+@media (prefers-color-scheme: dark) {
+  .add-menu__panel,
+  .card-menu__panel {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      var(--shadow-panel);
+  }
 }
 
 @keyframes scale-up-menu {
   from {
     opacity: 0;
-    transform: scale(0.92) translateY(-4px);
+    transform: scale(0.97) translateY(-2px);
   }
   to {
     opacity: 1;
@@ -371,32 +375,87 @@ details > summary::-webkit-details-marker {
 
 .menu-button {
   align-items: center;
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   color: var(--text);
   display: inline-flex;
   font-size: 0.92rem;
   font-weight: 550;
   gap: 12px;
   justify-content: start;
-  min-block-size: 40px;
+  min-block-size: 38px;
   padding: 0 12px;
   text-align: start;
   width: 100%;
-  transition: background-color var(--t-micro), color var(--t-micro);
+  transition: background-color var(--t-micro);
 }
 
-.menu-button:hover:not(:disabled) {
+/* Leading icons sit in the muted ink so the labels carry the hierarchy. */
+.menu-button > svg {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.menu-button:hover:not(:disabled),
+.menu-button:focus-visible {
   background: var(--surface-strong);
-  color: var(--accent);
 }
 
-.menu-button--danger {
+.menu-button--danger,
+.menu-button--danger > svg {
   color: var(--danger);
 }
 
-.menu-button--danger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--danger) 10%, transparent);
-  color: var(--danger);
+.menu-button--danger:hover:not(:disabled),
+.menu-button--danger:focus-visible {
+  background: color-mix(in srgb, var(--danger) 9%, transparent);
+}
+
+/* A hairline between menu groups (e.g. before a destructive action). */
+.menu-separator {
+  background: var(--line);
+  block-size: 1px;
+  margin: 4px 10px;
+}
+
+/* ── Kind chips ────────────────────────────────────────────────────────────
+   Each widget kind wears its own hue — a rounded chip in the add menu and the
+   edit dialog, so the kinds read at a glance. The hues echo the card presets. */
+
+.menu-chip {
+  --chip: hsl(220, 25%, 50%);
+  align-items: center;
+  background: color-mix(in srgb, var(--chip) 15%, transparent);
+  border-radius: 10px;
+  color: var(--chip);
+  display: inline-flex;
+  flex-shrink: 0;
+  block-size: 30px;
+  inline-size: 30px;
+  justify-content: center;
+}
+
+.menu-chip--large {
+  block-size: 44px;
+  inline-size: 44px;
+  border-radius: 14px;
+}
+
+.menu-chip--clock { --chip: hsl(208, 95%, 46%); }
+.menu-chip--countdown { --chip: hsl(243, 80%, 56%); }
+.menu-chip--note { --chip: hsl(160, 90%, 32%); }
+.menu-chip--quote { --chip: hsl(275, 80%, 52%); }
+.menu-chip--stopwatch { --chip: hsl(186, 95%, 31%); }
+.menu-chip--timer { --chip: hsl(14, 85%, 50%); }
+.menu-chip--habit { --chip: hsl(33, 95%, 42%); }
+
+@media (prefers-color-scheme: dark) {
+  .menu-chip--clock { --chip: hsl(204, 95%, 62%); }
+  .menu-chip--countdown { --chip: hsl(238, 90%, 72%); }
+  .menu-chip--note { --chip: hsl(158, 80%, 52%); }
+  .menu-chip--quote { --chip: hsl(275, 85%, 70%); }
+  .menu-chip--stopwatch { --chip: hsl(183, 85%, 52%); }
+  .menu-chip--timer { --chip: hsl(14, 90%, 66%); }
+  .menu-chip--habit { --chip: hsl(40, 95%, 60%); }
 }
 
 /* ── Board Layout ──────────────────────────────────────────────────────── */
@@ -405,18 +464,6 @@ details > summary::-webkit-details-marker {
   display: grid;
   gap: 28px;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
-}
-
-/* A user-chosen fixed column count overrides the responsive default. */
-.board-list[data-columns] {
-  grid-template-columns: repeat(var(--board-columns), minmax(0, 1fr));
-}
-
-/* Keep a fixed multi-column board from becoming cramped on small screens. */
-@media (max-width: 720px) {
-  .board-list[data-columns] {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* ── Archive ───────────────────────────────────────────────────────────── */
@@ -444,7 +491,7 @@ details > summary::-webkit-details-marker {
   min-block-size: 64px;
   position: fixed;
   z-index: 300;
-  animation: fade-in var(--t-fast) ease;
+  animation: fade-in var(--t-fast) ease-out;
 }
 
 .archive-dropzone--over {
@@ -461,18 +508,20 @@ details > summary::-webkit-details-marker {
 }
 
 .archive-toggle {
-  border-radius: var(--radius);
+  border: 1px solid transparent;
+  border-radius: 999px;
   color: var(--muted);
   font-size: 0.9rem;
   font-weight: 600;
   justify-self: center;
   min-block-size: 38px;
-  padding: 8px 18px;
-  transition: background-color var(--t-fast), color var(--t-fast);
+  padding: 8px 20px;
+  transition: background-color var(--t-fast), border-color var(--t-fast), color var(--t-fast);
 }
 
 .archive-toggle:hover {
   background: var(--surface-strong);
+  border-color: var(--line);
   color: var(--accent);
 }
 
@@ -486,7 +535,7 @@ details > summary::-webkit-details-marker {
   opacity: 1;
 }
 
-/* ── Card redesign ─────────────────────────────────────────────────────── */
+/* ── Cards ─────────────────────────────────────────────────────────────── */
 
 .board-row {
   /* Preset custom property fallbacks */
@@ -503,7 +552,7 @@ details > summary::-webkit-details-marker {
   gap: 24px;
   grid-template-rows: auto 1fr;
   min-block-size: 210px;
-  padding: 28px 32px 26px;
+  padding: 26px 30px 24px;
   position: relative;
   overflow: hidden;
   transition:
@@ -515,7 +564,7 @@ details > summary::-webkit-details-marker {
 /* Cards present at page load must simply be there; only cards that appear
    while the board is on screen (added, restored) get the entrance. */
 .board-row--enter {
-  animation: card-enter var(--t-normal) cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: card-enter var(--t-normal) var(--ease-out) both;
 }
 
 /* Light / Dark Mode mapping for HSL presets */
@@ -540,7 +589,7 @@ details > summary::-webkit-details-marker {
 @keyframes card-enter {
   from {
     opacity: 0;
-    transform: scale(0.96) translateY(12px);
+    transform: scale(0.94) translateY(14px);
   }
   to {
     opacity: 1;
@@ -548,12 +597,13 @@ details > summary::-webkit-details-marker {
   }
 }
 
-/* Add a very subtle fluid inner radial gradient for presets (except slate) */
+/* A very subtle inner radial gradient gives each colored card a hint of light
+   falling from the corner (slate stays flat and neutral). */
 .board-row:not(.board-row--theme-slate)::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--card-accent-resolved) 4%, transparent) 0%, transparent 60%);
+  background: radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--card-accent-resolved) 5%, transparent) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -580,6 +630,19 @@ details > summary::-webkit-details-marker {
   font-weight: 550;
   line-height: 1.4;
   margin: 6px 0 0;
+}
+
+/* The kind badge in the card's corner, tinted with the card's own accent. */
+.board-row__badge {
+  align-items: center;
+  background: color-mix(in srgb, var(--card-accent-resolved) 12%, transparent);
+  border-radius: 10px;
+  color: var(--card-accent-resolved);
+  display: inline-flex;
+  block-size: 32px;
+  inline-size: 32px;
+  justify-content: center;
+  opacity: 0.9;
 }
 
 .board-row__body {
@@ -690,7 +753,11 @@ details > summary::-webkit-details-marker {
 }
 
 .progress-bar__fill {
-  background: var(--card-accent-resolved);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--card-accent-resolved) 80%, var(--card-bg-resolved)),
+    var(--card-accent-resolved)
+  );
   block-size: 100%;
   border-radius: inherit;
   min-inline-size: 0;
@@ -712,34 +779,33 @@ details > summary::-webkit-details-marker {
   align-items: center;
   background: color-mix(in srgb, var(--card-bg-resolved) 50%, var(--surface));
   border: 1.5px solid var(--card-border-resolved);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   color: var(--text);
   display: inline-flex;
   font-size: 0.88rem;
   font-weight: 600;
   justify-content: center;
   min-block-size: 36px;
-  padding: 0 16px;
+  padding: 0 18px;
   transition:
     background-color var(--t-fast),
-    border-color var(--t-fast),
-    box-shadow var(--t-micro),
-    transform var(--t-micro);
+    border-color var(--t-fast);
 }
 
 .timer-button:hover:not(:disabled) {
   border-color: color-mix(in srgb, var(--card-accent-resolved) 45%, var(--card-border-resolved));
 }
 
+/* The card's own accent drives its primary action, so a rose timer starts
+   with a rose button. */
 .timer-button--primary {
-  background: var(--accent);
+  background: var(--card-accent-resolved);
   border-color: transparent;
-  color: var(--accent-text);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 25%, transparent);
+  color: var(--card-bg-resolved);
 }
 
 .timer-button--primary:hover:not(:disabled) {
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 35%, transparent);
+  background: color-mix(in srgb, var(--card-accent-resolved) 88%, var(--text));
 }
 
 .board-row__meta--alert {
@@ -759,6 +825,7 @@ details > summary::-webkit-details-marker {
   block-size: 14px;
   border-radius: 50%;
   inline-size: 14px;
+  transition: background-color var(--t-fast);
 }
 
 .habit-day--done {
@@ -852,18 +919,13 @@ details > summary::-webkit-details-marker {
 }
 
 /* Hover & Interactive effects — only light up when the draggable frame is
-   hovered, so hovering the body stays calm and undistracting. */
+   hovered, so hovering the body stays calm and undistracting. The lifted
+   shadow borrows the card's own accent for a soft colored glow. */
 .board-row--draggable:has(.board-row__frame:hover):not(.board-row--dragging),
 .board-row--draggable:focus-visible,
 .board-row--menu-open {
   border-color: color-mix(in srgb, var(--card-accent-resolved) 35%, var(--card-border-resolved));
   box-shadow: var(--shadow-card-hover);
-}
-
-/* When dragging is turned off there is no frame to light up, so give the card a
-   calm border tint on hover (no lift, to avoid implying it can be dragged). */
-.board-row:not(.board-row--draggable):hover {
-  border-color: color-mix(in srgb, var(--card-accent-resolved) 22%, var(--card-border-resolved));
 }
 
 /* The in-list card while it is being dragged: a calm, dimmed placeholder that
@@ -887,7 +949,6 @@ details > summary::-webkit-details-marker {
   transition: none;
   will-change: transform;
 }
-
 
 .board-row--drop-target {
   border-color: var(--accent);
@@ -916,7 +977,8 @@ label.form-label-group {
   gap: 8px;
 }
 
-label.form-label-group span {
+label.form-label-group span,
+.form-label-group > span {
   color: var(--muted);
   font-size: 0.85rem;
   font-weight: 700;
@@ -977,7 +1039,7 @@ select:focus {
   padding: 12px 16px;
   position: fixed;
   z-index: 400;
-  animation: fade-in var(--t-fast) ease;
+  animation: fade-in var(--t-fast) ease-out;
 }
 
 .board-notice__text {
@@ -1056,7 +1118,7 @@ select:focus {
   border: 2px solid transparent;
   cursor: pointer;
   position: relative;
-  transition: transform var(--t-micro), box-shadow var(--t-micro);
+  transition: transform 200ms var(--ease-out), box-shadow var(--t-micro);
   padding: 0;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
 }
@@ -1107,7 +1169,7 @@ select:focus {
   z-index: 1000;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  animation: fade-in var(--t-fast) ease out;
+  animation: fade-in var(--t-fast) ease-out;
 }
 
 @keyframes fade-in {
@@ -1124,11 +1186,11 @@ select:focus {
   max-block-size: calc(100vh - 48px);
   overflow: auto;
   padding: 36px 36px 32px;
-  animation: modal-enter var(--t-normal) cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: modal-enter var(--t-normal) var(--ease-out) both;
 }
 
 .modal-dialog--narrow {
-  inline-size: min(100%, 420px);
+  inline-size: min(100%, 464px);
 }
 
 @keyframes modal-enter {
@@ -1144,6 +1206,13 @@ select:focus {
 
 .modal-dialog__header {
   margin-block-end: 28px;
+}
+
+/* The edit dialog leads with the kind's tinted chip beside the title. */
+.modal-dialog__header--with-badge {
+  align-items: center;
+  display: flex;
+  gap: 14px;
 }
 
 .modal-dialog__title {
@@ -1173,6 +1242,35 @@ select:focus {
   justify-content: end;
 }
 
+/* A footer row with something quiet on the left (e.g. the GitHub link) and
+   the primary action on the right. */
+.modal-dialog__actions--split {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settings-github-link {
+  align-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  display: inline-flex;
+  font-size: 0.88rem;
+  font-weight: 550;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-inline-start: -8px;
+  transition: color var(--t-fast);
+}
+
+.settings-github-link:hover {
+  color: var(--text);
+}
+
+.settings-github-link:focus-visible {
+  box-shadow: var(--focus-ring);
+  outline: 0;
+}
+
 @media (max-width: 720px) {
   .modal-backdrop {
     padding: 16px;
@@ -1185,9 +1283,26 @@ select:focus {
 
 /* ── Options dialog ────────────────────────────────────────────────────── */
 
-.settings-fields {
+/* The dialog reads as a short, well-set page: sections separated by hairlines,
+   with the label / control / hint rhythm repeated in each. */
+.settings-sections {
   display: grid;
-  gap: 24px;
+  gap: 28px;
+  margin-block-end: 36px;
+}
+
+.settings-section {
+  display: grid;
+  gap: 4px;
+}
+
+.settings-section + .settings-section {
+  border-block-start: 1px solid var(--line);
+  padding-block-start: 28px;
+}
+
+.settings-section .form-label-group {
+  gap: 10px;
 }
 
 .settings-actions {
@@ -1196,11 +1311,7 @@ select:focus {
   gap: 12px;
 }
 
-.options-list {
-  display: grid;
-  gap: 8px;
-}
-
+/* Option rows (e.g. a timer's chime toggle in its edit dialog). */
 .option-row {
   align-items: center;
   display: flex;
@@ -1229,12 +1340,6 @@ select:focus {
   color: var(--muted);
   font-size: 0.85rem;
   line-height: 1.4;
-}
-
-.option-row__control {
-  inline-size: auto;
-  min-inline-size: 88px;
-  flex-shrink: 0;
 }
 
 /* Switch toggle */
@@ -1274,7 +1379,7 @@ select:focus {
   inset-inline-start: 3px;
   block-size: 19px;
   inline-size: 19px;
-  transition: transform var(--t-fast);
+  transition: transform 200ms var(--ease-out);
 }
 
 .switch__input:checked + .switch__track {
@@ -1335,6 +1440,14 @@ select:focus {
   background: color-mix(in srgb, var(--surface) 20%, transparent);
 }
 
+.empty-state__glyph {
+  color: var(--accent);
+  font-size: 1.8rem;
+  line-height: 1;
+  margin-block-end: 16px;
+  opacity: 0.8;
+}
+
 .empty-state h2 {
   font-size: 1.4rem;
   font-weight: 750;
@@ -1346,7 +1459,7 @@ select:focus {
 .empty-state p {
   font-size: 1rem;
   margin: 10px 0 0;
-  max-width: 320px;
+  max-width: 340px;
   line-height: 1.5;
 }
 

@@ -213,6 +213,15 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
   }
 ]
 
+// A random hue for newly created widgets, so every new card arrives already
+// looking at home on the board. Neutral slate is skipped — it reads as "no
+// color chosen" — but stays available in the picker as a deliberate choice.
+export const randomColorPreset = (): WidgetColorPreset => {
+  const hues = COLOR_PRESETS.filter((preset) => preset.id !== "slate")
+
+  return hues[Math.floor(Math.random() * hues.length)]!.id
+}
+
 export const getPresetById = (id: WidgetColorPreset): ColorPresetDefinition => {
   return COLOR_PRESETS.find((preset) => preset.id === id) || COLOR_PRESETS[0]!
 }
