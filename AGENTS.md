@@ -4,19 +4,24 @@
 
 Dayboard is a WXT, TypeScript, and React Manifest V3 extension for Chrome and Microsoft Edge. It replaces the new tab page with a calm, responsive board of widgets — live clocks, natural-language countdowns (with optional progress bars and recurrence), sticky notes, rotating quotes, a stopwatch and timer, and habit streaks — with editing kept on the new tab page itself.
 
-The product should feel polished, quiet, and useful at a glance. Favor clarity and automatic behavior over configuration-heavy UI.
+The product should feel premium, polished, quiet, and useful at a glance. The whole app "just works" with as few knobs as possible: favor automatic behavior over configuration, and remove an option whenever a good default can replace it.
 
 ## Product Direction
 
-- Keep the primary experience as compact individual cards that stack on narrow screens and flow into multiple columns on wider screens (Auto by default, or a fixed 1–4 via options). Widgets render at a single standard size; the layout decides placement.
+- Keep the primary experience as compact individual cards that stack on narrow screens and flow into multiple columns on wider screens. The responsive grid decides placement; there is no column setting. Widgets render at a single standard size.
+- The board centers itself vertically in the viewport (clear of the omnibox suggestions that drop over the top of a new tab) and scrolls from the top once it outgrows the screen. There is no docking option.
+- The header is the greeting, not a brand title: a time-of-day greeting (optionally personalized) as the hero, with the date beneath.
+- The look is premium through restraint: solid colors (no gradients or glows), calm decelerating motion (no overshoot, squish, or spin), neutral shadows for depth, and hairline separators for structure. Color belongs to the cards and the kind chips, not to chrome effects.
+- Dragging to rearrange is always on. The drag handle is the card's padded outer ring, so text and controls inside the card stay selectable. Menu-based reordering uses "Move back" / "Move next" — the grid flows in reading order, so "up/down" would be inaccurate.
 - Use system theme colors and system accent behavior. Prefer `AccentColor` and `AccentColorText` with `Highlight` and `HighlightText` as fallbacks when Chromium does not expose accent colors.
-- Per-item color is limited to the curated preset picker (`ColorPresetPicker`); the first-run default board uses these presets to feel customized at a glance. Do not add per-item seconds or 12-hour/24-hour controls.
+- Each widget kind has one shared line icon (`WidgetIcon`) used in the add menu, the card's corner badge, and the edit dialog, with a per-kind tinted chip color.
+- Per-item color is limited to the curated preset picker (`ColorPresetPicker`); the first-run default board uses these presets to feel customized at a glance, and a newly created widget preselects a random colorful preset (never neutral slate). Do not add per-item seconds or 12-hour/24-hour controls.
 - Clocks use the user's system time format through `Intl.DateTimeFormat`.
 - Countdowns use natural language such as `5 days, 3 hours from now`.
 - User-facing copy should be concise, warm, and not overly explanatory.
 - Dialog titles should name the action and kind, such as `Edit countdown`, not the item name.
 - Widgets can be archived — tucked behind a quiet "Show archived" toggle (by drag onto a drop zone, or via the context menu) and restored the same ways. Keep the active board the clear focus.
-- Global options live in an overlay reached from a gear button and from the browser's Options link: a greeting name, drag-to-rearrange, and column count, plus JSON export/import of the board. A timer's optional finish chime is opt-in per timer, set in that timer's own dialog rather than globally.
+- Global options live in an overlay reached from a gear button and from the browser's Options link, and stay deliberately small: a greeting name, JSON export/import of the board, and a quiet link to the GitHub project. Do not add layout or behavior toggles there. A timer's optional finish chime is opt-in per timer, set in that timer's own dialog rather than globally.
 - Any sound (e.g. the timer chime) must be opt-in and gentle; never autoplay audio.
 - Keep permissions minimal. Dayboard should only need `storage`.
 

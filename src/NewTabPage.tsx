@@ -6,9 +6,10 @@ import { DeleteDialog } from "~/components/DeleteDialog"
 import { ItemDialog } from "~/components/ItemDialog"
 import { SettingsDialog } from "~/components/SettingsDialog"
 import { ErrorView } from "~/components/StatusViews"
+import { WidgetIcon } from "~/components/WidgetIcon"
 import { useDayboardState } from "~/hooks/useDayboardState"
 import { useNow } from "~/hooks/useNow"
-import { getGreeting } from "~/lib/greeting"
+import { getGreeting, getHeaderDate } from "~/lib/greeting"
 import { parseDayboardState, serializeDayboardState } from "~/lib/storage"
 import {
   archiveWidget,
@@ -17,12 +18,46 @@ import {
   reorderWidgets,
   restoreWidget
 } from "~/lib/widgets"
-import type { Widget } from "~/lib/types"
+import type { Widget, WidgetKind } from "~/lib/types"
 
 interface EditorState {
   mode: "add" | "edit"
   item: Widget
 }
+
+// Leading icons for the card context menu. The move icons point in reading
+// order (back/forward), matching the "back/next" labels.
+const MENU_ICON_PATHS = {
+  moveBack: "M19 12H5m6-6-6 6 6 6",
+  moveNext: "M5 12h14m-6-6 6 6-6 6",
+  edit: "M4.5 19.5h4L19 9a2.12 2.12 0 0 0-3-3L5.5 16.5l-1 3ZM13.5 5.5l3 3",
+  archive:
+    "M4.5 5h15a.5.5 0 0 1 .5.5V8H4V5.5a.5.5 0 0 1 .5-.5ZM5 8v10.5a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5V8M10 11.5h4",
+  restore: "M4 12a8 8 0 1 0 2.6-5.9M4 4v4.5h4.5",
+  del: "M4.5 7h15M9.5 7V5.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V7m-8.2 0 .9 11.6a1.5 1.5 0 0 0 1.5 1.4h5.6a1.5 1.5 0 0 0 1.5-1.4L19 7M10 11v5M14 11v5"
+} as const
+
+const MenuIcon = ({ name }: { name: keyof typeof MENU_ICON_PATHS }) => (
+  <svg aria-hidden="true" fill="none" height="17" viewBox="0 0 24 24" width="17">
+    <path
+      d={MENU_ICON_PATHS[name]}
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.7"
+    />
+  </svg>
+)
+
+const ADD_MENU_KINDS: { kind: WidgetKind; label: string }[] = [
+  { kind: "clock", label: "Clock" },
+  { kind: "countdown", label: "Countdown" },
+  { kind: "note", label: "Note" },
+  { kind: "quote", label: "Quote" },
+  { kind: "stopwatch", label: "Stopwatch" },
+  { kind: "timer", label: "Timer" },
+  { kind: "habit", label: "Habit" }
+]
 
 // The new tab page doubles as the extension's options page. When the browser
 // opens it as options it appends `?view=settings`, so the overlay shows itself.
@@ -166,16 +201,13 @@ export function NewTabPage() {
 
   return (
     <>
-      <main
-        className={`page${
-          state.settings.dockToBottom ? " page--dock-bottom" : ""
-        }`}>
+      <main className="page">
         <header className="page-header">
           <div>
-            <h1>Dayboard</h1>
-            <p className="page-header__greeting">
+            <h1 className="page-header__greeting">
               {getGreeting(now, state.settings.name)}
-            </p>
+            </h1>
+            <p className="page-header__date">{getHeaderDate(now)}</p>
           </div>
           <div className="page-header__actions">
             <button
@@ -214,7 +246,6 @@ export function NewTabPage() {
                 aria-label="Add widget"
                 className="icon-button"
                 role="button">
-
                 <svg
                   aria-hidden="true"
                   fill="none"
@@ -230,157 +261,20 @@ export function NewTabPage() {
                 </svg>
               </summary>
               <div className="add-menu__panel">
-                <button
-                  className="menu-button"
-                  onClick={() => addItem("clock")}
-                  type="button">
-                  <svg
-                    aria-hidden="true"
-                    fill="none"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    width="22">
-                    <circle cx="12" cy="12" r="8.25" stroke="currentColor" strokeWidth="1.8" />
-                    <path
-                      d="M12 7.5v5l3.5 2.1"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.8"
-                    />
-                  </svg>
-                  Add clock
-                </button>
-                <button
-                  className="menu-button"
-                  onClick={() => addItem("countdown")}
-                  type="button">
-                  <svg
-                    aria-hidden="true"
-                    fill="none"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    width="22">
-                    <path
-                      d="M8 4h8M8 20h8M9 4c0 3.8 1.5 5.6 3 7 1.5-1.4 3-3.2 3-7M9 20c0-3.8 1.5-5.6 3-7 1.5 1.4 3 3.2 3 7"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.8"
-                    />
-                  </svg>
-                  Add countdown
-                </button>
-                <button
-                  className="menu-button"
-                  onClick={() => addItem("note")}
-                  type="button">
-                  <svg
-                    aria-hidden="true"
-                    fill="none"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    width="22">
-                    <path
-                      d="M5 4.5h14a1 1 0 0 1 1 1V14l-6 5.5H5a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Z"
-                      stroke="currentColor"
-                      strokeLinejoin="round"
-                      strokeWidth="1.8"
-                    />
-                    <path
-                      d="M20 14h-5a1 1 0 0 0-1 1v4.5"
-                      stroke="currentColor"
-                      strokeLinejoin="round"
-                      strokeWidth="1.8"
-                    />
-                    <path
-                      d="M8 9h8M8 12.5h5"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeWidth="1.6"
-                    />
-                  </svg>
-                  Add note
-                </button>
-                <button
-                  className="menu-button"
-                  onClick={() => addItem("quote")}
-                  type="button">
-                  <svg
-                    aria-hidden="true"
-                    fill="none"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    width="22">
-                    <path
-                      d="M10 7.5C7.5 8.3 6 10.3 6 13v3.5h4.5V12H8.4c.2-1.3 1-2.2 2.3-2.7L10 7.5ZM19 7.5c-2.5.8-4 2.8-4 5.5v3.5h4.5V12h-2.1c.2-1.3 1-2.2 2.3-2.7L19 7.5Z"
-                      stroke="currentColor"
-                      strokeLinejoin="round"
-                      strokeWidth="1.6"
-                    />
-                  </svg>
-                  Add quote
-                </button>
-                <button
-                  className="menu-button"
-                  onClick={() => addItem("stopwatch")}
-                  type="button">
-                  <svg
-                    aria-hidden="true"
-                    fill="none"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    width="22">
-                    <circle cx="12" cy="13.5" r="7.25" stroke="currentColor" strokeWidth="1.8" />
-                    <path
-                      d="M12 13.5V9.5M9.5 2.75h5M18.5 7l1.4-1.4"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeWidth="1.8"
-                    />
-                  </svg>
-                  Add stopwatch
-                </button>
-                <button
-                  className="menu-button"
-                  onClick={() => addItem("timer")}
-                  type="button">
-                  <svg
-                    aria-hidden="true"
-                    fill="none"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    width="22">
-                    <circle cx="12" cy="13" r="8" stroke="currentColor" strokeWidth="1.8" />
-                    <path
-                      d="M12 13 15 10"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.8"
-                    />
-                  </svg>
-                  Add timer
-                </button>
-                <button
-                  className="menu-button"
-                  onClick={() => addItem("habit")}
-                  type="button">
-                  <svg
-                    aria-hidden="true"
-                    fill="none"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    width="22">
-                    <path
-                      d="m12 4.5 2.1 4.6 5 .5-3.7 3.4 1 4.9L12 16l-4.4 2.4 1-4.9L4.9 9.6l5-.5z"
-                      stroke="currentColor"
-                      strokeLinejoin="round"
-                      strokeWidth="1.7"
-                    />
-                  </svg>
-                  Add habit
-                </button>
+                {ADD_MENU_KINDS.map(({ kind, label }) => (
+                  <button
+                    className="menu-button"
+                    key={kind}
+                    onClick={() => addItem(kind)}
+                    type="button">
+                    <span
+                      aria-hidden="true"
+                      className={`menu-chip menu-chip--${kind}`}>
+                      <WidgetIcon kind={kind} size={18} />
+                    </span>
+                    Add {label.toLowerCase()}
+                  </button>
+                ))}
               </div>
             </details>
           </div>
@@ -412,30 +306,34 @@ export function NewTabPage() {
                 <BoardList
                   items={activeWidgets}
                   now={now}
-                  draggable={state.settings.dragToMove}
-                  columns={state.settings.columns}
                   restoreTarget
                   onWidgetChange={updateWidget}
                   renderItemActions={(item, index) => (
                     <>
+                      {/* The board reads left-to-right, top-to-bottom, so the
+                          menu moves in reading order — "up/down" would lie in
+                          a multi-column grid. */}
                       <button
-                        aria-label={`Move ${item.title} up`}
+                        aria-label={`Move ${item.title} back`}
                         className="menu-button"
                         disabled={index === 0}
                         onClick={() => reorderItem(item.id, -1)}
                         role="menuitem"
                         type="button">
-                        Move up
+                        <MenuIcon name="moveBack" />
+                        Move back
                       </button>
                       <button
-                        aria-label={`Move ${item.title} down`}
+                        aria-label={`Move ${item.title} next`}
                         className="menu-button"
                         disabled={index === activeWidgets.length - 1}
                         onClick={() => reorderItem(item.id, 1)}
                         role="menuitem"
                         type="button">
-                        Move down
+                        <MenuIcon name="moveNext" />
+                        Move next
                       </button>
+                      <div aria-hidden="true" className="menu-separator" />
                       <button
                         aria-label={`Edit ${item.title}`}
                         className="menu-button"
@@ -445,6 +343,7 @@ export function NewTabPage() {
                         }}
                         role="menuitem"
                         type="button">
+                        <MenuIcon name="edit" />
                         Edit
                       </button>
                       <button
@@ -453,8 +352,10 @@ export function NewTabPage() {
                         onClick={() => archiveItem(item)}
                         role="menuitem"
                         type="button">
+                        <MenuIcon name="archive" />
                         Archive
                       </button>
+                      <div aria-hidden="true" className="menu-separator" />
                       <button
                         aria-label={`Delete ${item.title}`}
                         className="menu-button menu-button--danger"
@@ -464,6 +365,7 @@ export function NewTabPage() {
                         }}
                         role="menuitem"
                         type="button">
+                        <MenuIcon name="del" />
                         Delete
                       </button>
                     </>
@@ -484,8 +386,6 @@ export function NewTabPage() {
                       <BoardList
                         items={archivedWidgets}
                         now={now}
-                        draggable={state.settings.dragToMove}
-                        columns={state.settings.columns}
                         onWidgetChange={updateWidget}
                         renderItemActions={(item) => (
                           <>
@@ -495,6 +395,7 @@ export function NewTabPage() {
                               onClick={() => restoreItem(item)}
                               role="menuitem"
                               type="button">
+                              <MenuIcon name="restore" />
                               Restore
                             </button>
                             <button
@@ -506,8 +407,10 @@ export function NewTabPage() {
                               }}
                               role="menuitem"
                               type="button">
+                              <MenuIcon name="edit" />
                               Edit
                             </button>
+                            <div aria-hidden="true" className="menu-separator" />
                             <button
                               aria-label={`Delete ${item.title}`}
                               className="menu-button menu-button--danger"
@@ -517,6 +420,7 @@ export function NewTabPage() {
                               }}
                               role="menuitem"
                               type="button">
+                              <MenuIcon name="del" />
                               Delete
                             </button>
                           </>

@@ -1,6 +1,6 @@
+import { randomColorPreset } from "./colors"
 import {
   DEFAULT_TIME_ZONE,
-  DEFAULT_COLOR_PRESET,
   type ClockWidget,
   type CountdownWidget,
   type NoteWidget,
@@ -26,7 +26,7 @@ const createClockWidget = (): ClockWidget => ({
   id: crypto.randomUUID(),
   kind: "clock",
   title: "New clock",
-  colorPreset: DEFAULT_COLOR_PRESET,
+  colorPreset: randomColorPreset(),
   settings: {
     timeZone: DEFAULT_TIME_ZONE
   }
@@ -40,7 +40,7 @@ const createCountdownWidget = (now = new Date()): CountdownWidget => {
     id: crypto.randomUUID(),
     kind: "countdown",
     title: "New countdown",
-    colorPreset: DEFAULT_COLOR_PRESET,
+    colorPreset: randomColorPreset(),
     settings: {
       targetAt: target.toISOString()
     }
@@ -51,7 +51,7 @@ const createNoteWidget = (): NoteWidget => ({
   id: crypto.randomUUID(),
   kind: "note",
   title: "New note",
-  colorPreset: DEFAULT_COLOR_PRESET,
+  colorPreset: randomColorPreset(),
   settings: {
     text: ""
   }
@@ -61,7 +61,7 @@ const createQuoteWidget = (): QuoteWidget => ({
   id: crypto.randomUUID(),
   kind: "quote",
   title: "Daily quote",
-  colorPreset: DEFAULT_COLOR_PRESET,
+  colorPreset: randomColorPreset(),
   settings: {
     quotes: [
       "The secret of getting ahead is getting started.",
@@ -76,7 +76,7 @@ const createStopwatchWidget = (): StopwatchWidget => ({
   id: crypto.randomUUID(),
   kind: "stopwatch",
   title: "Stopwatch",
-  colorPreset: DEFAULT_COLOR_PRESET,
+  colorPreset: randomColorPreset(),
   settings: {
     running: false,
     elapsedMs: 0,
@@ -88,7 +88,7 @@ const createHabitWidget = (): HabitWidget => ({
   id: crypto.randomUUID(),
   kind: "habit",
   title: "New habit",
-  colorPreset: DEFAULT_COLOR_PRESET,
+  colorPreset: randomColorPreset(),
   settings: {
     history: []
   }
@@ -98,7 +98,7 @@ const createTimerWidget = (): TimerWidget => ({
   id: crypto.randomUUID(),
   kind: "timer",
   title: "Timer",
-  colorPreset: DEFAULT_COLOR_PRESET,
+  colorPreset: randomColorPreset(),
   settings: {
     durationMs: DEFAULT_TIMER_DURATION_MS,
     running: false,
@@ -184,7 +184,7 @@ export const moveWidgetToIndex = (
 // Move an active (non-archived) widget one step up or down relative to the
 // other active widgets. The board only shows active widgets, and archived ones
 // are not guaranteed to sit after them in storage — a widget added once
-// something is archived lands past it — so the menu's Move up/down must reorder
+// something is archived lands past it — so the menu's Move back/next must
 // against the visible neighbor rather than the raw array neighbor (which could
 // be a hidden archived widget, making the move a silent no-op).
 export const moveActiveWidget = (
@@ -224,7 +224,7 @@ export const reorderWidgets = (
 }
 
 // Archiving moves the widget to the end so the active widgets stay a contiguous
-// block at the front. That keeps index-based moves (the menu's Move up/down)
+// block at the front. That keeps index-based moves (the menu's Move back/next)
 // lined up with what is actually on the board.
 export const archiveWidget = (widgets: Widget[], id: string): Widget[] => {
   const target = widgets.find((widget) => widget.id === id)

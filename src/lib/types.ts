@@ -23,8 +23,6 @@ export type WidgetColorPreset =
   | "violet"
   | "fuchsia"
 
-export const DEFAULT_COLOR_PRESET: WidgetColorPreset = "slate"
-
 export interface WidgetBase {
   id: string
   kind: WidgetKind
@@ -120,26 +118,16 @@ export type Widget =
   | TimerWidget
   | HabitWidget
 
-export type BoardColumns = "auto" | 1 | 2 | 3 | 4
-
-export const BOARD_COLUMN_CHOICES: BoardColumns[] = ["auto", 1, 2, 3, 4]
-
+// Dayboard's philosophy is that the board just works: the layout is
+// responsive, dragging is always available, and the board centers itself in
+// the viewport. The only setting left is the optional greeting name.
 export interface DayboardSettings {
-  /** Whether widgets can be dragged to rearrange the board. */
-  dragToMove: boolean
-  /** Fixed number of board columns, or `auto` for the responsive default. */
-  columns: BoardColumns
   /** Optional name used to personalize the greeting; empty hides it. */
   name: string
-  /** Anchor the board to the bottom of the screen (clear of the omnibox). */
-  dockToBottom: boolean
 }
 
 export const DEFAULT_SETTINGS: DayboardSettings = {
-  dragToMove: true,
-  columns: "auto",
-  name: "",
-  dockToBottom: false
+  name: ""
 }
 
 export interface DayboardState {

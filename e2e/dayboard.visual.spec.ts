@@ -65,7 +65,7 @@ const storyState: DayboardState = {
       settings: { targetAt: "2025-12-25T06:00:00.000Z" }
     }
   ],
-  settings: { dragToMove: true, columns: "auto", name: "", dockToBottom: false }
+  settings: { name: "" }
 }
 
 const freezeTime = async (page: Page) => {
@@ -105,7 +105,9 @@ const openStoryBoard = async (page: Page, extensionId: string) => {
     { key: STORAGE_KEY, state: storyState }
   )
   await page.reload()
-  await expect(page.getByRole("heading", { name: "Dayboard" })).toBeVisible()
+  await expect(
+    page.getByRole("heading", { name: /Good (morning|afternoon|evening|night)/ })
+  ).toBeVisible()
   await expect(page.getByRole("heading", { name: "Austin" })).toBeVisible()
 }
 
@@ -186,4 +188,9 @@ test("captures Dayboard product screenshots", async ({
     page.getByRole("dialog", { name: "Edit countdown" })
   ).toBeVisible()
   await attachScreenshot(testInfo, page, "dayboard-edit-countdown-dialog")
+  await page.getByRole("button", { name: "Cancel" }).click()
+
+  await page.getByRole("button", { name: "Options" }).click()
+  await expect(page.getByRole("dialog", { name: "Options" })).toBeVisible()
+  await attachScreenshot(testInfo, page, "dayboard-options-dialog")
 })

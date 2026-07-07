@@ -59,7 +59,9 @@ test("new tab page renders the default widgets and editing controls", async ({
     "href",
     /icon32\.png$/
   )
-  await expect(page.getByRole("heading", { name: "Dayboard" })).toBeVisible()
+  await expect(
+    page.getByRole("heading", { name: /Good (morning|afternoon|evening|night)/ })
+  ).toBeVisible()
   await expect(page.getByText("Local time")).toBeVisible()
   await expect(page.getByText("Tomorrow morning")).toBeVisible()
   await expect(page.getByRole("button", { name: "Add widget" })).toBeVisible()
@@ -71,7 +73,7 @@ test("new tab page renders the default widgets and editing controls", async ({
 
   await openWidgetMenu(page, "Tomorrow morning")
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning up" })
+    page.getByRole("menuitem", { name: "Move Tomorrow morning back" })
   ).toBeVisible()
   await expect(
     page.getByRole("button", { name: "Reorder Tomorrow morning" })
@@ -88,7 +90,7 @@ test("new tab page renders the default widgets and editing controls", async ({
   ])
 })
 
-test("docks to the top by default and can be moved to the bottom", async ({
+test("centers the board in the viewport with no docking option", async ({
   page,
   extensionId
 }) => {
@@ -101,36 +103,22 @@ test("docks to the top by default and can be moved to the bottom", async ({
     throw new Error("Unable to determine viewport size")
   }
 
-  const weighting = async () => {
-    const header = await page.locator(".page-header").boundingBox()
-    const board = await page.locator(".board-list").boundingBox()
-    if (!header || !board) {
-      throw new Error("Unable to measure board layout")
-    }
-    return {
-      above: header.y,
-      below: viewport.height - (board.y + board.height)
-    }
+  // The board floats in the middle: clear of the omnibox suggestions that
+  // drop over the top of a new tab, without hugging the bottom. There is no
+  // setting for this — it just works.
+  const header = await page.locator(".page-header").boundingBox()
+  const board = await page.locator(".board-list").boundingBox()
+  if (!header || !board) {
+    throw new Error("Unable to measure board layout")
   }
 
-  // By default the board sits at the top — more empty room below than above.
-  const top = await weighting()
-  expect(top.above).toBeLessThan(top.below)
+  const above = header.y
+  const below = viewport.height - (board.y + board.height)
 
-  // Turning on "Dock to bottom" weights the content toward the bottom, clear of
-  // where the omnibox suggestions drop down.
-  await page.getByRole("button", { name: "Options" }).click()
-  await page.getByRole("switch", { name: "Dock to bottom" }).click()
-  await page.getByRole("button", { name: "Done" }).click()
-
-  const docked = await weighting()
-  expect(docked.above).toBeGreaterThan(docked.below)
-  expect(docked.below).toBeGreaterThan(0)
-
-  // The preference persists across a reload.
-  await page.reload()
-  const afterReload = await weighting()
-  expect(afterReload.above).toBeGreaterThan(afterReload.below)
+  expect(above).toBeGreaterThan(0)
+  expect(below).toBeGreaterThan(0)
+  // The auto margins split the free space evenly (padding skews it slightly).
+  expect(Math.abs(above - below)).toBeLessThan(60)
 })
 
 test("keeps the board from shifting when a scrollbar appears", async ({
@@ -209,7 +197,7 @@ test("exports the board to a file and imports one back", async ({
         settings: { timeZone: "UTC" }
       }
     ],
-    settings: { dragToMove: true, columns: "auto", name: "" }
+    settings: { name: "" }
   }
   await page.locator('input[type="file"]').setInputFiles({
     name: "board.json",
@@ -246,41 +234,26 @@ test("a bad import shows an error and leaves the board intact", async ({
   await expect(page.getByText("Local time")).toBeVisible()
 })
 
-test("global options toggle drag and columns and persist across reloads", async ({
+test("the board just works: drag handles on, responsive grid, knob-free options", async ({
   page,
   extensionId
 }) => {
   await openNewTab(page, extensionId)
 
-  // Drag handles exist by default and the grid is responsive (no fixed columns).
+  // Every card is draggable and the grid is responsive — with no way (and no
+  // need) to configure either.
   await expect(page.locator(".board-row__frame")).toHaveCount(6)
   await expect(page.locator(".board-list")).not.toHaveAttribute("data-columns")
 
   await page.getByRole("button", { name: "Options" }).click()
   await expect(page.getByRole("dialog", { name: "Options" })).toBeVisible()
 
-  // Turning off drag-to-move removes the draggable frames from every card.
-  await page.getByRole("switch", { name: "Drag to rearrange" }).click()
-  await expect(page.locator(".board-row__frame")).toHaveCount(0)
-
-  // Choosing a fixed column count drives the grid.
-  await page.getByLabel("Columns").selectOption("2")
-  await expect(page.locator(".board-list")).toHaveAttribute("data-columns", "2")
+  const dialog = page.getByRole("dialog", { name: "Options" })
+  await expect(dialog.getByRole("switch")).toHaveCount(0)
+  await expect(dialog.getByRole("combobox")).toHaveCount(0)
 
   await page.getByRole("button", { name: "Done" }).click()
   await expect(page.getByRole("dialog", { name: "Options" })).toHaveCount(0)
-
-  // Settings persist across a reload...
-  await page.reload()
-  await expect(page.locator(".board-row__frame")).toHaveCount(0)
-  await expect(page.locator(".board-list")).toHaveAttribute("data-columns", "2")
-
-  // ...and the overlay reflects the saved choices when reopened.
-  await page.getByRole("button", { name: "Options" }).click()
-  await expect(
-    page.getByRole("switch", { name: "Drag to rearrange" })
-  ).not.toBeChecked()
-  await expect(page.getByLabel("Columns")).toHaveValue("2")
 })
 
 test("the options dialog moves, traps, and restores focus", async ({
@@ -383,9 +356,10 @@ test("widget menu stays within the viewport when opened near the screen edge", a
     throw new Error("Unable to locate widget bounds")
   }
 
-  // Right-click near the card's right edge, where an unclamped menu would spill off screen.
+  // Right-click near the card's right edge (at mid-height, clear of the
+  // rounded corners), where an unclamped menu would spill off screen.
   const cursorX = cardBox.x + cardBox.width - 6
-  const cursorY = cardBox.y + cardBox.height - 6
+  const cursorY = cardBox.y + cardBox.height / 2
   await page.mouse.move(cursorX, cursorY)
   await page.mouse.down({ button: "right" })
   await page.mouse.up({ button: "right" })
@@ -432,15 +406,15 @@ test("widget menu supports keyboard navigation", async ({
   await expect(menu).toBeVisible()
 
   // Focus lands on the first enabled item, and arrow keys move between items.
-  // "Tomorrow morning" sits among other widgets, so both Move up and Move down
+  // "Tomorrow morning" sits among other widgets, so both Move back and Move next
   // are enabled and arrow keys step through every item in turn.
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning up" })
+    page.getByRole("menuitem", { name: "Move Tomorrow morning back" })
   ).toBeFocused()
 
   await page.keyboard.press("ArrowDown")
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning down" })
+    page.getByRole("menuitem", { name: "Move Tomorrow morning next" })
   ).toBeFocused()
 
   await page.keyboard.press("ArrowDown")
@@ -455,7 +429,7 @@ test("widget menu supports keyboard navigation", async ({
 
   await page.keyboard.press("ArrowDown")
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning up" })
+    page.getByRole("menuitem", { name: "Move Tomorrow morning back" })
   ).toBeFocused() // wraps back to the first item
 
   // Escape closes the menu and returns focus to the card that opened it.
@@ -480,7 +454,7 @@ test("widget menu closes on resize and returns focus to its card", async ({
   const menu = page.locator(".card-menu")
   await expect(menu).toBeVisible()
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning up" })
+    page.getByRole("menuitem", { name: "Move Tomorrow morning back" })
   ).toBeFocused()
 
   // The menu is pinned to the cursor, so a resize closes it...
@@ -523,7 +497,7 @@ test("reordering changes the visible order and persists after reload", async ({
   await expect(titles).toHaveText(swappedOrder)
 })
 
-test("the menu's Move up reorders even after a widget was archived", async ({
+test("the menu's Move back reorders even after a widget was archived", async ({
   page,
   extensionId
 }) => {
@@ -533,7 +507,7 @@ test("the menu's Move up reorders even after a widget was archived", async ({
 
   // Archive one widget, then add a new one. The new widget lands after the
   // archived one in storage, so the active widgets are no longer contiguous —
-  // the case where Move up/down used to silently do nothing.
+  // the case where Move back/next used to silently do nothing.
   await openWidgetMenu(page, "This year")
   await page.getByRole("menuitem", { name: "Archive This year" }).click()
 
@@ -555,7 +529,7 @@ test("the menu's Move up reorders even after a widget was archived", async ({
   // Moving the freshly added widget up steps above its visible neighbor instead
   // of no-opping against the hidden archived widget beside it in storage.
   await openWidgetMenu(page, "New clock")
-  await page.getByRole("menuitem", { name: "Move New clock up" }).click()
+  await page.getByRole("menuitem", { name: "Move New clock back" }).click()
 
   await expect(titles).toHaveText([
     "Local time",
@@ -700,16 +674,20 @@ test("dropdowns close when clicking outside them", async ({
 
   await page.getByRole("button", { name: "Add widget" }).click()
   await expect(page.getByRole("button", { name: "Add clock" })).toBeVisible()
-  await page.getByRole("heading", { name: "Dayboard" }).click()
+  await page
+    .getByRole("heading", { name: /Good (morning|afternoon|evening|night)/ })
+    .click()
   await expect(page.getByRole("button", { name: "Add clock" })).not.toBeVisible()
 
   await openWidgetMenu(page, "Tomorrow morning")
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning up" })
+    page.getByRole("menuitem", { name: "Move Tomorrow morning back" })
   ).toBeVisible()
-  await page.getByRole("heading", { name: "Dayboard" }).click()
+  await page
+    .getByRole("heading", { name: /Good (morning|afternoon|evening|night)/ })
+    .click()
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning up" })
+    page.getByRole("menuitem", { name: "Move Tomorrow morning back" })
   ).not.toBeVisible()
 })
 
@@ -811,7 +789,9 @@ test("add note flow saves typed text and persists across reloads", async ({
   const field = page.getByLabel("Reminders note")
   await field.fill("Buy milk")
   // Blurring flushes the debounced auto-save.
-  await page.getByRole("heading", { name: "Dayboard" }).click()
+  await page
+    .getByRole("heading", { name: /Good (morning|afternoon|evening|night)/ })
+    .click()
 
   await page.reload()
   await expect(page.getByLabel("Reminders note")).toHaveValue("Buy milk")

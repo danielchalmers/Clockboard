@@ -12,7 +12,6 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type PointerEventHandler,
@@ -21,13 +20,11 @@ import {
 
 import { BOARD_DROP_ID } from "~/components/BoardDnd"
 import { BoardRow } from "~/components/BoardRow"
-import type { BoardColumns, Widget } from "~/lib/types"
+import type { Widget } from "~/lib/types"
 
 interface BoardListProps {
   items: Widget[]
   now: Date
-  draggable?: boolean
-  columns?: BoardColumns
   // Marks this list as the place archived cards land when dragged back: the
   // grid highlights while a foreign card is in flight, and the empty state
   // becomes a drop target of its own.
@@ -65,8 +62,12 @@ const EmptyState = ({ restoreTarget }: { restoreTarget: boolean }) => {
         </>
       ) : (
         <>
-          <h2>Nothing here yet</h2>
-          <p>Use the + button to add a clock, countdown, note, timer, and more.</p>
+          <span aria-hidden="true" className="empty-state__glyph">✦</span>
+          <h2>A fresh start</h2>
+          <p>
+            Add a clock, a countdown, a note — whatever your day needs. The +
+            button up top has them all.
+          </p>
         </>
       )}
     </div>
@@ -271,7 +272,13 @@ const WidgetContextMenu = ({
       <div
         aria-label={label}
         className="card-menu__panel"
-        onClick={onClose}
+        onClick={(event) => {
+          // Only a chosen item dismisses the menu — clicks on the panel's
+          // padding or a separator are inert, like a native menu.
+          if ((event.target as HTMLElement).closest("button")) {
+            onClose()
+          }
+        }}
         onKeyDown={handleKeyDown}
         ref={panelRef}
         role="menu">
@@ -287,7 +294,6 @@ interface SortableBoardRowProps {
   activeId: string | null
   isMenuOpen: boolean
   hasActions: boolean
-  draggable: boolean
   animateEnter: boolean
   prefersReducedMotion: boolean
   onCloseMenu: () => void
@@ -317,7 +323,6 @@ const areRowsEqual = (
     prev.activeId === next.activeId &&
     prev.isMenuOpen === next.isMenuOpen &&
     prev.hasActions === next.hasActions &&
-    prev.draggable === next.draggable &&
     prev.animateEnter === next.animateEnter &&
     prev.prefersReducedMotion === next.prefersReducedMotion &&
     prev.onCloseMenu === next.onCloseMenu &&
@@ -332,7 +337,6 @@ const SortableBoardRow = memo(({
   activeId,
   isMenuOpen,
   hasActions,
-  draggable,
   animateEnter,
   prefersReducedMotion,
   onCloseMenu,
@@ -347,13 +351,12 @@ const SortableBoardRow = memo(({
     transform,
     transition
   } = useSortable({
-    id: item.id,
-    disabled: !draggable
+    id: item.id
   })
 
   const className = [
     "board-row--sortable",
-    draggable ? "board-row--draggable" : "",
+    "board-row--draggable",
     animateEnter ? "board-row--enter" : "",
     isMenuOpen ? "board-row--menu-open" : "",
     isDragging ? "board-row--dragging" : "",
@@ -376,12 +379,8 @@ const SortableBoardRow = memo(({
     onOpenMenu(item.id, event.clientX, event.clientY)
   }
 
-  // Keyboard dragging is only offered when the card is draggable; otherwise the
-  // sortable's key listener is skipped so arrow keys do nothing surprising.
   const deferToDragKeys = (event: ReactKeyboardEvent<HTMLElement>) => {
-    if (draggable) {
-      listeners?.onKeyDown?.(event)
-    }
+    listeners?.onKeyDown?.(event)
   }
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
@@ -426,8 +425,6 @@ const SortableBoardRow = memo(({
   // border; keyboard dragging stays on the focusable card via handleKeyDown,
   // which still defers to the sortable's onKeyDown listener. dnd-kit types its
   // listeners loosely as `Function`, so narrow the pointer-down handler here.
-  // When dragging is turned off there is no frame at all, leaving the whole
-  // card selectable.
   const onPointerDown = listeners?.onPointerDown as
     | PointerEventHandler<HTMLDivElement>
     | undefined
@@ -440,7 +437,7 @@ const SortableBoardRow = memo(({
         onKeyDown: handleKeyDown,
         tabIndex: 0
       }}
-      dragHandleProps={draggable ? { onPointerDown } : undefined}
+      dragHandleProps={{ onPointerDown }}
       className={className}
       item={item}
       now={now}
@@ -461,8 +458,6 @@ const SortableBoardRow = memo(({
 export const BoardList = ({
   items,
   now,
-  draggable = true,
-  columns = "auto",
   restoreTarget = false,
   renderItemActions,
   onWidgetChange
@@ -528,26 +523,14 @@ export const BoardList = ({
     .filter(Boolean)
     .join(" ")
 
-  // A fixed column count is driven by a CSS variable; `auto` keeps the
-  // responsive grid that fits as many cards as the width allows.
-  const sectionStyle =
-    columns === "auto"
-      ? undefined
-      : ({ "--board-columns": String(columns) } as CSSProperties)
-
   return (
     <>
       <SortableContext items={itemIds} strategy={rectSortingStrategy}>
-        <section
-          className={sectionClassName}
-          data-columns={columns === "auto" ? undefined : columns}
-          style={sectionStyle}
-          aria-label="Dayboard widgets">
+        <section className={sectionClassName} aria-label="Dayboard widgets">
           {items.map((item) => (
             <SortableBoardRow
               activeId={activeId}
               animateEnter={!initialIds.has(item.id)}
-              draggable={draggable}
               hasActions={hasActions}
               isMenuOpen={openMenu?.id === item.id}
               item={item}

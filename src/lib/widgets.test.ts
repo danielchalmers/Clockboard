@@ -8,6 +8,7 @@ import {
   reorderWidgets,
   restoreWidget
 } from "./widgets"
+import { COLOR_PRESETS } from "./colors"
 import type { Widget } from "./types"
 
 const createWidget = (
@@ -26,12 +27,19 @@ const createWidget = (
 })
 
 describe("createWidget", () => {
-  it("initializes a widget with the default slate color preset", () => {
-    const clock = createActualWidget("clock")
-    const countdown = createActualWidget("countdown")
-    
-    expect(clock.colorPreset).toBe("slate")
-    expect(countdown.colorPreset).toBe("slate")
+  it("preselects a random colorful preset — never the neutral slate", () => {
+    const presets = Array.from({ length: 40 }, () =>
+      createActualWidget("clock").colorPreset
+    )
+
+    presets.forEach((preset) => {
+      expect(COLOR_PRESETS.some(({ id }) => id === preset)).toBe(true)
+      expect(preset).not.toBe("slate")
+    })
+
+    // 40 draws over 11 hues collide on a single value with probability ~0,
+    // so seeing variety proves the pick is actually random.
+    expect(new Set(presets).size).toBeGreaterThan(1)
   })
 })
 

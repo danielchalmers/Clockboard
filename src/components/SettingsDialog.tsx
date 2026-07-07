@@ -1,11 +1,7 @@
 import { useRef } from "react"
 
 import { useModalFocus } from "~/hooks/useModalFocus"
-import {
-  BOARD_COLUMN_CHOICES,
-  type BoardColumns,
-  type DayboardSettings
-} from "~/lib/types"
+import type { DayboardSettings } from "~/lib/types"
 
 interface SettingsDialogProps {
   isOpen: boolean
@@ -17,9 +13,9 @@ interface SettingsDialogProps {
   importError?: string | null
 }
 
-const columnLabel = (columns: BoardColumns): string =>
-  columns === "auto" ? "Auto" : `${columns}`
-
+// Dayboard keeps options to a minimum on purpose — the layout, dragging, and
+// placement all just work. What's left is the greeting name and moving the
+// board between browsers.
 export const SettingsDialog = ({
   isOpen,
   settings,
@@ -38,13 +34,6 @@ export const SettingsDialog = ({
     return null
   }
 
-  const setColumns = (value: string) => {
-    onChange({
-      ...settings,
-      columns: value === "auto" ? "auto" : (Number(value) as BoardColumns)
-    })
-  }
-
   return (
     <div
       className="modal-backdrop"
@@ -56,7 +45,7 @@ export const SettingsDialog = ({
       <section
         aria-labelledby="settings-dialog-title"
         aria-modal="true"
-        className="modal-dialog modal-dialog--narrow"
+        className="modal-dialog"
         ref={dialogRef}
         role="dialog"
         tabIndex={-1}>
@@ -71,132 +60,83 @@ export const SettingsDialog = ({
           </div>
         </div>
 
-        <div className="settings-fields">
-          <label className="form-label-group">
-            <span>Your name</span>
-            <input
-              onChange={(event) =>
-                onChange({ ...settings, name: event.currentTarget.value })
-              }
-              placeholder="Optional, for your greeting"
-              type="text"
-              value={settings.name}
-            />
-          </label>
-
-          <div className="options-list">
-          <div className="option-row">
-            <div className="option-row__text">
-              <label className="option-row__label" htmlFor="settings-drag-to-move">
-                Drag to rearrange
-              </label>
-              <span className="option-row__hint">
-                Grab a widget&rsquo;s edge to reorder the board.
-              </span>
-            </div>
-            <label className="switch">
+        <div className="settings-sections">
+          <section className="settings-section">
+            <label className="form-label-group">
+              <span>Your name</span>
               <input
-                checked={settings.dragToMove}
-                className="switch__input"
-                id="settings-drag-to-move"
                 onChange={(event) =>
-                  onChange({ ...settings, dragToMove: event.currentTarget.checked })
+                  onChange({ ...settings, name: event.currentTarget.value })
                 }
-                role="switch"
-                type="checkbox"
+                placeholder="Optional"
+                type="text"
+                value={settings.name}
               />
-              <span aria-hidden="true" className="switch__track" />
             </label>
-          </div>
+            <p className="form-note">
+              Used to greet you at the top of every new tab.
+            </p>
+          </section>
 
-          <div className="option-row">
-            <div className="option-row__text">
-              <label className="option-row__label" htmlFor="settings-columns">
-                Columns
-              </label>
-              <span className="option-row__hint">
-                Auto fits as many as the width allows.
-              </span>
+          <section className="settings-section">
+            <div className="form-label-group">
+              <span>Board</span>
+              <div className="settings-actions">
+                <button
+                  className="secondary-button"
+                  onClick={onExport}
+                  type="button">
+                  Export
+                </button>
+                <button
+                  className="secondary-button"
+                  onClick={() => fileInputRef.current?.click()}
+                  type="button">
+                  Import
+                </button>
+                <input
+                  accept="application/json,.json"
+                  aria-label="Import board file"
+                  hidden
+                  onChange={(event) => {
+                    const file = event.currentTarget.files?.[0]
+                    if (file) {
+                      onImport?.(file)
+                    }
+                    event.currentTarget.value = ""
+                  }}
+                  ref={fileInputRef}
+                  type="file"
+                />
+              </div>
             </div>
-            <select
-              className="option-row__control"
-              id="settings-columns"
-              onChange={(event) => setColumns(event.currentTarget.value)}
-              value={String(settings.columns)}>
-              {BOARD_COLUMN_CHOICES.map((choice) => (
-                <option key={choice} value={String(choice)}>
-                  {columnLabel(choice)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="option-row">
-            <div className="option-row__text">
-              <label className="option-row__label" htmlFor="settings-dock-bottom">
-                Dock to bottom
-              </label>
-              <span className="option-row__hint">
-                Sit the board near the bottom, clear of the address bar&rsquo;s
-                suggestions.
-              </span>
-            </div>
-            <label className="switch">
-              <input
-                checked={settings.dockToBottom}
-                className="switch__input"
-                id="settings-dock-bottom"
-                onChange={(event) =>
-                  onChange({ ...settings, dockToBottom: event.currentTarget.checked })
-                }
-                role="switch"
-                type="checkbox"
-              />
-              <span aria-hidden="true" className="switch__track" />
-            </label>
-          </div>
-
-          </div>
-
-          <div className="form-label-group">
-            <span>Board</span>
-            <div className="settings-actions">
-              <button
-                className="secondary-button"
-                onClick={onExport}
-                type="button">
-                Export
-              </button>
-              <button
-                className="secondary-button"
-                onClick={() => fileInputRef.current?.click()}
-                type="button">
-                Import
-              </button>
-              <input
-                accept="application/json,.json"
-                aria-label="Import board file"
-                hidden
-                onChange={(event) => {
-                  const file = event.currentTarget.files?.[0]
-                  if (file) {
-                    onImport?.(file)
-                  }
-                  event.currentTarget.value = ""
-                }}
-                ref={fileInputRef}
-                type="file"
-              />
-            </div>
+            <p className="form-note">
+              Save your board to a file, or bring one in from another browser.
+            </p>
             {importError ? (
               <p className="form-note form-note--error" role="alert">
                 {importError}
               </p>
             ) : null}
-          </div>
+          </section>
         </div>
 
-        <div className="modal-dialog__actions">
+        <div className="modal-dialog__actions modal-dialog__actions--split">
+          <a
+            className="settings-github-link"
+            href="https://github.com/danielchalmers/Dayboard"
+            rel="noreferrer"
+            target="_blank">
+            <svg
+              aria-hidden="true"
+              fill="currentColor"
+              height="16"
+              viewBox="0 0 16 16"
+              width="16">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+            </svg>
+            Dayboard on GitHub
+          </a>
           <button className="primary-button" onClick={onClose} type="button">
             Done
           </button>

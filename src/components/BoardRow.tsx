@@ -27,6 +27,7 @@ import type {
   Widget
 } from "~/lib/types"
 import { getPresetCssVars } from "~/lib/colors"
+import { WidgetIcon } from "~/components/WidgetIcon"
 import { playChime, primeChime } from "~/lib/chime"
 import {
   currentStreak,
@@ -393,6 +394,11 @@ const CardShell = forwardRef<HTMLElement, CardShellProps>(function CardShell(
             <p className="board-row__detail">{detail}</p>
           ) : null}
         </div>
+        {/* A quiet badge in the card's own accent, so a glance tells the kind
+            apart even when two cards share a color. */}
+        <span aria-hidden="true" className="board-row__badge">
+          <WidgetIcon kind={item.kind} size={18} />
+        </span>
       </div>
       <div
         className={`board-row__body${bodyClassName ? ` ${bodyClassName}` : ""}`}>

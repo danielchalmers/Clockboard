@@ -17,10 +17,7 @@ const sampleState: DayboardState = {
     }
   ],
   settings: {
-    dragToMove: true,
-    columns: "auto",
-    name: "",
-    dockToBottom: false
+    name: ""
   }
 }
 
@@ -87,7 +84,7 @@ describe("readDayboardState", () => {
     const state = await readDayboardState()
 
     expect(state.widgets).toHaveLength(6)
-    expect(state.settings).toEqual({ dragToMove: true, columns: "auto", name: "", dockToBottom: false })
+    expect(state.settings).toEqual({ name: "" })
   })
 
   it("fills in default settings for state stored before settings existed", async () => {
@@ -98,7 +95,7 @@ describe("readDayboardState", () => {
     const state = await readDayboardState()
 
     expect(state.widgets).toEqual(sampleState.widgets)
-    expect(state.settings).toEqual({ dragToMove: true, columns: "auto", name: "", dockToBottom: false })
+    expect(state.settings).toEqual({ name: "" })
   })
 
   it("drops malformed widget entries while keeping valid ones", async () => {
@@ -122,13 +119,13 @@ describe("readDayboardState", () => {
     const { store } = stubChromeStorage()
     store.set(STORAGE_KEY, {
       widgets: sampleState.widgets,
-      settings: { dragToMove: "nope", columns: 7 }
+      settings: { name: 7 }
     })
 
     const { readDayboardState } = await import("./storage")
     const state = await readDayboardState()
 
-    expect(state.settings).toEqual({ dragToMove: true, columns: "auto", name: "", dockToBottom: false })
+    expect(state.settings).toEqual({ name: "" })
   })
 })
 
