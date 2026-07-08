@@ -6,6 +6,8 @@
 
 A calm new tab board of clocks, countdowns, notes, timers, quotes, and habits.
 
+<img width="1440" height="1000" alt="Main view" src="https://github.com/user-attachments/assets/5eaebcef-2e4f-447a-9c87-0aef467e0f8c" />
+
 ## 📖 Usage
 
 1. Open a new tab.
