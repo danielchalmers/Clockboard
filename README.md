@@ -79,11 +79,3 @@ Dayboard is built with [WXT](https://wxt.dev), [React](https://react.dev), and [
 | `npm test` | Run unit tests ([Vitest](https://vitest.dev)) |
 | `npm run e2e` | Run end-to-end tests ([Playwright](https://playwright.dev)) |
 | `npm run verify` | Typecheck, test, and build |
-
-## Contributing
-
-Bug reports and ideas are welcome — please [open an issue](https://github.com/danielchalmers/Dayboard/issues). Run `npm run verify` before opening a pull request.
-
-## License
-
-[MIT](https://github.com/danielchalmers/Dayboard/blob/main/LICENSE) © 2026 Daniel Chalmers
