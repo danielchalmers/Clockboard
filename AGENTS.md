@@ -21,7 +21,7 @@ The product should feel premium, polished, quiet, and useful at a glance. The wh
 - User-facing copy should be concise, warm, and not overly explanatory.
 - Dialog titles should name the action and kind, such as `Edit countdown`, not the item name.
 - Widgets can be archived — tucked behind a quiet "Show archived" toggle (by drag onto a drop zone, or via the context menu) and restored the same ways. Keep the active board the clear focus.
-- Global options live in an overlay reached from a gear button and from the browser's Options link, and stay deliberately small: a greeting name, JSON export/import of the board, and a quiet link to the GitHub project. Do not add layout or behavior toggles there. A timer's optional finish chime is opt-in per timer, set in that timer's own dialog rather than globally.
+- Global options live in an overlay reached from a gear button and from the browser's Options link, and stay deliberately small: a greeting name, JSON export/import of the board, and quiet links to the GitHub project and its issues page for feedback. Do not add layout or behavior toggles there. A timer's optional finish chime is opt-in per timer, set in that timer's own dialog rather than globally.
 - Any sound (e.g. the timer chime) must be opt-in and gentle; never autoplay audio.
 - Keep permissions minimal. Dayboard should only need `storage`.
 

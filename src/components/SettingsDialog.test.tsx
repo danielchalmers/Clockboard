@@ -105,6 +105,21 @@ describe("SettingsDialog", () => {
     ).toHaveAttribute("href", "https://github.com/danielchalmers/Dayboard")
   })
 
+  it("offers a feedback link to the GitHub issues page", () => {
+    render(
+      <SettingsDialog
+        isOpen
+        settings={DEFAULT_SETTINGS}
+        onChange={() => {}}
+        onClose={() => {}}
+      />
+    )
+
+    expect(
+      screen.getByRole("link", { name: /Give feedback/ })
+    ).toHaveAttribute("href", "https://github.com/danielchalmers/Dayboard/issues")
+  })
+
   it("closes from the Done button", () => {
     const onClose = vi.fn()
     render(
