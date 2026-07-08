@@ -1,16 +1,18 @@
 # Privacy Policy
 
-Dayboard replaces the browser new tab page with live clocks and countdowns.
-This policy explains what data Dayboard stores and how it is handled.
+Dayboard replaces the browser new tab page with a board of widgets — clocks,
+countdowns, notes, quotes, a stopwatch, timers, and habits. This policy explains
+what data Dayboard stores and how it is handled.
 
 ## Data Dayboard Stores
 
-Dayboard stores only the clocks and countdowns you create, including:
+Dayboard stores only the widgets you create and their content, including:
 
-- Clock and countdown names
+- Widget titles, colors, and their order on the board
 - Clock time zones
-- Countdown dates and times
-- Item order and basic item metadata needed to keep the board working
+- Countdown target dates, times, and recurrence
+- Note text, curated quote lists, timer durations, stopwatch state, and habit history
+- Your optional greeting name and basic item metadata needed to keep the board working
 
 This data is stored using `chrome.storage.sync`, which Chrome syncs across the
 browsers where you are signed in. It is never sent anywhere else.
@@ -30,8 +32,8 @@ Dayboard does not use:
 
 ## Permissions
 
-Dayboard requests the `storage` permission so your clocks and countdowns remain
-available when you open future new tabs.
+Dayboard requests the `storage` permission so your board remains available when
+you open future new tabs.
 
 ## Third Parties
 
@@ -39,9 +41,9 @@ Dayboard does not send data to third-party services.
 
 ## Data Removal
 
-You can remove individual clocks and countdowns from Dayboard. You can remove
-all locally stored Dayboard data by uninstalling the extension or clearing the
-extension's site and storage data in your browser.
+You can remove individual widgets from Dayboard. You can remove all locally
+stored Dayboard data by uninstalling the extension or clearing the extension's
+site and storage data in your browser.
 
 ## Changes
 
@@ -52,4 +54,4 @@ effective date.
 
 For questions or support, open an issue at:
 
-https://github.com/danielchalmers/Clockboard/issues
+https://github.com/danielchalmers/Dayboard/issues

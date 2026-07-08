@@ -1249,7 +1249,18 @@ select:focus {
   justify-content: space-between;
 }
 
-.settings-github-link {
+/* Quiet links sit together on the footer's left; the negative inline start
+   pulls the first link's text back flush with the dialog edge, past its
+   hover padding. */
+.settings-footer-links {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-inline-start: -8px;
+}
+
+.settings-footer-link {
   align-items: center;
   border-radius: var(--radius-sm);
   color: var(--muted);
@@ -1258,15 +1269,14 @@ select:focus {
   font-weight: 550;
   gap: 8px;
   padding: 6px 8px;
-  margin-inline-start: -8px;
   transition: color var(--t-fast);
 }
 
-.settings-github-link:hover {
+.settings-footer-link:hover {
   color: var(--text);
 }
 
-.settings-github-link:focus-visible {
+.settings-footer-link:focus-visible {
   box-shadow: var(--focus-ring);
   outline: 0;
 }
