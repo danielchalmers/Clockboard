@@ -8,7 +8,7 @@ Dayboard is a new tab page for Chrome and Edge. It replaces the blank tab with a
 
 It's a free, open-source browser extension. Everything is stored locally and it makes no network requests.
 
-<img width="1440" height="1000" alt="Dayboard new tab page: a greeting and date above a grid of widget cards including a clock, a countdown, a note, and a habit tracker." src="https://github.com/user-attachments/assets/5eaebcef-2e4f-447a-9c87-0aef467e0f8c" />
+<img width="1280" height="800" alt="Dayboard new tab page" src="https://github.com/user-attachments/assets/faba12fc-b6f4-48da-9818-ea3f9e4f6227" />
 
 ## Widgets
 
