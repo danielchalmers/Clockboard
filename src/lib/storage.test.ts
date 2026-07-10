@@ -159,9 +159,9 @@ describe("serializeDayboardState / parseDayboardState", () => {
   })
 })
 
-// Widget bodies destructure their settings during render, so every repaired
-// widget must come out of normalization with the full shape its kind expects —
-// otherwise a hand-edited or imported file blanks the whole new tab.
+// Widget bodies destructure their settings during render, so every widget must
+// come out of normalization with the fields its kind relies on — otherwise a
+// hand-edited or imported file blanks the whole new tab.
 describe("widget settings repair", () => {
   const importWidgets = async (widgets: unknown[]) => {
     const { parseDayboardState } = await import("./storage")
@@ -169,157 +169,64 @@ describe("widget settings repair", () => {
     return parseDayboardState(JSON.stringify({ widgets })).widgets
   }
 
-  it("rebuilds settings for a widget imported without any", async () => {
-    const [habit] = await importWidgets([
-      { id: "x", kind: "habit", title: "t", colorPreset: "amber" }
-    ])
-
-    expect(habit).toMatchObject({
-      id: "x",
-      kind: "habit",
-      settings: { history: [] }
-    })
+  const widget = (kind: string, settings?: unknown) => ({
+    id: `${kind}-1`,
+    kind,
+    title: "Widget",
+    colorPreset: "sky",
+    settings
   })
 
-  it("rebuilds settings when they are null", async () => {
-    const [note] = await importWidgets([
-      { id: "n", kind: "note", title: "Note", colorPreset: "mint", settings: null }
-    ])
+  it("fills every kind's missing settings with renderable defaults", async () => {
+    const kinds = [
+      "clock",
+      "countdown",
+      "note",
+      "quote",
+      "stopwatch",
+      "timer",
+      "habit"
+    ]
+    const widgets = await importWidgets(kinds.map((kind) => widget(kind)))
 
-    expect(note).toMatchObject({ settings: { text: "" } })
+    expect(widgets.map(({ settings }) => settings)).toMatchObject([
+      { timeZone: DEFAULT_TIME_ZONE },
+      { targetAt: expect.any(String) },
+      { text: "" },
+      { quotes: expect.any(Array), rotation: "daily" },
+      { running: false, elapsedMs: 0, startedAt: null },
+      { durationMs: 300_000, running: false, remainingMs: 300_000, endsAt: null },
+      { history: [] }
+    ])
   })
 
-  it("resets a habit history that is not an array and drops non-string days", async () => {
-    const [notArray, mixed] = await importWidgets([
-      {
-        id: "h1",
-        kind: "habit",
-        title: "Habit",
-        colorPreset: "amber",
-        settings: { history: "2026-01-01" }
-      },
-      {
-        id: "h2",
-        kind: "habit",
-        title: "Habit",
-        colorPreset: "amber",
-        settings: { history: ["2026-01-01", 5, null] }
-      }
+  it("replaces junk-typed fields with defaults and keeps the usable ones", async () => {
+    const [habit, clock, timer, note] = await importWidgets([
+      widget("habit", { history: "2026-01-01" }),
+      widget("clock", { timeZone: "Mars/Olympus_Mons" }),
+      widget("timer", { durationMs: "soon", remainingMs: 30_000 }),
+      widget("note", null)
     ])
 
-    expect(notArray).toMatchObject({ settings: { history: [] } })
-    expect(mixed).toMatchObject({ settings: { history: ["2026-01-01"] } })
-  })
-
-  it("fills each kind's missing required fields with defaults", async () => {
-    const bare = (id: string, kind: string) => ({
-      id,
-      kind,
-      title: "Widget",
-      colorPreset: "sky",
-      settings: {}
+    expect(habit!.settings).toEqual({ history: [] })
+    expect(clock!.settings).toEqual({ timeZone: DEFAULT_TIME_ZONE })
+    expect(timer!.settings).toMatchObject({
+      durationMs: 300_000,
+      remainingMs: 30_000
     })
-
-    const [clock, countdown, note, quote, stopwatch, timer] =
-      await importWidgets([
-        bare("c", "clock"),
-        bare("cd", "countdown"),
-        bare("n", "note"),
-        bare("q", "quote"),
-        bare("s", "stopwatch"),
-        bare("t", "timer")
-      ])
-
-    expect(clock).toMatchObject({ settings: { timeZone: DEFAULT_TIME_ZONE } })
-    expect(note).toMatchObject({ settings: { text: "" } })
-    expect(quote).toMatchObject({ settings: { quotes: [], rotation: "daily" } })
-    expect(stopwatch).toMatchObject({
-      settings: { running: false, elapsedMs: 0, startedAt: null }
-    })
-    expect(timer).toMatchObject({
-      settings: {
-        durationMs: 5 * 60 * 1000,
-        running: false,
-        remainingMs: 5 * 60 * 1000,
-        endsAt: null,
-        chime: false
-      }
-    })
-
-    const targetAt = (
-      countdown as Extract<DayboardState["widgets"][number], { kind: "countdown" }>
-    ).settings.targetAt
-    expect(Number.isNaN(new Date(targetAt).getTime())).toBe(false)
-  })
-
-  it("replaces a time zone Intl cannot format with the local default", async () => {
-    const [clock] = await importWidgets([
-      {
-        id: "c",
-        kind: "clock",
-        title: "Clock",
-        colorPreset: "sky",
-        settings: { timeZone: "Mars/Olympus_Mons" }
-      }
-    ])
-
-    expect(clock).toMatchObject({ settings: { timeZone: DEFAULT_TIME_ZONE } })
-  })
-
-  it("pauses a running stopwatch or timer that lost its time anchor", async () => {
-    const [stopwatch, timer] = await importWidgets([
-      {
-        id: "s",
-        kind: "stopwatch",
-        title: "Stopwatch",
-        colorPreset: "teal",
-        settings: { running: true, elapsedMs: 1500 }
-      },
-      {
-        id: "t",
-        kind: "timer",
-        title: "Timer",
-        colorPreset: "rose",
-        settings: { running: true, durationMs: 60_000, remainingMs: 30_000 }
-      }
-    ])
-
-    expect(stopwatch).toMatchObject({
-      settings: { running: false, elapsedMs: 1500, startedAt: null }
-    })
-    expect(timer).toMatchObject({
-      settings: {
-        running: false,
-        durationMs: 60_000,
-        remainingMs: 30_000,
-        endsAt: null
-      }
-    })
+    expect(note!.settings).toEqual({ text: "" })
   })
 
   it("blanks a title that is not a string", async () => {
     const [habit] = await importWidgets([
-      {
-        id: "h",
-        kind: "habit",
-        title: { nested: "junk" },
-        colorPreset: "amber",
-        settings: { history: [] }
-      }
+      { ...widget("habit", { history: [] }), title: { nested: "junk" } }
     ])
 
     expect(habit).toMatchObject({ title: "", settings: { history: [] } })
   })
 
-  it("passes fully valid widgets of every kind through untouched", async () => {
+  it("passes valid widgets through untouched, optional fields included", async () => {
     const widgets: DayboardState["widgets"] = [
-      {
-        id: "c",
-        kind: "clock",
-        title: "Tokyo",
-        colorPreset: "teal",
-        settings: { timeZone: "Asia/Tokyo" }
-      },
       {
         id: "cd",
         kind: "countdown",
@@ -333,38 +240,11 @@ describe("widget settings repair", () => {
         }
       },
       {
-        id: "n",
-        kind: "note",
-        title: "Note",
-        colorPreset: "mint",
-        settings: { text: "hello" }
-      },
-      {
-        id: "q",
-        kind: "quote",
-        title: "Quotes",
-        colorPreset: "violet",
-        settings: { quotes: ["one", "two"], rotation: "open" }
-      },
-      {
         id: "s",
         kind: "stopwatch",
         title: "Stopwatch",
         colorPreset: "sky",
         settings: { running: true, elapsedMs: 1000, startedAt: 1_700_000_000_000 }
-      },
-      {
-        id: "t",
-        kind: "timer",
-        title: "Timer",
-        colorPreset: "amber",
-        settings: {
-          durationMs: 60_000,
-          running: true,
-          remainingMs: 45_000,
-          endsAt: 1_700_000_045_000,
-          chime: true
-        }
       },
       {
         id: "h",

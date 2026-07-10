@@ -3,7 +3,8 @@ import {
   createDefaultState,
   type DayboardSettings,
   type DayboardState,
-  type Widget
+  type Widget,
+  type WidgetKind
 } from "./types"
 import { widgetRegistry } from "./widgets"
 
@@ -23,18 +24,84 @@ const isValidWidget = (value: unknown): value is Widget =>
   typeof (value as Widget).id === "string" &&
   (value as Widget).kind in widgetRegistry
 
-// A surviving widget's fields can still be junk — the bodies destructure
-// settings and render the title, so a missing or malformed field would throw
-// mid-render and blank the whole board. Settings repair is per-kind knowledge,
-// so it lives in the registry next to each kind's createDefault.
-const repairWidget = (widget: Widget): Widget =>
-  ({
+const isString = (value: unknown) => typeof value === "string"
+const isBoolean = (value: unknown) => typeof value === "boolean"
+const isFiniteNumber = (value: unknown) =>
+  typeof value === "number" && Number.isFinite(value)
+const isNullOrFiniteNumber = (value: unknown) =>
+  value === null || isFiniteNumber(value)
+const isStringArray = (value: unknown) =>
+  Array.isArray(value) && value.every((entry) => typeof entry === "string")
+
+// A zone must be one Intl actually accepts — the formatter constructor throws
+// on anything else, which would take down the whole render.
+const isUsableTimeZone = (value: unknown) => {
+  if (typeof value !== "string") {
+    return false
+  }
+
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: value })
+    return true
+  } catch {
+    return false
+  }
+}
+
+// The settings fields each widget body relies on during render, and what makes
+// them usable. Optional fields (countdown display/startAt/repeat, timer chime)
+// are absent because their consumers already tolerate junk.
+const REQUIRED_SETTINGS: Record<
+  WidgetKind,
+  Record<string, (value: unknown) => boolean>
+> = {
+  clock: { timeZone: isUsableTimeZone },
+  countdown: { targetAt: isString },
+  note: { text: isString },
+  quote: { quotes: isStringArray, rotation: isString },
+  stopwatch: {
+    running: isBoolean,
+    elapsedMs: isFiniteNumber,
+    startedAt: isNullOrFiniteNumber
+  },
+  timer: {
+    durationMs: isFiniteNumber,
+    running: isBoolean,
+    remainingMs: isFiniteNumber,
+    endsAt: isNullOrFiniteNumber
+  },
+  habit: { history: isStringArray }
+}
+
+// A widget that passed the kind check can still carry junk fields, and the
+// bodies destructure settings and render the title mid-render — one missing or
+// malformed field would throw and blank the whole board. Replace each unusable
+// required field with its default; the cast rejoins kind and settings, which
+// TypeScript cannot correlate across the union.
+const repairWidget = (widget: Widget): Widget => {
+  const defaults = widgetRegistry[widget.kind].createDefault()
+    .settings as Record<string, unknown>
+  const stored = (
+    typeof widget.settings === "object" && widget.settings !== null
+      ? widget.settings
+      : {}
+  ) as Record<string, unknown>
+  const settings = { ...stored }
+
+  for (const [field, isUsable] of Object.entries(
+    REQUIRED_SETTINGS[widget.kind]
+  )) {
+    if (!isUsable(stored[field])) {
+      settings[field] = defaults[field]
+    }
+  }
+
+  return {
     ...widget,
     title: typeof widget.title === "string" ? widget.title : "",
-    settings: widgetRegistry[widget.kind].normalizeSettings(widget.settings)
-    // The cast rejoins kind and settings; TypeScript cannot correlate them
-    // across the union when the registry is indexed by a dynamic kind.
-  }) as Widget
+    settings
+  } as Widget
+}
 
 // Fill any missing or malformed fields with their defaults so a partial or
 // hand-edited imported board still loads cleanly.
