@@ -5,6 +5,7 @@ import {
   type DayboardState,
   type Widget
 } from "./types"
+import { normalizeHistory } from "./habit"
 import { widgetRegistry } from "./widgets"
 
 export const STORAGE_KEY = "dayboard-state"
@@ -35,13 +36,22 @@ const normalizeSettings = (value: unknown): DayboardSettings => {
   }
 }
 
+// Habit history used to be stored as a raw array of day keys, which near the
+// retention cap is large enough that two habits blow the sync per-item quota
+// and every save of the board fails. Re-encode to the compact form on read so
+// existing boards migrate the first time they load.
+const normalizeWidget = (widget: Widget): Widget =>
+  widget.kind === "habit"
+    ? { ...widget, settings: { history: normalizeHistory(widget.settings.history) } }
+    : widget
+
 const normalizeState = (value: unknown): DayboardState => {
   if (!hasWidgets(value)) {
     return createDefaultState()
   }
 
   return {
-    widgets: value.widgets.filter(isValidWidget),
+    widgets: value.widgets.filter(isValidWidget).map(normalizeWidget),
     settings: normalizeSettings((value as { settings?: unknown }).settings)
   }
 }

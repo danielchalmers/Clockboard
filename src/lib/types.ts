@@ -104,8 +104,12 @@ export interface TimerWidget extends WidgetBase {
 export interface HabitWidget extends WidgetBase {
   kind: "habit"
   settings: {
-    /** Local day keys (YYYY-MM-DD) on which the habit was marked done. */
-    history: string[]
+    /**
+     * Days the habit was marked done, encoded compactly (see lib/habit.ts) so
+     * a year-plus of history stays far under the chrome.storage.sync per-item
+     * quota that the whole board shares. Empty string means no history.
+     */
+    history: string
   }
 }
 
@@ -205,7 +209,7 @@ export const createDefaultWidgets = (now = new Date()): Widget[] => {
       title: "Daily walk",
       colorPreset: "amber",
       settings: {
-        history: []
+        history: ""
       }
     },
     {

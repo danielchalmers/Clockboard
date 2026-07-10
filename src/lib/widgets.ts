@@ -90,7 +90,7 @@ const createHabitWidget = (): HabitWidget => ({
   title: "New habit",
   colorPreset: randomColorPreset(),
   settings: {
-    history: []
+    history: ""
   }
 })
 

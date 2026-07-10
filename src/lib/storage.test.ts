@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import type { DayboardState } from "./types"
+import { encodeHistory, toDayKey } from "./habit"
+import type { DayboardState, HabitWidget } from "./types"
 
 const STORAGE_KEY = "dayboard-state"
 
@@ -115,6 +116,28 @@ describe("readDayboardState", () => {
     expect(state.widgets).toEqual(sampleState.widgets)
   })
 
+  it("migrates habit history stored as a legacy day-key array", async () => {
+    const days = ["2026-07-07", "2026-07-08", "2026-07-09"]
+    const { store } = stubChromeStorage()
+    store.set(STORAGE_KEY, {
+      widgets: [
+        {
+          id: "habit-1",
+          kind: "habit",
+          title: "Read",
+          colorPreset: "amber",
+          settings: { history: days }
+        }
+      ]
+    })
+
+    const { readDayboardState } = await import("./storage")
+    const state = await readDayboardState()
+
+    const habit = state.widgets[0] as HabitWidget
+    expect(habit.settings.history).toBe(encodeHistory(days))
+  })
+
   it("sanitizes malformed settings fields back to their defaults", async () => {
     const { store } = stubChromeStorage()
     store.set(STORAGE_KEY, {
@@ -167,6 +190,42 @@ describe("writeDayboardState", () => {
     await writeDayboardState(sampleState)
 
     expect(store.get(STORAGE_KEY)).toEqual(sampleState)
+  })
+
+  // chrome.storage.sync rejects any single item over QUOTA_BYTES_PER_ITEM
+  // (8192 bytes of key + serialized value), and the whole board lives under
+  // one key — so even a board packed with habits at the full retention window
+  // must stay under it or every save starts failing.
+  it("keeps a board of maxed-out habits under the sync per-item quota", async () => {
+    const QUOTA_BYTES_PER_ITEM = 8192
+    const day = (offset: number) => {
+      const d = new Date(2026, 5, 19)
+      d.setDate(d.getDate() - offset)
+      return toDayKey(d)
+    }
+    const fullHistory = encodeHistory(
+      Array.from({ length: 400 }, (_, offset) => day(offset))
+    )
+    const habits: HabitWidget[] = Array.from({ length: 10 }, (_, index) => ({
+      id: crypto.randomUUID(),
+      kind: "habit",
+      title: `A habit with a fairly long title ${index}`,
+      colorPreset: "amber",
+      settings: { history: fullHistory }
+    }))
+    const state: DayboardState = {
+      widgets: habits,
+      settings: { name: "Dan" }
+    }
+
+    const { store } = stubChromeStorage()
+    const { writeDayboardState } = await import("./storage")
+    await writeDayboardState(state)
+
+    const stored = JSON.stringify(store.get(STORAGE_KEY))
+    expect(STORAGE_KEY.length + stored.length).toBeLessThan(
+      QUOTA_BYTES_PER_ITEM
+    )
   })
 })
 

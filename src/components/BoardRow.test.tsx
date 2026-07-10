@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { BoardRow } from "./BoardRow"
-import { toDayKey } from "~/lib/habit"
+import { encodeHistory, toDayKey } from "~/lib/habit"
 import { dailyQuoteIndex } from "~/lib/quotes"
 import type { Widget } from "~/lib/types"
 
@@ -118,7 +118,7 @@ describe("BoardRow", () => {
       kind: "habit",
       title: "Read",
       colorPreset: "emerald",
-      settings: { history: [] }
+      settings: { history: "" }
     }
     const onWidgetChange = vi.fn()
 
@@ -132,7 +132,7 @@ describe("BoardRow", () => {
 
     expect(onWidgetChange).toHaveBeenCalledWith({
       ...item,
-      settings: { history: [toDayKey(now)] }
+      settings: { history: encodeHistory([toDayKey(now)]) }
     })
   })
 
@@ -143,7 +143,7 @@ describe("BoardRow", () => {
       kind: "habit",
       title: "Read",
       colorPreset: "emerald",
-      settings: { history: [toDayKey(now)] }
+      settings: { history: encodeHistory([toDayKey(now)]) }
     }
 
     render(<BoardRow item={item} now={now} />)
