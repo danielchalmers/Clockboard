@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react"
-import { beforeAll, describe, expect, it } from "vitest"
+import { beforeAll, describe, expect, it, vi } from "vitest"
 
-import { BoardList, isTimeSensitive } from "./BoardList"
+import { BoardList, isDaySensitive, isTimeSensitive } from "./BoardList"
+import { toDayKey } from "~/lib/habit"
 import type { Widget, WidgetKind } from "~/lib/types"
 
 const widgets: Widget[] = [
@@ -73,6 +74,97 @@ describe("isTimeSensitive", () => {
 
     expect(live.every(isTimeSensitive)).toBe(true)
     expect(still.some(isTimeSensitive)).toBe(false)
+  })
+})
+
+describe("isDaySensitive", () => {
+  it("marks only the widgets that must notice local midnight", () => {
+    const daily: WidgetKind[] = ["habit", "quote"]
+    const indifferent: WidgetKind[] = [
+      "clock",
+      "countdown",
+      "note",
+      "stopwatch",
+      "timer"
+    ]
+
+    expect(daily.every(isDaySensitive)).toBe(true)
+    expect(indifferent.some(isDaySensitive)).toBe(false)
+  })
+})
+
+// A new tab can sit open overnight. These rows skip the per-second tick, so they
+// only see a fresh `now` if the memo lets midnight through.
+describe("a board left open across local midnight", () => {
+  const lateMonday = new Date(2026, 2, 2, 23, 59, 0)
+  const earlyTuesday = new Date(2026, 2, 3, 0, 1, 0)
+
+  const habit: Widget = {
+    id: "walk",
+    kind: "habit",
+    title: "Daily walk",
+    colorPreset: "amber",
+    settings: { history: [] }
+  }
+
+  it("marks the new day, not the day the tab was opened on", () => {
+    const onWidgetChange = vi.fn()
+    const { rerender } = render(
+      <BoardList
+        items={[habit]}
+        now={lateMonday}
+        onWidgetChange={onWidgetChange}
+      />
+    )
+
+    rerender(
+      <BoardList
+        items={[habit]}
+        now={earlyTuesday}
+        onWidgetChange={onWidgetChange}
+      />
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Mark today" }))
+
+    expect(onWidgetChange).toHaveBeenCalledWith({
+      ...habit,
+      settings: { history: [toDayKey(earlyTuesday)] }
+    })
+  })
+
+  it("reopens yesterday's completed habit for the new day", () => {
+    const done: Widget = {
+      ...habit,
+      settings: { history: [toDayKey(lateMonday)] }
+    }
+
+    const { rerender } = render(<BoardList items={[done]} now={lateMonday} />)
+    expect(screen.getByRole("button", { name: "Done today ✓" })).toBeInTheDocument()
+
+    rerender(<BoardList items={[done]} now={earlyTuesday} />)
+
+    // Yesterday still carries the streak, but today is unmarked again.
+    expect(screen.getByRole("button", { name: "Mark today" })).toBeInTheDocument()
+    expect(screen.getByLabelText("1 day streak")).toBeInTheDocument()
+  })
+
+  it("rotates a daily quote onto the new day", () => {
+    const quote: Widget = {
+      id: "quote",
+      kind: "quote",
+      title: "Quote",
+      colorPreset: "sky",
+      settings: { quotes: ["First", "Second"], rotation: "daily" }
+    }
+
+    const { container, rerender } = render(
+      <BoardList items={[quote]} now={lateMonday} />
+    )
+    const monday = container.querySelector(".quote-text")?.textContent
+
+    rerender(<BoardList items={[quote]} now={earlyTuesday} />)
+
+    expect(container.querySelector(".quote-text")?.textContent).not.toBe(monday)
   })
 })
 

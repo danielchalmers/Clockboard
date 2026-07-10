@@ -976,6 +976,46 @@ test("add habit flow tracks a streak and persists", async ({
   await expect(reloaded.getByLabel("1 day streak")).toBeVisible()
 })
 
+test("a habit marked after midnight credits the new day", async ({
+  page,
+  extensionId
+}) => {
+  // A new tab commonly sits open overnight, so the board has to roll over on its
+  // own — marking the habit must credit the day the user is actually in.
+  await page.clock.install({ time: new Date(2026, 2, 2, 23, 59, 0) })
+  await openNewTab(page, extensionId)
+
+  await page.getByRole("button", { name: "Add widget" }).click()
+  await page.getByRole("button", { name: "Add habit" }).click()
+  await page.getByLabel("Name").fill("Read")
+  await page.getByRole("button", { name: "Save habit" }).click()
+
+  const card = page
+    .locator(".board-row")
+    .filter({ has: page.getByRole("heading", { name: "Read" }) })
+  await expect(card.getByRole("button", { name: "Mark today" })).toBeVisible()
+
+  // Jump the clock past local midnight the way a sleeping laptop would.
+  await page.clock.fastForward("00:05:00")
+  await expect(page.locator(".page-header__date")).toContainText("March 3")
+
+  await card.getByRole("button", { name: "Mark today" }).click()
+  await expect(card.getByRole("button", { name: "Done today ✓" })).toBeVisible()
+  await expect(card.getByLabel("1 day streak")).toBeVisible()
+
+  // The default board ships its own habit card, so read back the one added here.
+  const history = await page.evaluate(async () => {
+    const stored = await chrome.storage.sync.get("dayboard-state")
+    const { widgets } = stored["dayboard-state"] as {
+      widgets: { title: string; settings: { history?: string[] } }[]
+    }
+
+    return widgets.find((widget) => widget.title === "Read")?.settings.history
+  })
+
+  expect(history).toEqual(["2026-03-03"])
+})
+
 test("add and edit countdown works without a time-zone field", async ({
   page,
   extensionId
