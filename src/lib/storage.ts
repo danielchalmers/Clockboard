@@ -23,6 +23,19 @@ const isValidWidget = (value: unknown): value is Widget =>
   typeof (value as Widget).id === "string" &&
   (value as Widget).kind in widgetRegistry
 
+// A surviving widget's fields can still be junk — the bodies destructure
+// settings and render the title, so a missing or malformed field would throw
+// mid-render and blank the whole board. Settings repair is per-kind knowledge,
+// so it lives in the registry next to each kind's createDefault.
+const repairWidget = (widget: Widget): Widget =>
+  ({
+    ...widget,
+    title: typeof widget.title === "string" ? widget.title : "",
+    settings: widgetRegistry[widget.kind].normalizeSettings(widget.settings)
+    // The cast rejoins kind and settings; TypeScript cannot correlate them
+    // across the union when the registry is indexed by a dynamic kind.
+  }) as Widget
+
 // Fill any missing or malformed fields with their defaults so a partial or
 // hand-edited imported board still loads cleanly.
 const normalizeSettings = (value: unknown): DayboardSettings => {
@@ -41,7 +54,7 @@ const normalizeState = (value: unknown): DayboardState => {
   }
 
   return {
-    widgets: value.widgets.filter(isValidWidget),
+    widgets: value.widgets.filter(isValidWidget).map(repairWidget),
     settings: normalizeSettings((value as { settings?: unknown }).settings)
   }
 }

@@ -2,6 +2,7 @@ import { randomColorPreset } from "./colors"
 import {
   DEFAULT_TIME_ZONE,
   type ClockWidget,
+  type CountdownRepeat,
   type CountdownWidget,
   type NoteWidget,
   type QuoteWidget,
@@ -20,7 +21,24 @@ export interface WidgetDefinition<K extends WidgetKind> {
     targetLabel?: string
   }
   createDefault: (now?: Date) => Extract<Widget, { kind: K }>
+  /**
+   * Rebuild this kind's settings from an untrusted stored value, keeping every
+   * usable field and falling back to defaults for the rest, so a hand-edited or
+   * imported board renders instead of crashing a widget body mid-render.
+   */
+  normalizeSettings: (value: unknown) => Extract<Widget, { kind: K }>["settings"]
 }
+
+const asRecord = (value: unknown): Record<string, unknown> =>
+  typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : {}
+
+const finiteNumber = (value: unknown, fallback: number): number =>
+  typeof value === "number" && Number.isFinite(value) ? value : fallback
+
+const finiteNumberOrNull = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? value : null
 
 const createClockWidget = (): ClockWidget => ({
   id: crypto.randomUUID(),
@@ -31,6 +49,31 @@ const createClockWidget = (): ClockWidget => ({
     timeZone: DEFAULT_TIME_ZONE
   }
 })
+
+// A time zone must be one Intl actually accepts — the formatter constructor
+// throws on anything else, which would take down the whole render.
+const isUsableTimeZone = (value: unknown): value is string => {
+  if (typeof value !== "string") {
+    return false
+  }
+
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: value })
+    return true
+  } catch {
+    return false
+  }
+}
+
+const normalizeClockSettings = (value: unknown): ClockWidget["settings"] => {
+  const stored = asRecord(value)
+
+  return {
+    timeZone: isUsableTimeZone(stored.timeZone)
+      ? stored.timeZone
+      : DEFAULT_TIME_ZONE
+  }
+}
 
 const createCountdownWidget = (now = new Date()): CountdownWidget => {
   const target = new Date(now)
@@ -47,6 +90,44 @@ const createCountdownWidget = (now = new Date()): CountdownWidget => {
   }
 }
 
+const COUNTDOWN_REPEATS: CountdownRepeat[] = [
+  "none",
+  "daily",
+  "weekly",
+  "monthly",
+  "yearly"
+]
+
+const normalizeCountdownSettings = (
+  value: unknown
+): CountdownWidget["settings"] => {
+  const stored = asRecord(value)
+
+  // A string target is kept even when it isn't a parseable date — the display
+  // helpers already degrade to "Invalid target" — so only a missing or
+  // non-string target falls back to the default anchor.
+  const settings: CountdownWidget["settings"] = {
+    targetAt:
+      typeof stored.targetAt === "string"
+        ? stored.targetAt
+        : createCountdownWidget().settings.targetAt
+  }
+
+  if (stored.display === "text" || stored.display === "progress") {
+    settings.display = stored.display
+  }
+
+  if (typeof stored.startAt === "string") {
+    settings.startAt = stored.startAt
+  }
+
+  if (COUNTDOWN_REPEATS.includes(stored.repeat as CountdownRepeat)) {
+    settings.repeat = stored.repeat as CountdownRepeat
+  }
+
+  return settings
+}
+
 const createNoteWidget = (): NoteWidget => ({
   id: crypto.randomUUID(),
   kind: "note",
@@ -56,6 +137,14 @@ const createNoteWidget = (): NoteWidget => ({
     text: ""
   }
 })
+
+const normalizeNoteSettings = (value: unknown): NoteWidget["settings"] => {
+  const stored = asRecord(value)
+
+  return {
+    text: typeof stored.text === "string" ? stored.text : ""
+  }
+}
 
 const createQuoteWidget = (): QuoteWidget => ({
   id: crypto.randomUUID(),
@@ -72,6 +161,20 @@ const createQuoteWidget = (): QuoteWidget => ({
   }
 })
 
+const normalizeQuoteSettings = (value: unknown): QuoteWidget["settings"] => {
+  const stored = asRecord(value)
+
+  return {
+    // An unusable list becomes empty rather than the starter quotes — the
+    // widget then invites the user to add their own instead of showing lines
+    // they never wrote.
+    quotes: Array.isArray(stored.quotes)
+      ? stored.quotes.filter((quote): quote is string => typeof quote === "string")
+      : [],
+    rotation: stored.rotation === "open" ? "open" : "daily"
+  }
+}
+
 const createStopwatchWidget = (): StopwatchWidget => ({
   id: crypto.randomUUID(),
   kind: "stopwatch",
@@ -84,6 +187,22 @@ const createStopwatchWidget = (): StopwatchWidget => ({
   }
 })
 
+const normalizeStopwatchSettings = (
+  value: unknown
+): StopwatchWidget["settings"] => {
+  const stored = asRecord(value)
+  const startedAt = finiteNumberOrNull(stored.startedAt)
+  // "Running" without a valid start moment is unrecoverable, so such a
+  // stopwatch lands paused at its banked time instead.
+  const running = stored.running === true && startedAt !== null
+
+  return {
+    running,
+    elapsedMs: Math.max(0, finiteNumber(stored.elapsedMs, 0)),
+    startedAt: running ? startedAt : null
+  }
+}
+
 const createHabitWidget = (): HabitWidget => ({
   id: crypto.randomUUID(),
   kind: "habit",
@@ -93,6 +212,16 @@ const createHabitWidget = (): HabitWidget => ({
     history: []
   }
 })
+
+const normalizeHabitSettings = (value: unknown): HabitWidget["settings"] => {
+  const stored = asRecord(value)
+
+  return {
+    history: Array.isArray(stored.history)
+      ? stored.history.filter((day): day is string => typeof day === "string")
+      : []
+  }
+}
 
 const createTimerWidget = (): TimerWidget => ({
   id: crypto.randomUUID(),
@@ -108,45 +237,70 @@ const createTimerWidget = (): TimerWidget => ({
   }
 })
 
+const normalizeTimerSettings = (value: unknown): TimerWidget["settings"] => {
+  const stored = asRecord(value)
+  const storedDuration = finiteNumber(stored.durationMs, 0)
+  const durationMs = storedDuration > 0 ? storedDuration : DEFAULT_TIMER_DURATION_MS
+  const endsAt = finiteNumberOrNull(stored.endsAt)
+  // "Running" without a valid end moment is unrecoverable, so such a timer
+  // lands paused with its remaining time intact.
+  const running = stored.running === true && endsAt !== null
+
+  return {
+    durationMs,
+    running,
+    remainingMs: Math.max(0, finiteNumber(stored.remainingMs, durationMs)),
+    endsAt: running ? endsAt : null,
+    chime: stored.chime === true
+  }
+}
+
 export const widgetRegistry: {
   [K in WidgetKind]: WidgetDefinition<K>
 } = {
   clock: {
     kind: "clock",
     editor: {},
-    createDefault: createClockWidget
+    createDefault: createClockWidget,
+    normalizeSettings: normalizeClockSettings
   },
   countdown: {
     kind: "countdown",
     editor: {
       targetLabel: "When"
     },
-    createDefault: createCountdownWidget
+    createDefault: createCountdownWidget,
+    normalizeSettings: normalizeCountdownSettings
   },
   note: {
     kind: "note",
     editor: {},
-    createDefault: createNoteWidget
+    createDefault: createNoteWidget,
+    normalizeSettings: normalizeNoteSettings
   },
   quote: {
     kind: "quote",
     editor: {},
-    createDefault: createQuoteWidget
+    createDefault: createQuoteWidget,
+    normalizeSettings: normalizeQuoteSettings
   },
   stopwatch: {
     kind: "stopwatch",
     editor: {},
-    createDefault: createStopwatchWidget
+    createDefault: createStopwatchWidget,
+    normalizeSettings: normalizeStopwatchSettings
   },
   timer: {
     kind: "timer",
     editor: {},
-    createDefault: createTimerWidget
+    createDefault: createTimerWidget,
+    normalizeSettings: normalizeTimerSettings
   },
   habit: {
     kind: "habit",
     editor: {},
-    createDefault: createHabitWidget
+    createDefault: createHabitWidget,
+    normalizeSettings: normalizeHabitSettings
   }
 }
 
