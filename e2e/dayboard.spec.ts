@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs"
 
 import type { Page } from "@playwright/test"
 
+import { decodeHistory } from "../src/lib/habit"
 import { expect, test } from "./fixtures"
 
 const openNewTab = async (page: Page, extensionId: string) => {
@@ -1007,13 +1008,13 @@ test("a habit marked after midnight credits the new day", async ({
   const history = await page.evaluate(async () => {
     const stored = await chrome.storage.sync.get("dayboard-state")
     const { widgets } = stored["dayboard-state"] as {
-      widgets: { title: string; settings: { history?: string[] } }[]
+      widgets: { title: string; settings: { history?: string } }[]
     }
 
     return widgets.find((widget) => widget.title === "Read")?.settings.history
   })
 
-  expect(history).toEqual(["2026-03-03"])
+  expect(decodeHistory(history ?? "")).toEqual(["2026-03-03"])
 })
 
 test("add and edit countdown works without a time-zone field", async ({

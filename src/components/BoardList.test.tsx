@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { beforeAll, describe, expect, it, vi } from "vitest"
 
 import { BoardList, isDaySensitive, isTimeSensitive } from "./BoardList"
-import { toDayKey } from "~/lib/habit"
+import { encodeHistory, toDayKey } from "~/lib/habit"
 import type { Widget, WidgetKind } from "~/lib/types"
 
 const widgets: Widget[] = [
@@ -104,7 +104,7 @@ describe("a board left open across local midnight", () => {
     kind: "habit",
     title: "Daily walk",
     colorPreset: "amber",
-    settings: { history: [] }
+    settings: { history: "" }
   }
 
   it("marks the new day, not the day the tab was opened on", () => {
@@ -128,14 +128,14 @@ describe("a board left open across local midnight", () => {
 
     expect(onWidgetChange).toHaveBeenCalledWith({
       ...habit,
-      settings: { history: [toDayKey(earlyTuesday)] }
+      settings: { history: encodeHistory([toDayKey(earlyTuesday)]) }
     })
   })
 
   it("reopens yesterday's completed habit for the new day", () => {
     const done: Widget = {
       ...habit,
-      settings: { history: [toDayKey(lateMonday)] }
+      settings: { history: encodeHistory([toDayKey(lateMonday)]) }
     }
 
     const { rerender } = render(<BoardList items={[done]} now={lateMonday} />)
