@@ -30,12 +30,12 @@ import { getPresetCssVars } from "~/lib/colors"
 import { WidgetIcon } from "~/components/WidgetIcon"
 import { playChime, primeChime } from "~/lib/chime"
 import {
-  currentStreak,
   isDoneOn,
   isDoneToday,
   recentDays,
   toDayKey,
-  toggleToday
+  toggleToday,
+  VISIBLE_DAYS
 } from "~/lib/habit"
 import { cleanQuotes, dailyQuoteIndex } from "~/lib/quotes"
 import {
@@ -296,9 +296,9 @@ const HabitBody = ({
 }) => {
   const { history } = item.settings
   const done = isDoneToday(history, now)
-  const streak = currentStreak(history, now)
-  const days = recentDays(now, 7)
+  const days = recentDays(now, VISIBLE_DAYS)
   const todayKey = toDayKey(now)
+  const doneCount = days.filter((day) => isDoneOn(history, day)).length
 
   const toggle = () =>
     onWidgetChange?.({
@@ -308,13 +308,10 @@ const HabitBody = ({
 
   return (
     <>
-      <p
-        className="board-row__value board-row__value--timer"
-        aria-label={`${streak} day streak`}>
-        {streak}
-      </p>
-      <p className="board-row__meta">day streak</p>
-      <div className="habit-days" aria-hidden="true">
+      <div
+        className="habit-days"
+        role="img"
+        aria-label={`Done ${doneCount} of the past ${VISIBLE_DAYS} days`}>
         {days.map((day) => {
           const key = toDayKey(day)
           const className = [
@@ -328,6 +325,7 @@ const HabitBody = ({
           return <span className={className} key={key} />
         })}
       </div>
+      <p className="board-row__meta">past {VISIBLE_DAYS} days</p>
       <div className="timer-controls">
         <button
           aria-pressed={done}

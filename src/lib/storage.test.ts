@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { encodeHistory, toDayKey } from "./habit"
+import { toDayKey } from "./habit"
 import type { DayboardState, HabitWidget } from "./types"
 
 const STORAGE_KEY = "dayboard-state"
@@ -116,8 +116,14 @@ describe("readDayboardState", () => {
     expect(state.widgets).toEqual(sampleState.widgets)
   })
 
-  it("migrates habit history stored as a legacy day-key array", async () => {
-    const days = ["2026-07-07", "2026-07-08", "2026-07-09"]
+  it("prunes a legacy unbounded habit history down to the visible week", async () => {
+    // Ten months of daily completions, the shape old versions accumulated.
+    const base = new Date(2026, 6, 9)
+    const days = Array.from({ length: 300 }, (_, offset) => {
+      const d = new Date(base)
+      d.setDate(d.getDate() - offset)
+      return toDayKey(d)
+    })
     const { store } = stubChromeStorage()
     store.set(STORAGE_KEY, {
       widgets: [
@@ -135,7 +141,9 @@ describe("readDayboardState", () => {
     const state = await readDayboardState()
 
     const habit = state.widgets[0] as HabitWidget
-    expect(habit.settings.history).toBe(encodeHistory(days))
+    expect(habit.settings.history).toHaveLength(7)
+    expect(habit.settings.history).toContain("2026-07-09")
+    expect(habit.settings.history).not.toContain("2026-07-02")
   })
 
   it("sanitizes malformed settings fields back to their defaults", async () => {
@@ -194,24 +202,21 @@ describe("writeDayboardState", () => {
 
   // chrome.storage.sync rejects any single item over QUOTA_BYTES_PER_ITEM
   // (8192 bytes of key + serialized value), and the whole board lives under
-  // one key — so even a board packed with habits at the full retention window
-  // must stay under it or every save starts failing.
-  it("keeps a board of maxed-out habits under the sync per-item quota", async () => {
+  // one key — so even a board packed with habits at their fullest must stay
+  // under it or every save starts failing.
+  it("keeps a board of full habit histories under the sync per-item quota", async () => {
     const QUOTA_BYTES_PER_ITEM = 8192
-    const day = (offset: number) => {
-      const d = new Date(2026, 5, 19)
+    const fullWeek = Array.from({ length: 7 }, (_, offset) => {
+      const d = new Date(2026, 6, 9)
       d.setDate(d.getDate() - offset)
       return toDayKey(d)
-    }
-    const fullHistory = encodeHistory(
-      Array.from({ length: 400 }, (_, offset) => day(offset))
-    )
+    })
     const habits: HabitWidget[] = Array.from({ length: 10 }, (_, index) => ({
       id: crypto.randomUUID(),
       kind: "habit",
       title: `A habit with a fairly long title ${index}`,
       colorPreset: "amber",
-      settings: { history: fullHistory }
+      settings: { history: fullWeek }
     }))
     const state: DayboardState = {
       widgets: habits,

@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { BoardRow } from "./BoardRow"
-import { encodeHistory, toDayKey } from "~/lib/habit"
+import { toDayKey } from "~/lib/habit"
 import { dailyQuoteIndex } from "~/lib/quotes"
 import type { Widget } from "~/lib/types"
 
@@ -111,20 +111,22 @@ describe("BoardRow", () => {
     })
   })
 
-  it("marks today on a habit and reports the streak", () => {
+  it("marks today on a habit", () => {
     const now = new Date("2026-03-04T09:00:00.000Z")
     const item: Widget = {
       id: "habit",
       kind: "habit",
       title: "Read",
       colorPreset: "emerald",
-      settings: { history: "" }
+      settings: { history: [] }
     }
     const onWidgetChange = vi.fn()
 
     render(<BoardRow item={item} now={now} onWidgetChange={onWidgetChange} />)
 
-    expect(screen.getByLabelText("0 day streak")).toBeInTheDocument()
+    expect(
+      screen.getByLabelText("Done 0 of the past 7 days")
+    ).toBeInTheDocument()
     const button = screen.getByRole("button", { name: "Mark today" })
     expect(button).toHaveAttribute("aria-pressed", "false")
 
@@ -132,23 +134,26 @@ describe("BoardRow", () => {
 
     expect(onWidgetChange).toHaveBeenCalledWith({
       ...item,
-      settings: { history: encodeHistory([toDayKey(now)]) }
+      settings: { history: [toDayKey(now)] }
     })
   })
 
-  it("shows a completed habit as done with its streak", () => {
+  it("shows a completed habit as done in its week of dots", () => {
     const now = new Date("2026-03-04T09:00:00.000Z")
     const item: Widget = {
       id: "habit",
       kind: "habit",
       title: "Read",
       colorPreset: "emerald",
-      settings: { history: encodeHistory([toDayKey(now)]) }
+      settings: { history: [toDayKey(now)] }
     }
 
-    render(<BoardRow item={item} now={now} />)
+    const { container } = render(<BoardRow item={item} now={now} />)
 
-    expect(screen.getByLabelText("1 day streak")).toBeInTheDocument()
+    expect(
+      screen.getByLabelText("Done 1 of the past 7 days")
+    ).toBeInTheDocument()
+    expect(container.querySelectorAll(".habit-day--done")).toHaveLength(1)
     expect(
       screen.getByRole("button", { name: "Done today ✓" })
     ).toHaveAttribute("aria-pressed", "true")

@@ -105,11 +105,11 @@ export interface HabitWidget extends WidgetBase {
   kind: "habit"
   settings: {
     /**
-     * Days the habit was marked done, encoded compactly (see lib/habit.ts) so
-     * a year-plus of history stays far under the chrome.storage.sync per-item
-     * quota that the whole board shares. Empty string means no history.
+     * Local day keys (YYYY-MM-DD) on which the habit was marked done, pruned
+     * to the week the dot row can show — an unbounded list eventually grew
+     * into the chrome.storage.sync per-item quota the whole board shares.
      */
-    history: string
+    history: string[]
   }
 }
 
@@ -209,7 +209,7 @@ export const createDefaultWidgets = (now = new Date()): Widget[] => {
       title: "Daily walk",
       colorPreset: "amber",
       settings: {
-        history: ""
+        history: []
       }
     },
     {

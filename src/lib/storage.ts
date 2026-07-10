@@ -36,10 +36,10 @@ const normalizeSettings = (value: unknown): DayboardSettings => {
   }
 }
 
-// Habit history used to be stored as a raw array of day keys, which near the
-// retention cap is large enough that two habits blow the sync per-item quota
-// and every save of the board fails. Re-encode to the compact form on read so
-// existing boards migrate the first time they load.
+// Habit history used to be stored unbounded — every completed day key — which
+// after a year or two of use is large enough that two habits blow the sync
+// per-item quota and every save of the board fails. Prune to the visible week
+// on read so existing boards shrink the first time they load.
 const normalizeWidget = (widget: Widget): Widget =>
   widget.kind === "habit"
     ? { ...widget, settings: { history: normalizeHistory(widget.settings.history) } }

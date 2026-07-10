@@ -2,7 +2,7 @@
 
 ## Project
 
-Dayboard is a WXT, TypeScript, and React Manifest V3 extension for Chrome and Microsoft Edge. It replaces the new tab page with a calm, responsive board of widgets — live clocks, natural-language countdowns (with optional progress bars and recurrence), sticky notes, rotating quotes, a stopwatch and timer, and habit streaks — with editing kept on the new tab page itself.
+Dayboard is a WXT, TypeScript, and React Manifest V3 extension for Chrome and Microsoft Edge. It replaces the new tab page with a calm, responsive board of widgets — live clocks, natural-language countdowns (with optional progress bars and recurrence), sticky notes, rotating quotes, a stopwatch and timer, and daily habits — with editing kept on the new tab page itself.
 
 The product should feel premium, polished, quiet, and useful at a glance. The whole app "just works" with as few knobs as possible: favor automatic behavior over configuration, and remove an option whenever a good default can replace it.
 

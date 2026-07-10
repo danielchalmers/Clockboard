@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs"
 
 import type { Page } from "@playwright/test"
 
-import { decodeHistory } from "../src/lib/habit"
 import { expect, test } from "./fixtures"
 
 const openNewTab = async (page: Page, extensionId: string) => {
@@ -949,7 +948,7 @@ test("a timer's per-widget chime is opt-in, persists, and still finishes", async
   ).toBeChecked()
 })
 
-test("add habit flow tracks a streak and persists", async ({
+test("add habit flow marks today and persists", async ({
   page,
   extensionId
 }) => {
@@ -964,17 +963,17 @@ test("add habit flow tracks a streak and persists", async ({
     .locator(".board-row")
     .filter({ has: page.getByRole("heading", { name: "Read" }) })
 
-  await expect(card.getByLabel("0 day streak")).toBeVisible()
+  await expect(card.getByLabel("Done 0 of the past 7 days")).toBeVisible()
   await card.getByRole("button", { name: "Mark today" }).click()
-  await expect(card.getByLabel("1 day streak")).toBeVisible()
+  await expect(card.getByLabel("Done 1 of the past 7 days")).toBeVisible()
   await expect(card.getByRole("button", { name: "Done today ✓" })).toBeVisible()
 
-  // The streak persists across a reload.
+  // The marked day persists across a reload.
   await page.reload()
   const reloaded = page
     .locator(".board-row")
     .filter({ has: page.getByRole("heading", { name: "Read" }) })
-  await expect(reloaded.getByLabel("1 day streak")).toBeVisible()
+  await expect(reloaded.getByLabel("Done 1 of the past 7 days")).toBeVisible()
 })
 
 test("a habit marked after midnight credits the new day", async ({
@@ -1002,19 +1001,18 @@ test("a habit marked after midnight credits the new day", async ({
 
   await card.getByRole("button", { name: "Mark today" }).click()
   await expect(card.getByRole("button", { name: "Done today ✓" })).toBeVisible()
-  await expect(card.getByLabel("1 day streak")).toBeVisible()
 
   // The default board ships its own habit card, so read back the one added here.
-  const history = await page.evaluate(async () => {
+  const settings = await page.evaluate(async () => {
     const stored = await chrome.storage.sync.get("dayboard-state")
     const { widgets } = stored["dayboard-state"] as {
-      widgets: { title: string; settings: { history?: string } }[]
+      widgets: { title: string; settings: unknown }[]
     }
 
-    return widgets.find((widget) => widget.title === "Read")?.settings.history
+    return widgets.find((widget) => widget.title === "Read")?.settings
   })
 
-  expect(decodeHistory(history ?? "")).toEqual(["2026-03-03"])
+  expect(settings).toEqual({ history: ["2026-03-03"] })
 })
 
 test("add and edit countdown works without a time-zone field", async ({
