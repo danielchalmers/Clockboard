@@ -5,6 +5,7 @@ import {
   formatRelativeCountdown,
   getCountdownParts,
   getCountdownProgress,
+  isSameLocalDay,
   isoInstantToDateTimeInputValue,
   nextCountdownTarget
 } from "./time"
@@ -18,6 +19,29 @@ const countdownWidget = (targetAt: string): CountdownWidget => ({
   settings: {
     targetAt
   }
+})
+
+describe("isSameLocalDay", () => {
+  it("is true for two instants on the same local day", () => {
+    expect(
+      isSameLocalDay(new Date(2026, 2, 2, 0, 0, 0), new Date(2026, 2, 2, 23, 59, 59))
+    ).toBe(true)
+  })
+
+  it("is false a minute either side of local midnight", () => {
+    expect(
+      isSameLocalDay(new Date(2026, 2, 2, 23, 59, 0), new Date(2026, 2, 3, 0, 1, 0))
+    ).toBe(false)
+  })
+
+  it("separates the same day number in different months and years", () => {
+    expect(
+      isSameLocalDay(new Date(2026, 2, 2, 12, 0, 0), new Date(2026, 3, 2, 12, 0, 0))
+    ).toBe(false)
+    expect(
+      isSameLocalDay(new Date(2025, 2, 2, 12, 0, 0), new Date(2026, 2, 2, 12, 0, 0))
+    ).toBe(false)
+  })
 })
 
 describe("nextCountdownTarget", () => {

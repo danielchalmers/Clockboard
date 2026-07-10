@@ -40,6 +40,14 @@ export const isoInstantToDateTimeInputValue = (instant: string): string => {
   return toDateTimeInputValue(date)
 }
 
+// Whether two instants land on the same day of the user's local calendar.
+// Widgets that only care which day it is compare ticks with this, so they notice
+// midnight without re-rendering on every second in between.
+export const isSameLocalDay = (a: Date, b: Date): boolean =>
+  a.getDate() === b.getDate() &&
+  a.getMonth() === b.getMonth() &&
+  a.getFullYear() === b.getFullYear()
+
 // Intl.DateTimeFormat construction parses options on every call and is among the
 // pricier locale operations; format() itself is cheap. Cache instances by their
 // options so repeated renders (and ticking clocks) reuse one formatter.
