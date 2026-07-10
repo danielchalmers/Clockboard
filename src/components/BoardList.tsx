@@ -20,6 +20,7 @@ import {
 
 import { BOARD_DROP_ID } from "~/components/BoardDnd"
 import { BoardRow } from "~/components/BoardRow"
+import { isSameLocalDay } from "~/lib/time"
 import type { Widget } from "~/lib/types"
 
 interface BoardListProps {
@@ -309,6 +310,14 @@ export const isTimeSensitive = (kind: Widget["kind"]) =>
   kind === "stopwatch" ||
   kind === "timer"
 
+// Day-sensitive widgets read `now` only to ask which local day it is: the habit
+// widget's streak, dot row and "Mark today" write, and the quote widget's daily
+// rotation. They skip the per-second tick like any still widget, but they must
+// re-render at midnight — a tab left open overnight would otherwise hold
+// yesterday's `now` and mark yesterday when the user marks today.
+export const isDaySensitive = (kind: Widget["kind"]) =>
+  kind === "habit" || kind === "quote"
+
 const areRowsEqual = (
   prev: SortableBoardRowProps,
   next: SortableBoardRowProps
@@ -317,7 +326,11 @@ const areRowsEqual = (
     return false
   }
 
-  // `now` is intentionally excluded: notes/quotes/habits do not show live time.
+  if (isDaySensitive(next.item.kind) && !isSameLocalDay(prev.now, next.now)) {
+    return false
+  }
+
+  // `now` is otherwise excluded: nothing else on these cards changes within a day.
   return (
     prev.item === next.item &&
     prev.activeId === next.activeId &&
