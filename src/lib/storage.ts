@@ -5,6 +5,7 @@ import {
   type DayboardState,
   type Widget
 } from "./types"
+import { normalizeHistory } from "./habit"
 import { widgetRegistry } from "./widgets"
 
 export const STORAGE_KEY = "dayboard-state"
@@ -35,13 +36,22 @@ const normalizeSettings = (value: unknown): DayboardSettings => {
   }
 }
 
+// Habit history used to be stored unbounded — every completed day key — which
+// after a year or two of use is large enough that two habits blow the sync
+// per-item quota and every save of the board fails. Prune to the visible week
+// on read so existing boards shrink the first time they load.
+const normalizeWidget = (widget: Widget): Widget =>
+  widget.kind === "habit"
+    ? { ...widget, settings: { history: normalizeHistory(widget.settings.history) } }
+    : widget
+
 const normalizeState = (value: unknown): DayboardState => {
   if (!hasWidgets(value)) {
     return createDefaultState()
   }
 
   return {
-    widgets: value.widgets.filter(isValidWidget),
+    widgets: value.widgets.filter(isValidWidget).map(normalizeWidget),
     settings: normalizeSettings((value as { settings?: unknown }).settings)
   }
 }

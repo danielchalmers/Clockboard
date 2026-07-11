@@ -20,7 +20,7 @@ Add the widgets you want, edit them in place, and drag to rearrange them. There 
 - **Quote** — cycles through a list of quotes you provide, either once a day or on every new tab.
 - **Stopwatch** — counts up, with start, pause, and reset.
 - **Timer** — counts down from a duration you set, with an optional chime when it reaches zero.
-- **Habit** — mark a habit done each day and track the running streak.
+- **Habit** — mark a habit done each day and see your week at a glance.
 
 A greeting and the date sit at the top of the board. The greeting can include your name.
 

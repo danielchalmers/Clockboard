@@ -138,14 +138,16 @@ describe("a board left open across local midnight", () => {
       settings: { history: [toDayKey(lateMonday)] }
     }
 
-    const { rerender } = render(<BoardList items={[done]} now={lateMonday} />)
+    const { container, rerender } = render(
+      <BoardList items={[done]} now={lateMonday} />
+    )
     expect(screen.getByRole("button", { name: "Done today ✓" })).toBeInTheDocument()
 
     rerender(<BoardList items={[done]} now={earlyTuesday} />)
 
-    // Yesterday still carries the streak, but today is unmarked again.
+    // Yesterday's dot stays lit, but today is unmarked again.
     expect(screen.getByRole("button", { name: "Mark today" })).toBeInTheDocument()
-    expect(screen.getByLabelText("1 day streak")).toBeInTheDocument()
+    expect(container.querySelectorAll(".habit-day--done")).toHaveLength(1)
   })
 
   it("rotates a daily quote onto the new day", () => {

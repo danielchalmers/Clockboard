@@ -813,18 +813,19 @@ details > summary::-webkit-details-marker {
   font-weight: 650;
 }
 
-/* Habit streak dots */
+/* Habit week dots — the card's main content, so they read larger than when
+   they sat under a number. */
 .habit-days {
   display: flex;
-  gap: 9px;
-  margin-block: 12px 4px;
+  gap: 10px;
+  margin-block: 14px 4px;
 }
 
 .habit-day {
   background: color-mix(in srgb, var(--card-accent-resolved) 16%, transparent);
-  block-size: 14px;
+  block-size: 18px;
   border-radius: 50%;
-  inline-size: 14px;
+  inline-size: 18px;
   transition: background-color var(--t-fast);
 }
 

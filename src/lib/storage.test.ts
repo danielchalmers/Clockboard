@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import type { DayboardState } from "./types"
+import { toDayKey } from "./habit"
+import type { DayboardState, HabitWidget } from "./types"
 
 const STORAGE_KEY = "dayboard-state"
 
@@ -115,6 +116,36 @@ describe("readDayboardState", () => {
     expect(state.widgets).toEqual(sampleState.widgets)
   })
 
+  it("prunes a legacy unbounded habit history down to the visible week", async () => {
+    // Ten months of daily completions, the shape old versions accumulated.
+    const base = new Date(2026, 6, 9)
+    const days = Array.from({ length: 300 }, (_, offset) => {
+      const d = new Date(base)
+      d.setDate(d.getDate() - offset)
+      return toDayKey(d)
+    })
+    const { store } = stubChromeStorage()
+    store.set(STORAGE_KEY, {
+      widgets: [
+        {
+          id: "habit-1",
+          kind: "habit",
+          title: "Read",
+          colorPreset: "amber",
+          settings: { history: days }
+        }
+      ]
+    })
+
+    const { readDayboardState } = await import("./storage")
+    const state = await readDayboardState()
+
+    const habit = state.widgets[0] as HabitWidget
+    expect(habit.settings.history).toHaveLength(7)
+    expect(habit.settings.history).toContain("2026-07-09")
+    expect(habit.settings.history).not.toContain("2026-07-02")
+  })
+
   it("sanitizes malformed settings fields back to their defaults", async () => {
     const { store } = stubChromeStorage()
     store.set(STORAGE_KEY, {
@@ -167,6 +198,39 @@ describe("writeDayboardState", () => {
     await writeDayboardState(sampleState)
 
     expect(store.get(STORAGE_KEY)).toEqual(sampleState)
+  })
+
+  // chrome.storage.sync rejects any single item over QUOTA_BYTES_PER_ITEM
+  // (8192 bytes of key + serialized value), and the whole board lives under
+  // one key — so even a board packed with habits at their fullest must stay
+  // under it or every save starts failing.
+  it("keeps a board of full habit histories under the sync per-item quota", async () => {
+    const QUOTA_BYTES_PER_ITEM = 8192
+    const fullWeek = Array.from({ length: 7 }, (_, offset) => {
+      const d = new Date(2026, 6, 9)
+      d.setDate(d.getDate() - offset)
+      return toDayKey(d)
+    })
+    const habits: HabitWidget[] = Array.from({ length: 10 }, (_, index) => ({
+      id: crypto.randomUUID(),
+      kind: "habit",
+      title: `A habit with a fairly long title ${index}`,
+      colorPreset: "amber",
+      settings: { history: fullWeek }
+    }))
+    const state: DayboardState = {
+      widgets: habits,
+      settings: { name: "Dan" }
+    }
+
+    const { store } = stubChromeStorage()
+    const { writeDayboardState } = await import("./storage")
+    await writeDayboardState(state)
+
+    const stored = JSON.stringify(store.get(STORAGE_KEY))
+    expect(STORAGE_KEY.length + stored.length).toBeLessThan(
+      QUOTA_BYTES_PER_ITEM
+    )
   })
 })
 

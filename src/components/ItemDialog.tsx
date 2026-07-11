@@ -369,7 +369,7 @@ export const ItemDialog = ({
 
             {draft.kind === "habit" ? (
               <p className="form-note">
-                Mark it done each day on the card to build your streak.
+                Mark it done each day on the card to fill in your week.
               </p>
             ) : null}
 
