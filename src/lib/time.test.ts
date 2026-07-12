@@ -84,6 +84,51 @@ describe("nextCountdownTarget", () => {
     expect(next.getDate()).toBe(25)
     expect(next.getFullYear()).toBe(2026)
   })
+
+  it("keeps a monthly target on the 31st pinned to each month's last day", () => {
+    const target = new Date(2026, 0, 31, 9, 0, 0).toISOString()
+
+    // February (28 days in 2026) -> the 28th, not a spill into early March.
+    const feb = new Date(nextCountdownTarget(target, "monthly", new Date(2026, 1, 15, 12, 0, 0)))
+    expect(feb.getMonth()).toBe(1)
+    expect(feb.getDate()).toBe(28)
+    expect(feb.getHours()).toBe(9)
+
+    // March keeps the full 31; April clamps to its 30.
+    const mar = new Date(nextCountdownTarget(target, "monthly", new Date(2026, 2, 15, 12, 0, 0)))
+    expect(mar.getMonth()).toBe(2)
+    expect(mar.getDate()).toBe(31)
+
+    const apr = new Date(nextCountdownTarget(target, "monthly", new Date(2026, 3, 15, 12, 0, 0)))
+    expect(apr.getMonth()).toBe(3)
+    expect(apr.getDate()).toBe(30)
+  })
+
+  it("recovers a yearly Feb-29 anchor on leap years and clamps otherwise", () => {
+    const target = new Date(2024, 1, 29, 9, 0, 0).toISOString()
+
+    // 2026 is not a leap year: clamp to Feb 28.
+    const nonLeap = new Date(nextCountdownTarget(target, "yearly", new Date(2025, 5, 1, 12, 0, 0)))
+    expect(nonLeap.getFullYear()).toBe(2026)
+    expect(nonLeap.getMonth()).toBe(1)
+    expect(nonLeap.getDate()).toBe(28)
+
+    // 2028 is a leap year: the anchor snaps back to Feb 29 rather than drifting.
+    const leap = new Date(nextCountdownTarget(target, "yearly", new Date(2028, 0, 15, 12, 0, 0)))
+    expect(leap.getFullYear()).toBe(2028)
+    expect(leap.getMonth()).toBe(1)
+    expect(leap.getDate()).toBe(29)
+  })
+
+  it("rolls a daily target from decades ago up to the next future day", () => {
+    const target = new Date(2000, 0, 1, 9, 0, 0).toISOString()
+    const nowFar = new Date(2026, 6, 12, 12, 0, 0)
+    const next = new Date(nextCountdownTarget(target, "daily", nowFar))
+
+    expect(next.getTime()).toBeGreaterThan(nowFar.getTime())
+    expect(next.getHours()).toBe(9)
+    expect(next.getTime() - nowFar.getTime()).toBeLessThanOrEqual(DAY)
+  })
 })
 
 describe("getCountdownProgress", () => {

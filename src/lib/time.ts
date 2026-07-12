@@ -90,9 +90,29 @@ export const formatTimeZoneName = (date: Date, timeZone: string): string => {
   return parts.find((part) => part.type === "timeZoneName")?.value || timeZone
 }
 
-// For a repeating countdown, roll the target forward (in calendar steps, so the
-// time of day is preserved across DST) to the next occurrence at or after now.
-// Non-repeating or still-future targets are returned unchanged.
+const daysInMonth = (year: number, monthIndex: number): number =>
+  new Date(year, monthIndex + 1, 0).getDate()
+
+// Move `date` forward by whole months, always re-deriving the day from `base`
+// and clamping it to the destination month's length. Plain Date.setMonth would
+// spill a day-of-month that doesn't exist into the next month (Jan 31 + 1 month
+// -> Mar 3), permanently drifting the anchor; clamping instead lands "monthly
+// on the 31st" on each month's last day, and because the day is re-derived from
+// `base` every step, a Feb-29 anchor snaps back to Feb 29 on the next leap year
+// rather than sticking at Mar 1. The time of day is preserved.
+const advanceByMonths = (date: Date, base: Date, months: number): void => {
+  const monthIndex = date.getFullYear() * 12 + date.getMonth() + months
+  const year = Math.floor(monthIndex / 12)
+  const month = ((monthIndex % 12) + 12) % 12
+
+  date.setFullYear(year, month, Math.min(base.getDate(), daysInMonth(year, month)))
+}
+
+// For a repeating countdown, roll the target forward to the next occurrence
+// strictly after now. Non-repeating or still-future targets are returned
+// unchanged. Each occurrence is built in calendar steps so the local time of day
+// survives DST; a coarse arithmetic jump lands just short of now first, so even
+// a target decades in the past resolves in a handful of steps.
 export const nextCountdownTarget = (
   targetAt: string,
   repeat: CountdownRepeat | undefined,
@@ -109,22 +129,37 @@ export const nextCountdownTarget = (
     return targetAt
   }
 
-  const next = new Date(base)
   const nowMs = now.getTime()
-  let guard = 0
+  const next = new Date(base)
 
-  while (next.getTime() <= nowMs && guard < 6000) {
-    if (repeat === "daily") {
-      next.setDate(next.getDate() + 1)
-    } else if (repeat === "weekly") {
-      next.setDate(next.getDate() + 7)
-    } else if (repeat === "monthly") {
-      next.setMonth(next.getMonth() + 1)
-    } else {
-      next.setFullYear(next.getFullYear() + 1)
+  if (repeat === "monthly" || repeat === "yearly") {
+    const step = repeat === "yearly" ? 12 : 1
+    const monthsApart =
+      (now.getFullYear() - base.getFullYear()) * 12 +
+      (now.getMonth() - base.getMonth())
+    const initialSteps = Math.max(0, Math.floor(monthsApart / step) - 1) * step
+
+    if (initialSteps > 0) {
+      advanceByMonths(next, base, initialSteps)
     }
 
-    guard += 1
+    while (next.getTime() <= nowMs) {
+      advanceByMonths(next, base, step)
+    }
+
+    return next.toISOString()
+  }
+
+  const stepDays = repeat === "weekly" ? 7 : 1
+  const approxSteps = Math.floor((nowMs - base.getTime()) / 86_400_000 / stepDays)
+  const initialDays = Math.max(0, approxSteps - 1) * stepDays
+
+  if (initialDays > 0) {
+    next.setDate(next.getDate() + initialDays)
+  }
+
+  while (next.getTime() <= nowMs) {
+    next.setDate(next.getDate() + stepDays)
   }
 
   return next.toISOString()
