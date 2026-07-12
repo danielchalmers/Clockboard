@@ -1,7 +1,13 @@
-import { useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { useModalFocus } from "~/hooks/useModalFocus"
 import type { DayboardSettings } from "~/lib/types"
+
+// Debounce the greeting-name write so a burst of keystrokes collapses into a
+// single chrome.storage.sync write, staying under the sync write-rate limit —
+// the same reason the note field is debounced. Without it, holding a key would
+// exceed the per-minute limit, roll the write back, and revert the name.
+const NAME_SAVE_DELAY = 600
 
 interface SettingsDialogProps {
   isOpen: boolean
@@ -27,11 +33,64 @@ export const SettingsDialog = ({
 }: SettingsDialogProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dialogRef = useRef<HTMLElement>(null)
+  const nameFieldRef = useRef<HTMLInputElement>(null)
+  const nameTimerRef = useRef<number | undefined>(undefined)
+
+  // Local mirror so every keystroke shows immediately while the write is
+  // debounced. Keep the latest onChange/settings in refs so the effects below
+  // don't re-run (and steal focus) on every parent render.
+  const [name, setName] = useState(settings.name)
+  const onChangeRef = useRef(onChange)
+  onChangeRef.current = onChange
+  const settingsRef = useRef(settings)
+  settingsRef.current = settings
+
+  // Adopt an external change (a sync from another tab) unless the field is
+  // focused, so a remote update never clobbers what is being typed here.
+  useEffect(() => {
+    if (document.activeElement !== nameFieldRef.current) {
+      setName(settings.name)
+    }
+  }, [settings.name])
+
+  useEffect(
+    () => () => {
+      if (nameTimerRef.current) {
+        window.clearTimeout(nameTimerRef.current)
+      }
+    },
+    []
+  )
 
   useModalFocus(isOpen, dialogRef, onClose)
 
   if (!isOpen) {
     return null
+  }
+
+  const flushName = (value: string) => {
+    if (value !== settingsRef.current.name) {
+      onChangeRef.current({ ...settingsRef.current, name: value })
+    }
+  }
+
+  const handleNameChange = (value: string) => {
+    setName(value)
+
+    if (nameTimerRef.current) {
+      window.clearTimeout(nameTimerRef.current)
+    }
+
+    nameTimerRef.current = window.setTimeout(() => flushName(value), NAME_SAVE_DELAY)
+  }
+
+  const flushNameNow = () => {
+    if (nameTimerRef.current) {
+      window.clearTimeout(nameTimerRef.current)
+      nameTimerRef.current = undefined
+    }
+
+    flushName(name)
   }
 
   return (
@@ -65,12 +124,12 @@ export const SettingsDialog = ({
             <label className="form-label-group">
               <span>Your name</span>
               <input
-                onChange={(event) =>
-                  onChange({ ...settings, name: event.currentTarget.value })
-                }
+                onBlur={flushNameNow}
+                onChange={(event) => handleNameChange(event.currentTarget.value)}
                 placeholder="Optional"
+                ref={nameFieldRef}
                 type="text"
-                value={settings.name}
+                value={name}
               />
             </label>
             <p className="form-note">
