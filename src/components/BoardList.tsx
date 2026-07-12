@@ -494,6 +494,18 @@ export const BoardList = ({
   // Stable so the memoized rows can skip re-rendering when only the tick changes.
   const closeMenu = useCallback(() => setOpenMenu(null), [])
 
+  // Declared before the early return below: React requires every hook to run in
+  // the same order on every render, so this must not sit after the empty-board
+  // `return`. Otherwise flipping between an empty and a non-empty board (adding
+  // the first card, deleting or archiving the last) changes the hook count and
+  // React throws, blanking the whole board until a reload.
+  const handleOpenMenu = useCallback((id: string, x: number, y: number) => {
+    document
+      .querySelectorAll<HTMLDetailsElement>(".add-menu[open]")
+      .forEach((menu) => menu.removeAttribute("open"))
+    setOpenMenu({ id, x, y })
+  }, [])
+
   // Cards on the board at first render must not animate in — the page should
   // simply be there on a new tab. Only cards that show up later (added,
   // restored) play the entrance animation.
@@ -515,13 +527,6 @@ export const BoardList = ({
   const isForeignDrag = Boolean(
     activeId && !items.some((item) => item.id === activeId)
   )
-
-  const handleOpenMenu = useCallback((id: string, x: number, y: number) => {
-    document
-      .querySelectorAll<HTMLDetailsElement>(".add-menu[open]")
-      .forEach((menu) => menu.removeAttribute("open"))
-    setOpenMenu({ id, x, y })
-  }, [])
 
   const activeMenuItem = openMenu
     ? items.find((item) => item.id === openMenu.id) ?? null
