@@ -2,9 +2,12 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { BoardRow } from "./BoardRow"
+import { playChime } from "~/lib/chime"
 import { toDayKey } from "~/lib/habit"
 import { dailyQuoteIndex } from "~/lib/quotes"
 import type { Widget } from "~/lib/types"
+
+vi.mock("~/lib/chime", () => ({ playChime: vi.fn(), primeChime: vi.fn() }))
 
 describe("BoardRow", () => {
   it("renders a clock card with time, date metadata, and color-preset attribute", () => {
@@ -375,6 +378,45 @@ describe("BoardRow", () => {
       ...item,
       settings: { ...item.settings, running: false, remainingMs: 0, endsAt: null }
     })
+  })
+
+  it("settles a finished timer only once even if a failed save rolls it back", () => {
+    vi.mocked(playChime).mockClear()
+
+    const item: Widget = {
+      id: "t",
+      kind: "timer",
+      title: "Tea",
+      colorPreset: "emerald",
+      settings: {
+        durationMs: 60_000,
+        running: true,
+        remainingMs: 60_000,
+        endsAt: 1000,
+        chime: true
+      }
+    }
+    const onWidgetChange = vi.fn()
+
+    const { rerender } = render(
+      <BoardRow item={item} now={new Date(50_000)} onWidgetChange={onWidgetChange} />
+    )
+
+    expect(onWidgetChange).toHaveBeenCalledTimes(1)
+    expect(playChime).toHaveBeenCalledTimes(1)
+
+    // A failed settle write would roll the widget back to the same running state
+    // (a fresh object, same past endsAt). The effect re-runs on each rerender but
+    // must not fire again — no stacked chimes, no loop of failing writes.
+    rerender(
+      <BoardRow item={{ ...item }} now={new Date(51_000)} onWidgetChange={onWidgetChange} />
+    )
+    rerender(
+      <BoardRow item={{ ...item }} now={new Date(52_000)} onWidgetChange={onWidgetChange} />
+    )
+
+    expect(onWidgetChange).toHaveBeenCalledTimes(1)
+    expect(playChime).toHaveBeenCalledTimes(1)
   })
 
   describe("with fake timers", () => {

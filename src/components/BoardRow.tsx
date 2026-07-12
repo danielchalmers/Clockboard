@@ -221,15 +221,28 @@ const TimerBody = ({
     onWidgetChange?.({ ...item, settings })
 
   // Settle the timer the moment it counts down to zero while running, and — when
-  // this timer opted into a chime — sound it once on that transition.
-  useEffect(() => {
-    if (running && done) {
-      if (chime) {
-        playChime()
-      }
+  // this timer opted into a chime — sound it once on that transition. endsAt
+  // uniquely identifies this run: if the settle write fails and the parent rolls
+  // the timer back to running with the same past endsAt, this ref stops the
+  // effect re-firing into a loop of stacked chimes and repeated failing writes.
+  const settledEndsAtRef = useRef<number | null | undefined>(undefined)
 
-      onWidgetChange?.({ ...item, settings: finishTimer(item.settings) })
+  useEffect(() => {
+    if (!(running && done)) {
+      return
     }
+
+    if (settledEndsAtRef.current === item.settings.endsAt) {
+      return
+    }
+
+    settledEndsAtRef.current = item.settings.endsAt
+
+    if (chime) {
+      playChime()
+    }
+
+    onWidgetChange?.({ ...item, settings: finishTimer(item.settings) })
   }, [running, done, item, onWidgetChange, chime])
 
   const handleStart = () => {
