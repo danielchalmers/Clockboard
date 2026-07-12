@@ -4,6 +4,7 @@ import { useModalFocus } from "~/hooks/useModalFocus"
 import {
   dateTimeInputValueToIsoInstant,
   getTimeZoneOptions,
+  isSupportedTimeZone,
   isoInstantToDateTimeInputValue
 } from "~/lib/time"
 import { quotesToText, textToQuotes } from "~/lib/quotes"
@@ -274,7 +275,19 @@ export const ItemDialog = ({
                 <span>Time zone</span>
                 <input
                   list="dayboard-time-zones"
-                  onChange={(event) => updateTimeZone(event.currentTarget.value)}
+                  onChange={(event) => {
+                    const input = event.currentTarget
+                    updateTimeZone(input.value)
+                    // The datalist only suggests; the field accepts free text.
+                    // A zone Intl can't format would throw and blank the board,
+                    // so block the save with a native validation message rather
+                    // than storing it.
+                    input.setCustomValidity(
+                      input.value === "" || isSupportedTimeZone(input.value)
+                        ? ""
+                        : "Pick a time zone from the list."
+                    )
+                  }}
                   required
                   type="text"
                   value={draft.settings.timeZone}
