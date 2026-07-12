@@ -1,12 +1,14 @@
 import {
   DEFAULT_SETTINGS,
+  DEFAULT_TIME_ZONE,
   createDefaultState,
   type DayboardSettings,
   type DayboardState,
   type Widget
 } from "./types"
 import { normalizeHistory } from "./habit"
-import { widgetRegistry } from "./widgets"
+import { isSupportedTimeZone } from "./time"
+import { DEFAULT_TIMER_DURATION_MS, widgetRegistry } from "./widgets"
 
 export const STORAGE_KEY = "dayboard-state"
 export const CACHE_KEY = "dayboard-state-cache"
@@ -36,14 +38,109 @@ const normalizeSettings = (value: unknown): DayboardSettings => {
   }
 }
 
-// Habit history used to be stored unbounded — every completed day key — which
-// after a year or two of use is large enough that two habits blow the sync
-// per-item quota and every save of the board fails. Prune to the visible week
-// on read so existing boards shrink the first time they load.
-const normalizeWidget = (widget: Widget): Widget =>
-  widget.kind === "habit"
-    ? { ...widget, settings: { history: normalizeHistory(widget.settings.history) } }
-    : widget
+const asString = (value: unknown, fallback: string): string =>
+  typeof value === "string" ? value : fallback
+
+const asFiniteNumber = (value: unknown, fallback: number): number =>
+  typeof value === "number" && Number.isFinite(value) ? value : fallback
+
+const asBoolean = (value: unknown, fallback: boolean): boolean =>
+  typeof value === "boolean" ? value : fallback
+
+const asEpochOrNull = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? value : null
+
+const asEnum = <T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  fallback: T
+): T => (allowed.includes(value as T) ? (value as T) : fallback)
+
+// The raw settings bag, tolerant of a missing or non-object value so a widget
+// with no settings at all normalizes instead of throwing at read time.
+const rawSettings = (widget: Widget): Record<string, unknown> => {
+  const value = (widget as { settings?: unknown }).settings
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {}
+}
+
+// Repair each kind's settings so a hand-edited, corrupted, or cross-version
+// board renders instead of crashing. isValidWidget only checks id + kind, so a
+// known-kind widget can arrive with missing or wrong-typed settings; every card
+// then reads those fields unconditionally (e.g. cleanQuotes(settings.quotes),
+// destructuring settings, Intl with settings.timeZone) and a bad value throws,
+// unmounting the whole board. Unknown fields are spread through first to keep
+// newer boards forward-compatible; the fields the app relies on are then forced
+// to safe values. Habit history is additionally pruned to the visible week (an
+// unbounded legacy list eventually blew the sync per-item quota).
+const normalizeWidget = (widget: Widget): Widget => {
+  const s = rawSettings(widget)
+
+  switch (widget.kind) {
+    case "clock":
+      return {
+        ...widget,
+        settings: {
+          ...s,
+          timeZone: isSupportedTimeZone(s.timeZone) ? s.timeZone : DEFAULT_TIME_ZONE
+        }
+      }
+    case "countdown":
+      return {
+        ...widget,
+        settings: {
+          ...s,
+          targetAt: asString(s.targetAt, new Date().toISOString()),
+          display: asEnum(s.display, ["text", "progress"] as const, "text"),
+          repeat: asEnum(
+            s.repeat,
+            ["none", "daily", "weekly", "monthly", "yearly"] as const,
+            "none"
+          )
+        }
+      }
+    case "note":
+      return { ...widget, settings: { ...s, text: asString(s.text, "") } }
+    case "quote":
+      return {
+        ...widget,
+        settings: {
+          ...s,
+          quotes: Array.isArray(s.quotes)
+            ? s.quotes.filter((quote): quote is string => typeof quote === "string")
+            : [],
+          rotation: asEnum(s.rotation, ["daily", "open"] as const, "daily")
+        }
+      }
+    case "stopwatch":
+      return {
+        ...widget,
+        settings: {
+          ...s,
+          running: asBoolean(s.running, false),
+          elapsedMs: asFiniteNumber(s.elapsedMs, 0),
+          startedAt: asEpochOrNull(s.startedAt)
+        }
+      }
+    case "timer": {
+      const durationMs = asFiniteNumber(s.durationMs, DEFAULT_TIMER_DURATION_MS)
+      return {
+        ...widget,
+        settings: {
+          ...s,
+          durationMs,
+          running: asBoolean(s.running, false),
+          remainingMs: asFiniteNumber(s.remainingMs, durationMs),
+          endsAt: asEpochOrNull(s.endsAt),
+          chime: asBoolean(s.chime, false)
+        }
+      }
+    }
+    case "habit":
+      return { ...widget, settings: { ...s, history: normalizeHistory(s.history) } }
+  }
+}
 
 const normalizeState = (value: unknown): DayboardState => {
   if (!hasWidgets(value)) {

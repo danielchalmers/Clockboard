@@ -221,6 +221,23 @@ export const formatCountdownTarget = (widget: CountdownWidget): string => {
   }).format(target)
 }
 
+// Whether a string is an IANA zone the runtime's Intl accepts. A clock's stored
+// zone flows straight into Intl.DateTimeFormat, which throws a RangeError on an
+// unknown zone — so anything read from storage or typed by hand must be checked
+// before it reaches a formatter.
+export const isSupportedTimeZone = (value: unknown): value is string => {
+  if (typeof value !== "string" || value === "") {
+    return false
+  }
+
+  try {
+    new Intl.DateTimeFormat(undefined, { timeZone: value })
+    return true
+  } catch {
+    return false
+  }
+}
+
 export const getTimeZoneOptions = (): string[] => {
   const supportedValuesOf = Intl.supportedValuesOf?.bind(Intl)
 

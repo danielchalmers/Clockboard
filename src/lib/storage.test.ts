@@ -1,7 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { toDayKey } from "./habit"
-import type { DayboardState, HabitWidget } from "./types"
+import {
+  DEFAULT_TIME_ZONE,
+  type ClockWidget,
+  type DayboardState,
+  type HabitWidget,
+  type QuoteWidget,
+  type TimerWidget
+} from "./types"
 
 const STORAGE_KEY = "dayboard-state"
 
@@ -144,6 +151,99 @@ describe("readDayboardState", () => {
     expect(habit.settings.history).toHaveLength(7)
     expect(habit.settings.history).toContain("2026-07-09")
     expect(habit.settings.history).not.toContain("2026-07-02")
+  })
+
+  it("repairs known-kind widgets whose settings object is missing entirely", async () => {
+    // isValidWidget accepts any known kind with a string id, so a hand-edited or
+    // cross-version board can carry a widget with no settings at all — which the
+    // cards would otherwise dereference and crash on. Normalization must fill it.
+    const { store } = stubChromeStorage()
+    store.set(STORAGE_KEY, {
+      widgets: [
+        { id: "q", kind: "quote", title: "Q", colorPreset: "sky" },
+        { id: "t", kind: "timer", title: "T", colorPreset: "rose" },
+        { id: "h", kind: "habit", title: "H", colorPreset: "amber" }
+      ]
+    })
+
+    const { readDayboardState } = await import("./storage")
+    const state = await readDayboardState()
+
+    const quote = state.widgets[0] as QuoteWidget
+    expect(quote.settings.quotes).toEqual([])
+    expect(quote.settings.rotation).toBe("daily")
+
+    const timer = state.widgets[1] as TimerWidget
+    expect(timer.settings.durationMs).toBeGreaterThan(0)
+    expect(timer.settings.remainingMs).toBe(timer.settings.durationMs)
+    expect(timer.settings.endsAt).toBeNull()
+    expect(timer.settings.running).toBe(false)
+
+    const habit = state.widgets[2] as HabitWidget
+    expect(habit.settings.history).toEqual([])
+  })
+
+  it("replaces an unsupported clock time zone with the default", async () => {
+    const { store } = stubChromeStorage()
+    store.set(STORAGE_KEY, {
+      widgets: [
+        {
+          id: "c",
+          kind: "clock",
+          title: "C",
+          colorPreset: "sky",
+          settings: { timeZone: "New York" }
+        }
+      ]
+    })
+
+    const { readDayboardState } = await import("./storage")
+    const clock = (await readDayboardState()).widgets[0] as ClockWidget
+
+    expect(clock.settings.timeZone).toBe(DEFAULT_TIME_ZONE)
+  })
+
+  it("coerces wrong-typed settings fields to valid values", async () => {
+    const { store } = stubChromeStorage()
+    store.set(STORAGE_KEY, {
+      widgets: [
+        {
+          id: "q",
+          kind: "quote",
+          title: "Q",
+          colorPreset: "sky",
+          settings: { quotes: "not an array", rotation: "sometimes" }
+        }
+      ]
+    })
+
+    const { readDayboardState } = await import("./storage")
+    const quote = (await readDayboardState()).widgets[0] as QuoteWidget
+
+    expect(quote.settings.quotes).toEqual([])
+    expect(quote.settings.rotation).toBe("daily")
+  })
+
+  it("preserves unknown settings fields so newer boards survive an older read", async () => {
+    const { store } = stubChromeStorage()
+    store.set(STORAGE_KEY, {
+      widgets: [
+        {
+          id: "c",
+          kind: "clock",
+          title: "C",
+          colorPreset: "sky",
+          settings: { timeZone: "UTC", futureField: 42 }
+        }
+      ]
+    })
+
+    const { readDayboardState } = await import("./storage")
+    const clock = (await readDayboardState()).widgets[0] as ClockWidget
+    const settings = clock.settings as Record<string, unknown>
+
+    expect(settings.futureField).toBe(42)
+    expect(settings.timeZone).toBe("UTC")
   })
 
   it("sanitizes malformed settings fields back to their defaults", async () => {
