@@ -808,6 +808,22 @@ details > summary::-webkit-details-marker {
   background: color-mix(in srgb, var(--card-accent-resolved) 88%, var(--text));
 }
 
+/* In light theme the pale card wash is too light to label a filled accent
+   button — white-on-accent and card-bg-on-accent both drop under WCAG AA on the
+   luminous presets (lemon, mint, coral…). Darken the accent enough that white
+   text clears 4.5:1 across every preset. Dark theme already passes (its accent
+   is a light tint), so it keeps the card-bg text from the base rule. */
+@media (prefers-color-scheme: light) {
+  .timer-button--primary {
+    background: color-mix(in srgb, var(--card-accent-resolved), #000 30%);
+    color: #fff;
+  }
+
+  .timer-button--primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--card-accent-resolved), #000 40%);
+  }
+}
+
 .board-row__meta--alert {
   color: var(--card-accent-resolved);
   font-weight: 650;
