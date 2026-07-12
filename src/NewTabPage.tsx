@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { BoardDnd } from "~/components/BoardDnd"
 import { BoardList } from "~/components/BoardList"
 import { DeleteDialog } from "~/components/DeleteDialog"
+import { ErrorBoundary } from "~/components/ErrorBoundary"
 import { ItemDialog } from "~/components/ItemDialog"
 import { SettingsDialog } from "~/components/SettingsDialog"
 import { ErrorView } from "~/components/StatusViews"
@@ -285,14 +286,33 @@ export function NewTabPage() {
             The lists render from BoardDnd's view of the widgets, which mid-drag
             previews the restore — the dragged card already sitting in its
             board slot. */}
-        <BoardDnd
-          now={now}
-          widgets={state.widgets}
-          onArchive={(id) => void setWidgets(archiveWidget(state.widgets, id))}
-          onReorder={reorderList}
-          onRestore={(id, beforeId) =>
-            void setWidgets(restoreWidget(state.widgets, id, beforeId))
+        <ErrorBoundary
+          fallback={
+            <div className="empty-state" role="alert">
+              <span aria-hidden="true" className="empty-state__glyph">
+                !
+              </span>
+              <h2>This board hit a snag</h2>
+              <p>
+                A widget couldn&rsquo;t be shown. Reload to try again, or use
+                Options above to export or replace your board.
+              </p>
+              <button
+                className="archive-toggle"
+                onClick={() => window.location.reload()}
+                type="button">
+                Reload
+              </button>
+            </div>
           }>
+          <BoardDnd
+            now={now}
+            widgets={state.widgets}
+            onArchive={(id) => void setWidgets(archiveWidget(state.widgets, id))}
+            onReorder={reorderList}
+            onRestore={(id, beforeId) =>
+              void setWidgets(restoreWidget(state.widgets, id, beforeId))
+            }>
           {(displayWidgets) => {
             const activeWidgets = displayWidgets.filter(
               (widget) => !widget.archived
@@ -432,7 +452,8 @@ export function NewTabPage() {
               </>
             )
           }}
-        </BoardDnd>
+          </BoardDnd>
+        </ErrorBoundary>
       </main>
       <ItemDialog
         isOpen={Boolean(editorState)}
