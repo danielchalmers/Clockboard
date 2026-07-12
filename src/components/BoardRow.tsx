@@ -15,7 +15,7 @@ import {
   formatTimeZoneName,
   getCountdownParts,
   getCountdownProgress,
-  nextCountdownTarget
+  resolveCountdownForDisplay
 } from "~/lib/time"
 import type {
   CountdownWidget,
@@ -481,15 +481,9 @@ export const BoardRow = forwardRef<HTMLElement, BoardRowProps>(function BoardRow
 
   // A repeating countdown shows the next occurrence, computed on the fly so the
   // stored target stays the anchor and every tab stays in sync without writes.
-  const resolvedTargetAt = nextCountdownTarget(
-    item.settings.targetAt,
-    item.settings.repeat,
-    now
-  )
-  const countdownItem: CountdownWidget =
-    resolvedTargetAt === item.settings.targetAt
-      ? item
-      : { ...item, settings: { ...item.settings, targetAt: resolvedTargetAt } }
+  // For the progress display the span start rolls forward with it, so the bar
+  // refills each period instead of creeping toward a permanent 100%.
+  const countdownItem: CountdownWidget = resolveCountdownForDisplay(item, now)
 
   const repeatLabel =
     item.settings.repeat && item.settings.repeat !== "none"

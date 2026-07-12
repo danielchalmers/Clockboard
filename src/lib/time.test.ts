@@ -7,7 +7,8 @@ import {
   getCountdownProgress,
   isSameLocalDay,
   isoInstantToDateTimeInputValue,
-  nextCountdownTarget
+  nextCountdownTarget,
+  resolveCountdownForDisplay
 } from "./time"
 import type { CountdownWidget } from "./types"
 
@@ -217,5 +218,44 @@ describe("formatRelativeCountdown", () => {
     expect(formatRelativeCountdown(-(3 * 3_600_000 + 12 * 60_000))).toBe(
       "3 hours, 12 minutes ago"
     )
+  })
+})
+
+describe("resolveCountdownForDisplay", () => {
+  const DAY = 24 * 60 * 60 * 1000
+
+  it("returns a still-future countdown unchanged", () => {
+    const widget = countdownWidget(new Date(2030, 0, 1, 9, 0, 0).toISOString())
+    expect(resolveCountdownForDisplay(widget, new Date(2026, 0, 1))).toBe(widget)
+  })
+
+  it("rolls a repeating progress span forward so the bar refills each period", () => {
+    const widget: CountdownWidget = {
+      id: "p",
+      kind: "countdown",
+      title: "Sprint",
+      colorPreset: "slate",
+      settings: {
+        startAt: new Date(2026, 0, 1, 0, 0, 0).toISOString(),
+        targetAt: new Date(2026, 0, 8, 0, 0, 0).toISOString(),
+        display: "progress",
+        repeat: "weekly"
+      }
+    }
+
+    // A day into the second week: the first target already passed.
+    const now = new Date(2026, 0, 9, 0, 0, 0)
+    const resolved = resolveCountdownForDisplay(widget, now)
+
+    // The span keeps its original length and slides forward with the target...
+    const span =
+      new Date(resolved.settings.targetAt).getTime() -
+      new Date(resolved.settings.startAt!).getTime()
+    expect(span).toBe(7 * DAY)
+
+    // ...so the bar reads near the start of the new period, not pinned high.
+    const progress = getCountdownProgress(resolved, now)
+    expect(progress).toBeGreaterThanOrEqual(0)
+    expect(progress).toBeLessThan(0.2)
   })
 })

@@ -165,6 +165,42 @@ export const nextCountdownTarget = (
   return next.toISOString()
 }
 
+// Resolve a countdown for display at `now`. A repeating target rolls forward to
+// its next occurrence; for the progress display the span start rolls with it by
+// the original span length, so each period's bar fills from 0% again instead of
+// the denominator (target - start) growing without bound and pinning the bar
+// near 100% forever. Non-repeating or still-future countdowns are unchanged.
+export const resolveCountdownForDisplay = (
+  widget: CountdownWidget,
+  now = new Date()
+): CountdownWidget => {
+  const resolvedTargetAt = nextCountdownTarget(
+    widget.settings.targetAt,
+    widget.settings.repeat,
+    now
+  )
+
+  if (resolvedTargetAt === widget.settings.targetAt) {
+    return widget
+  }
+
+  const settings = { ...widget.settings, targetAt: resolvedTargetAt }
+
+  if (widget.settings.display === "progress" && widget.settings.startAt) {
+    const span =
+      new Date(widget.settings.targetAt).getTime() -
+      new Date(widget.settings.startAt).getTime()
+
+    if (span > 0) {
+      settings.startAt = new Date(
+        new Date(resolvedTargetAt).getTime() - span
+      ).toISOString()
+    }
+  }
+
+  return { ...widget, settings }
+}
+
 export const getCountdownParts = (
   widget: CountdownWidget,
   now = new Date()
