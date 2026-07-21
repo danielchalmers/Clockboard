@@ -864,12 +864,6 @@ test("all widgets share one card size, even with a long quote", async ({
   await page.getByRole("button", { name: "Save quote" }).click()
   await expect(page.getByRole("heading", { name: "Long read" })).toBeVisible()
 
-  // The long quote steps down to the smallest tier instead of growing the card.
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Long read" }) })
-  await expect(card.locator(".quote-text")).toHaveClass(/quote-text--small/)
-
   const cards = page.locator(".board-row")
   const count = await cards.count()
   const heights = new Set<number>()
@@ -884,42 +878,6 @@ test("all widgets share one card size, even with a long quote", async ({
 
   // Every card — clock, countdown, note, quote, habit — is the same height.
   expect(heights.size).toBe(1)
-})
-
-test("a quote steps down a size instead of trimming at narrow widths", async ({
-  page,
-  extensionId
-}) => {
-  await openNewTab(page, extensionId)
-
-  // Mid-length: starts at the medium tier, which fits on a wide card but
-  // wraps past the clamp on a narrow one.
-  const quote =
-    "The best way to get started is to quit talking and begin doing, because " +
-    "vision without execution is merely a daydream on an ordinary Tuesday."
-
-  await page.getByRole("button", { name: "Add widget" }).click()
-  await page.getByRole("button", { name: "Add quote" }).click()
-  await page.getByLabel("Name").fill("Motivation")
-  await page.getByLabel("Quotes").fill(quote)
-  await page.getByRole("button", { name: "Save quote" }).click()
-  await expect(page.getByRole("heading", { name: "Motivation" })).toBeVisible()
-
-  await page.setViewportSize({ width: 390, height: 844 })
-
-  // The rendered text must never be clipped by the line clamp: the field
-  // steps down through the sizing tiers until the whole quote fits, so only
-  // the smallest tier is ever allowed to ellipsize.
-  const text = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Motivation" }) })
-    .locator(".quote-text")
-  await expect
-    .poll(() =>
-      text.evaluate((el) => el.scrollHeight <= el.clientHeight + 1)
-    )
-    .toBe(true)
-  await expect(text).toHaveText(quote)
 })
 
 test("stopwatch counts up, keeps running across a reload, and resets", async ({

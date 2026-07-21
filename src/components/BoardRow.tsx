@@ -1,8 +1,6 @@
 import {
   forwardRef,
   useEffect,
-  useLayoutEffect,
-  useReducer,
   useRef,
   useState,
   type ComponentPropsWithoutRef,
@@ -39,13 +37,7 @@ import {
   toggleToday,
   VISIBLE_DAYS
 } from "~/lib/habit"
-import {
-  cleanQuotes,
-  dailyQuoteIndex,
-  QUOTE_SIZES,
-  quoteSize,
-  type QuoteSize
-} from "~/lib/quotes"
+import { cleanQuotes, dailyQuoteIndex } from "~/lib/quotes"
 import {
   finishTimer,
   formatDuration,
@@ -153,44 +145,6 @@ const QuoteField = ({ item, now }: { item: QuoteWidget; now: Date }) => {
   // the board's per-second re-render never reshuffles it.
   const [openSeed] = useState(() => Math.random())
 
-  const index =
-    item.settings.rotation === "daily"
-      ? dailyQuoteIndex(now, quotes.length)
-      : Math.floor(openSeed * quotes.length) % quotes.length
-  const quote = quotes[index] ?? quotes[0] ?? ""
-
-  const quoteRef = useRef<HTMLQuoteElement>(null)
-  const [size, setSize] = useState<QuoteSize>(() => quoteSize(quote))
-  // Resizes change the card's width, so the fit is measured again from scratch.
-  const [fitEpoch, refit] = useReducer((epoch: number) => epoch + 1, 0)
-
-  // A new quote (or a refit) starts back at its length-based tier...
-  useLayoutEffect(() => {
-    setSize(quoteSize(quote))
-  }, [quote, fitEpoch])
-
-  // ...then steps down while the clamp is actually trimming, so a quote only
-  // ellipsizes once even the smallest tier cannot fit it. Layout effects keep
-  // the intermediate sizes from ever painting.
-  useLayoutEffect(() => {
-    const el = quoteRef.current
-
-    if (!el || el.scrollHeight <= el.clientHeight + 1) {
-      return
-    }
-
-    const next = QUOTE_SIZES[QUOTE_SIZES.indexOf(size) + 1]
-
-    if (next) {
-      setSize(next)
-    }
-  }, [size, quote, fitEpoch])
-
-  useEffect(() => {
-    window.addEventListener("resize", refit)
-    return () => window.removeEventListener("resize", refit)
-  }, [])
-
   if (quotes.length === 0) {
     return (
       <p className="quote-text quote-text--empty">
@@ -199,10 +153,13 @@ const QuoteField = ({ item, now }: { item: QuoteWidget; now: Date }) => {
     )
   }
 
+  const index =
+    item.settings.rotation === "daily"
+      ? dailyQuoteIndex(now, quotes.length)
+      : Math.floor(openSeed * quotes.length) % quotes.length
+
   return (
-    <blockquote className={`quote-text quote-text--${size}`} ref={quoteRef}>
-      {quote}
-    </blockquote>
+    <blockquote className="quote-text">{quotes[index] ?? quotes[0]}</blockquote>
   )
 }
 
