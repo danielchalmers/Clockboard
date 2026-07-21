@@ -696,7 +696,8 @@ details > summary::-webkit-details-marker {
 /* Quote cards render the chosen line as a styled pull-quote. Cards are one
    fixed size, so longer quotes step down through sizing tiers (chosen from the
    text length in QuoteField) and, past the last tier, ellipsize on the final
-   line rather than growing the card. */
+   line rather than growing the card. There is no decorative quotation mark —
+   the corner badge already says the kind, so every line belongs to the text. */
 .quote-text {
   align-self: center;
   color: var(--text);
@@ -710,55 +711,24 @@ details > summary::-webkit-details-marker {
   margin: 0;
   overflow: hidden;
   overflow-wrap: anywhere;
-  position: relative;
-  padding-block-start: 22px;
 }
 
 .quote-text--medium {
   -webkit-line-clamp: 4;
   font-size: 1.18rem;
   line-height: 1.45;
-  padding-block-start: 16px;
 }
 
 .quote-text--small {
-  -webkit-line-clamp: 5;
+  -webkit-line-clamp: 6;
   font-size: 0.98rem;
-  line-height: 1.45;
-  padding-block-start: 14px;
-}
-
-.quote-text::before {
-  color: var(--card-accent-resolved);
-  content: "\201C";
-  font-size: 3.2rem;
-  font-weight: 800;
-  line-height: 0.6;
-  opacity: 0.5;
-  position: absolute;
-  inset-block-start: 6px;
-  inset-inline-start: -2px;
-}
-
-/* The decorative mark scales with its tier so it stays a whisper, not a wall. */
-.quote-text--medium::before {
-  font-size: 2.4rem;
-  inset-block-start: 4px;
-}
-
-.quote-text--small::before {
-  font-size: 2rem;
-  inset-block-start: 3px;
+  line-height: 1.4;
 }
 
 .quote-text--empty {
   color: var(--card-tint-resolved);
   font-size: 1rem;
   font-weight: 550;
-}
-
-.quote-text--empty::before {
-  content: none;
 }
 
 .board-row__value {

@@ -12,9 +12,12 @@ export const cleanQuotes = (quotes: string[]): string[] =>
 
 // Cards are one fixed size, so a quote adapts to the card instead of growing
 // it: short lines render as a large pull-quote and longer ones step down to
-// calmer sizes. "large" is the base `.quote-text` look; the thresholds are
-// rough fits for each tier's font size at the card's width.
+// calmer sizes. "large" is the base `.quote-text` look. This picks the
+// starting tier from the text length; QuoteField then measures the rendered
+// text and steps down further whenever the clamp would actually trim it.
 export type QuoteSize = "large" | "medium" | "small"
+
+export const QUOTE_SIZES: readonly QuoteSize[] = ["large", "medium", "small"]
 
 export const quoteSize = (quote: string): QuoteSize => {
   if (quote.length <= 80) {
