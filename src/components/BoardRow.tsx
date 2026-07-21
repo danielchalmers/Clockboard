@@ -37,7 +37,7 @@ import {
   toggleToday,
   VISIBLE_DAYS
 } from "~/lib/habit"
-import { cleanQuotes, dailyQuoteIndex } from "~/lib/quotes"
+import { cleanQuotes, dailyQuoteIndex, quoteSize } from "~/lib/quotes"
 import {
   finishTimer,
   formatDuration,
@@ -157,8 +157,13 @@ const QuoteField = ({ item, now }: { item: QuoteWidget; now: Date }) => {
     item.settings.rotation === "daily"
       ? dailyQuoteIndex(now, quotes.length)
       : Math.floor(openSeed * quotes.length) % quotes.length
+  const quote = quotes[index] ?? quotes[0] ?? ""
 
-  return <blockquote className="quote-text">{quotes[index] ?? quotes[0]}</blockquote>
+  return (
+    <blockquote className={`quote-text quote-text--${quoteSize(quote)}`}>
+      {quote}
+    </blockquote>
+  )
 }
 
 const StopwatchBody = ({

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest"
 
-import { cleanQuotes, dailyQuoteIndex, quotesToText, textToQuotes } from "./quotes"
+import {
+  cleanQuotes,
+  dailyQuoteIndex,
+  quoteSize,
+  quotesToText,
+  textToQuotes
+} from "./quotes"
 
 describe("textToQuotes / quotesToText", () => {
   it("round-trips multi-line text without dropping blank lines", () => {
@@ -15,6 +21,19 @@ describe("cleanQuotes", () => {
       "hello",
       "world"
     ])
+  })
+})
+
+describe("quoteSize", () => {
+  it("keeps short quotes at the large pull-quote size", () => {
+    expect(quoteSize("Stay curious.")).toBe("large")
+    expect(quoteSize("a".repeat(80))).toBe("large")
+  })
+
+  it("steps down to medium, then small, as the text grows", () => {
+    expect(quoteSize("a".repeat(81))).toBe("medium")
+    expect(quoteSize("a".repeat(170))).toBe("medium")
+    expect(quoteSize("a".repeat(171))).toBe("small")
   })
 })
 

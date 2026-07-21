@@ -10,6 +10,20 @@ export const quotesToText = (quotes: string[]): string => quotes.join("\n")
 export const cleanQuotes = (quotes: string[]): string[] =>
   quotes.map((quote) => quote.trim()).filter((quote) => quote.length > 0)
 
+// Cards are one fixed size, so a quote adapts to the card instead of growing
+// it: short lines render as a large pull-quote and longer ones step down to
+// calmer sizes. "large" is the base `.quote-text` look; the thresholds are
+// rough fits for each tier's font size at the card's width.
+export type QuoteSize = "large" | "medium" | "small"
+
+export const quoteSize = (quote: string): QuoteSize => {
+  if (quote.length <= 80) {
+    return "large"
+  }
+
+  return quote.length <= 170 ? "medium" : "small"
+}
+
 // A whole-day number in local time, so the daily quote is stable across reloads
 // on the same calendar day and advances at local midnight.
 const localDayNumber = (now: Date): number =>
