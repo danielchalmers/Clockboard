@@ -845,6 +845,41 @@ test("add quote flow shows a quote and keeps the daily pick across reloads", asy
   await expect(mantras.locator(".quote-text")).toHaveText(shown)
 })
 
+test("all widgets share one card size, even with a long quote", async ({
+  page,
+  extensionId
+}) => {
+  await openNewTab(page, extensionId)
+
+  // A quote long enough to overflow the old content-driven sizing.
+  const longQuote =
+    "The best way to get started is to quit talking and begin doing, because " +
+    "vision without execution is merely a daydream that never survives its " +
+    "first contact with an ordinary Tuesday morning."
+
+  await page.getByRole("button", { name: "Add widget" }).click()
+  await page.getByRole("button", { name: "Add quote" }).click()
+  await page.getByLabel("Name").fill("Long read")
+  await page.getByLabel("Quotes").fill(longQuote)
+  await page.getByRole("button", { name: "Save quote" }).click()
+  await expect(page.getByRole("heading", { name: "Long read" })).toBeVisible()
+
+  const cards = page.locator(".board-row")
+  const count = await cards.count()
+  const heights = new Set<number>()
+
+  for (let index = 0; index < count; index += 1) {
+    const box = await cards.nth(index).boundingBox()
+    if (!box) {
+      throw new Error("Unable to measure a card")
+    }
+    heights.add(Math.round(box.height))
+  }
+
+  // Every card — clock, countdown, note, quote, habit — is the same height.
+  expect(heights.size).toBe(1)
+})
+
 test("stopwatch counts up, keeps running across a reload, and resets", async ({
   page,
   extensionId

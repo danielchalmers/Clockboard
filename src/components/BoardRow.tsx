@@ -158,7 +158,9 @@ const QuoteField = ({ item, now }: { item: QuoteWidget; now: Date }) => {
       ? dailyQuoteIndex(now, quotes.length)
       : Math.floor(openSeed * quotes.length) % quotes.length
 
-  return <blockquote className="quote-text">{quotes[index] ?? quotes[0]}</blockquote>
+  return (
+    <blockquote className="quote-text">{quotes[index] ?? quotes[0]}</blockquote>
+  )
 }
 
 const StopwatchBody = ({

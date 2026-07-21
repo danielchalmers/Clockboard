@@ -155,6 +155,11 @@ test("captures Dayboard product screenshots", async ({
   ).toHaveCount(0)
 
   await page.setViewportSize({ width: 390, height: 844 })
+  // Scroll through the page once before the stitched full-page capture:
+  // straight after a viewport resize Chromium can leave off-screen tiles
+  // unpainted, which showed up as a blank band across the middle cards.
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+  await page.evaluate(() => window.scrollTo(0, 0))
   await attachScreenshot(testInfo, page, "dayboard-main-mobile", {
     fullPage: true
   })
