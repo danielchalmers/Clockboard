@@ -24,21 +24,21 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
-    "@playwright/test": "^1.52.0",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.3.0",
-    "@types/chrome": "^0.0.309",
-    "@types/node": "^22.15.18",
-    "@types/react": "^18.3.20",
-    "@types/react-dom": "^18.3.6",
+    "@playwright/test": "^1.61.1",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@types/chrome": "^0.2.2",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "@wxt-dev/module-react": "^1.2.2",
-    "jsdom": "^26.1.0",
-    "typescript": "^5.8.3",
-    "vitest": "^3.1.3",
-    "wxt": "^0.20.26"
+    "jsdom": "^29.1.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10",
+    "wxt": "^0.20.27"
   }
 }
