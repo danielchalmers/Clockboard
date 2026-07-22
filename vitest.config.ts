@@ -1,8 +1,6 @@
 import { defineConfig } from "vitest/config"
 
 export default defineConfig({
-  // Vite 8 moved JSX handling from esbuild to oxc, so the transform options
-  // live under `oxc` now.
   oxc: {
     jsx: {
       runtime: "automatic"
