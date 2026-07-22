@@ -4,7 +4,7 @@
 [![Build status](https://img.shields.io/github/actions/workflow/status/danielchalmers/Dayboard/ci.yml?label=build)](https://github.com/danielchalmers/Dayboard/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/danielchalmers/Dayboard/blob/main/LICENSE)
 
-Dayboard is a new tab page for Chrome and Edge. It replaces the blank tab with a board of small widgets — clocks, countdowns, notes, quotes, a stopwatch, timers, and habit trackers — so a new tab can show the few things you want to keep an eye on.
+Dayboard is a new tab page for Chrome and Edge. It replaces the blank tab with a board of small widgets (clocks, countdowns, notes, quotes, stopwatches, timers, habit trackers) so a new tab can show the few things you want to keep an eye on.
 
 It's a free, open-source browser extension. Everything is stored locally and it makes no network requests.
 
@@ -12,23 +12,15 @@ It's a free, open-source browser extension. Everything is stored locally and it 
 
 ## Widgets
 
-Add the widgets you want, edit them in place, and drag to rearrange them. There are seven kinds:
+Add the widgets you want, edit them in place, and drag to rearrange them:
 
-- **Clock** — the current time in any time zone, in your system's 12- or 24-hour format.
-- **Countdown** — the time left until a date, written in plain language (for example, "5 days, 3 hours from now"). It can show as a progress bar instead, and repeat daily, weekly, monthly, or yearly.
-- **Note** — a short sticky note.
-- **Quote** — cycles through a list of quotes you provide, either once a day or on every new tab.
-- **Stopwatch** — counts up, with start, pause, and reset.
-- **Timer** — counts down from a duration you set, with an optional chime when it reaches zero.
-- **Habit** — mark a habit done each day and see your week at a glance.
-
-A greeting and the date sit at the top of the board. The greeting can include your name.
-
-## Layout
-
-- The board is a responsive grid: one column in a narrow window, more columns as the window gets wider. There is no column setting to adjust.
-- It follows your system theme and accent color. Each widget can be set to one of 12 preset colors.
-- Widgets you're not using can be archived and later restored.
+- **Clock**: the current time in any time zone, in your system's 12- or 24-hour format.
+- **Countdown**: the time left until a date, written in plain language (for example, "5 days, 3 hours from now"). It can show as a progress bar instead, and repeat daily, weekly, monthly, or yearly.
+- **Note**: a short sticky note.
+- **Quote**: cycles through a list of quotes you provide, either once a day or on every new tab.
+- **Stopwatch**: counts up, with start, pause, and reset.
+- **Timer**: counts down from a duration you set, with an optional chime when it reaches zero.
+- **Habit**: mark a habit done each day and see your week at a glance.
 
 ## Install
 
@@ -62,13 +54,12 @@ Then load the unpacked build:
 
 - Dayboard requests only the `storage` permission.
 - No accounts, analytics, ads, tracking, or remote code, and no network requests.
-- Your board is saved with `chrome.storage.sync`, so it follows you across browsers where you're signed in. It is not sent anywhere else.
 
 See [PRIVACY_POLICY.md](PRIVACY_POLICY.md) for details.
 
 ## Development
 
-Dayboard is built with [WXT](https://wxt.dev), [React](https://react.dev), and [TypeScript](https://www.typescriptlang.org) as a Manifest V3 extension (Chrome 116+).
+Dayboard is built with [WXT](https://wxt.dev), [React](https://react.dev), and [TypeScript](https://www.typescriptlang.org) as a Manifest V3 extension.
 
 | Command | Description |
 | --- | --- |
