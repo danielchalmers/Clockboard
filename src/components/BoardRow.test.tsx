@@ -88,14 +88,13 @@ describe("BoardRow", () => {
     expect(article).toHaveAttribute("data-color-preset", "amber")
   })
 
-  it("renders a countdown as a progress bar when configured", () => {
+  it("renders a countdown as a progress bar once it has a start", () => {
     const item: Widget = {
       id: "year",
       kind: "countdown",
       title: "Year",
       colorPreset: "sky",
       settings: {
-        display: "progress",
         startAt: "2026-01-01T00:00:00.000Z",
         targetAt: "2026-01-11T00:00:00.000Z"
       }
@@ -109,6 +108,23 @@ describe("BoardRow", () => {
     expect(bar.querySelector(".progress-bar__fill")).toHaveStyle({
       inlineSize: "50%"
     })
+  })
+
+  it("falls back to time remaining when a countdown has no start", () => {
+    const item: Widget = {
+      id: "year",
+      kind: "countdown",
+      title: "Year",
+      colorPreset: "sky",
+      settings: {
+        targetAt: "2026-01-11T00:00:00.000Z"
+      }
+    }
+
+    render(<BoardRow item={item} now={new Date("2026-01-06T00:00:00.000Z")} />)
+
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument()
+    expect(screen.getByText("5 days")).toBeInTheDocument()
   })
 
   it("marks today on a habit", () => {

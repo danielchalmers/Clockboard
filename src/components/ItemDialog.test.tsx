@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 
 import { ItemDialog } from "./ItemDialog"
-import type { Widget } from "~/lib/types"
+import type { CountdownWidget, Widget } from "~/lib/types"
 
 const clockItem: Widget = {
   id: "clock-1",
@@ -23,6 +23,17 @@ const timerItem: Widget = {
     remainingMs: 60_000,
     endsAt: null,
     chime: false
+  }
+}
+
+const countdownItem: CountdownWidget = {
+  id: "countdown-1",
+  kind: "countdown",
+  title: "Launch",
+  colorPreset: "slate",
+  settings: {
+    targetAt: new Date(2026, 0, 2, 9, 0, 0).toISOString(),
+    startAt: new Date(2026, 0, 1, 9, 0, 0).toISOString()
   }
 }
 
@@ -117,6 +128,62 @@ describe("ItemDialog", () => {
 
     expect(onSave).toHaveBeenCalledTimes(1)
     expect(onSave.mock.calls[0]![0].settings.chime).toBe(true)
+  })
+
+  it("clears a countdown's start so the card drops the progress bar", () => {
+    const onSave = vi.fn()
+
+    render(
+      <ItemDialog
+        isOpen
+        item={countdownItem}
+        mode="edit"
+        onClose={() => {}}
+        onSave={onSave}
+      />
+    )
+
+    expect(screen.getByLabelText("Starting from")).toHaveValue("2026-01-01T09:00")
+
+    fireEvent.change(screen.getByLabelText("Starting from"), {
+      target: { value: "" }
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+
+    expect(onSave).toHaveBeenCalledTimes(1)
+    expect(onSave.mock.calls[0]![0].settings.startAt).toBeUndefined()
+    // Clearing the start must not disturb the target.
+    expect(onSave.mock.calls[0]![0].settings.targetAt).toBe(
+      countdownItem.settings.targetAt
+    )
+  })
+
+  it("keeps an hourly repeat on a countdown", () => {
+    const onSave = vi.fn()
+
+    render(
+      <ItemDialog
+        isOpen
+        item={countdownItem}
+        mode="edit"
+        onClose={() => {}}
+        onSave={onSave}
+      />
+    )
+
+    fireEvent.change(screen.getByLabelText("Repeats"), {
+      target: { value: "hourly" }
+    })
+    // Moving the target must leave the span's start (and the bar) alone.
+    fireEvent.change(screen.getByLabelText("When"), {
+      target: { value: "2026-01-03T09:00" }
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+
+    expect(onSave.mock.calls[0]![0].settings.repeat).toBe("hourly")
+    expect(onSave.mock.calls[0]![0].settings.startAt).toBe(
+      countdownItem.settings.startAt
+    )
   })
 
   it("ignores clicks that land inside the dialog", () => {

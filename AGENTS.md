@@ -17,7 +17,7 @@ The product should feel premium, polished, quiet, and useful at a glance. The wh
 - Each widget kind has one shared line icon (`WidgetIcon`) used in the add menu, the card's corner badge, and the edit dialog, with a per-kind tinted chip color.
 - Per-item color is limited to the curated preset picker (`ColorPresetPicker`); the first-run default board uses these presets to feel customized at a glance, and a newly created widget preselects a random colorful preset (never neutral slate). Do not add per-item seconds or 12-hour/24-hour controls.
 - Clocks use the user's system time format through `Intl.DateTimeFormat`.
-- Countdowns use natural language such as `5 days, 3 hours from now`.
+- Countdowns use natural language such as `5 days, 3 hours from now`. A countdown's `startAt` is the only switch between the two presentations: with a start it fills a progress bar, without one it reads as time remaining. New countdowns start from the moment they are added, so a bar is the default with nothing to configure. Do not reintroduce an explicit display setting.
 - User-facing copy should be concise, warm, and not overly explanatory.
 - Dialog titles should name the action and kind, such as `Edit countdown`, not the item name.
 - Widgets can be archived — tucked behind a quiet "Show archived" toggle (by drag onto a drop zone, or via the context menu) and restored the same ways. Keep the active board the clear focus.

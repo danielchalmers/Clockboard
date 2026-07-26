@@ -39,17 +39,24 @@ export interface ClockWidget extends WidgetBase {
   }
 }
 
-export type CountdownDisplay = "text" | "progress"
-
-export type CountdownRepeat = "none" | "daily" | "weekly" | "monthly" | "yearly"
+export type CountdownRepeat =
+  | "none"
+  | "hourly"
+  | "daily"
+  | "weekly"
+  | "monthly"
+  | "yearly"
 
 export interface CountdownWidget extends WidgetBase {
   kind: "countdown"
   settings: {
     targetAt: string
-    /** How to present the countdown; defaults to the remaining-time text. */
-    display?: CountdownDisplay
-    /** Span start for the progress bar (the target is the span end). */
+    /**
+     * Span start for the progress bar (the target is the span end). Setting a
+     * start is what turns the card into a progress bar; clearing it goes back
+     * to the remaining-time text. New countdowns start from their creation
+     * time, so a bar is the default without asking.
+     */
     startAt?: string
     /** When set, the target rolls forward to the next occurrence as it passes. */
     repeat?: CountdownRepeat
@@ -219,8 +226,7 @@ export const createDefaultWidgets = (now = new Date()): Widget[] => {
       colorPreset: "rose",
       settings: {
         targetAt: yearEnd.toISOString(),
-        startAt: yearStart.toISOString(),
-        display: "progress"
+        startAt: yearStart.toISOString()
       }
     }
   ]

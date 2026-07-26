@@ -1,6 +1,7 @@
 import {
   DEFAULT_SETTINGS,
   createDefaultState,
+  type CountdownWidget,
   type DayboardSettings,
   type DayboardState,
   type Widget
@@ -36,14 +37,38 @@ const normalizeSettings = (value: unknown): DayboardSettings => {
   }
 }
 
+// Countdowns used to carry a `display` setting choosing between the remaining
+// time and a progress bar; a start date is now the only switch. Boards written
+// before that still carry the key, so retire it on read — dropping the start
+// alongside it when the card was set to text, which would otherwise come back
+// as a bar the owner never asked for.
+const normalizeCountdown = (widget: CountdownWidget): CountdownWidget => {
+  const { display, startAt, ...settings } = widget.settings as
+    CountdownWidget["settings"] & { display?: string }
+
+  if (display === undefined) {
+    return widget
+  }
+
+  return display === "progress"
+    ? { ...widget, settings: { ...settings, startAt } }
+    : { ...widget, settings }
+}
+
 // Habit history used to be stored unbounded — every completed day key — which
 // after a year or two of use is large enough that two habits blow the sync
 // per-item quota and every save of the board fails. Prune to the visible week
 // on read so existing boards shrink the first time they load.
-const normalizeWidget = (widget: Widget): Widget =>
-  widget.kind === "habit"
-    ? { ...widget, settings: { history: normalizeHistory(widget.settings.history) } }
-    : widget
+const normalizeWidget = (widget: Widget): Widget => {
+  if (widget.kind === "habit") {
+    return {
+      ...widget,
+      settings: { history: normalizeHistory(widget.settings.history) }
+    }
+  }
+
+  return widget.kind === "countdown" ? normalizeCountdown(widget) : widget
+}
 
 const normalizeState = (value: unknown): DayboardState => {
   if (!hasWidgets(value)) {

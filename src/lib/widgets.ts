@@ -32,6 +32,9 @@ const createClockWidget = (): ClockWidget => ({
   }
 })
 
+// The span starts the moment the countdown is added, so a new card shows a
+// progress bar filling toward its target without anyone configuring one.
+// Clearing the start in the dialog is what falls back to the time remaining.
 const createCountdownWidget = (now = new Date()): CountdownWidget => {
   const target = new Date(now)
   target.setHours(target.getHours() + 1, 0, 0, 0)
@@ -42,7 +45,8 @@ const createCountdownWidget = (now = new Date()): CountdownWidget => {
     title: "New countdown",
     colorPreset: randomColorPreset(),
     settings: {
-      targetAt: target.toISOString()
+      targetAt: target.toISOString(),
+      startAt: now.toISOString()
     }
   }
 }

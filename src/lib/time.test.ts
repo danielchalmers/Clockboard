@@ -7,19 +7,30 @@ import {
   getCountdownProgress,
   isSameLocalDay,
   isoInstantToDateTimeInputValue,
-  nextCountdownTarget
+  resolveCountdown
 } from "./time"
-import type { CountdownWidget } from "./types"
+import type { CountdownRepeat, CountdownWidget } from "./types"
 
-const countdownWidget = (targetAt: string): CountdownWidget => ({
+const countdownWidget = (
+  targetAt: string,
+  settings: Partial<CountdownWidget["settings"]> = {}
+): CountdownWidget => ({
   id: "launch",
   kind: "countdown",
   title: "Launch",
   colorPreset: "slate",
   settings: {
-    targetAt
+    targetAt,
+    ...settings
   }
 })
+
+const nextCountdownTarget = (
+  targetAt: string,
+  repeat: CountdownRepeat | undefined,
+  now: Date
+): string =>
+  resolveCountdown(countdownWidget(targetAt, { repeat }), now).settings.targetAt
 
 describe("isSameLocalDay", () => {
   it("is true for two instants on the same local day", () => {
@@ -44,7 +55,7 @@ describe("isSameLocalDay", () => {
   })
 })
 
-describe("nextCountdownTarget", () => {
+describe("resolveCountdown", () => {
   const now = new Date(2026, 5, 19, 12, 0, 0)
   const DAY = 24 * 60 * 60 * 1000
 
@@ -84,20 +95,49 @@ describe("nextCountdownTarget", () => {
     expect(next.getDate()).toBe(25)
     expect(next.getFullYear()).toBe(2026)
   })
+
+  it("rolls an hourly target to the top of the coming hour", () => {
+    // Years of missed occurrences resolve in one step rather than iterating.
+    const target = new Date(2024, 0, 1, 8, 30, 0).toISOString()
+    const next = new Date(nextCountdownTarget(target, "hourly", now))
+
+    expect(next.getTime()).toBeGreaterThan(now.getTime())
+    expect(next.getMinutes()).toBe(30)
+    expect(next.getTime() - now.getTime()).toBeLessThanOrEqual(60 * 60 * 1000)
+  })
+
+  it("moves a repeating span's start with its target so the bar keeps its length", () => {
+    const widget = countdownWidget(new Date(2026, 5, 17, 9, 0, 0).toISOString(), {
+      startAt: new Date(2026, 5, 16, 9, 0, 0).toISOString(),
+      repeat: "daily"
+    })
+
+    const resolved = resolveCountdown(widget, now)
+    const start = new Date(resolved.settings.startAt!).getTime()
+    const target = new Date(resolved.settings.targetAt).getTime()
+
+    expect(target).toBeGreaterThan(now.getTime())
+    expect(target - start).toBe(DAY)
+  })
+
+  it("drops a start that cannot fill a span", () => {
+    const backwards = countdownWidget("2026-01-11T00:00:00.000Z", {
+      startAt: "2026-02-01T00:00:00.000Z"
+    })
+
+    expect(resolveCountdown(backwards, now).settings.startAt).toBeUndefined()
+
+    const unreadable = countdownWidget("2026-01-11T00:00:00.000Z", {
+      startAt: "not a date"
+    })
+    expect(resolveCountdown(unreadable, now).settings.startAt).toBeUndefined()
+  })
 })
 
 describe("getCountdownProgress", () => {
-  const progressWidget: CountdownWidget = {
-    id: "year",
-    kind: "countdown",
-    title: "Year",
-    colorPreset: "slate",
-    settings: {
-      display: "progress",
-      startAt: "2026-01-01T00:00:00.000Z",
-      targetAt: "2026-01-11T00:00:00.000Z"
-    }
-  }
+  const progressWidget = countdownWidget("2026-01-11T00:00:00.000Z", {
+    startAt: "2026-01-01T00:00:00.000Z"
+  })
 
   it("is the fraction of the span elapsed", () => {
     expect(
