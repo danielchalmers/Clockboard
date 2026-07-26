@@ -15,10 +15,9 @@ import {
   formatTimeZoneName,
   getCountdownParts,
   getCountdownProgress,
-  nextCountdownTarget
+  resolveCountdown
 } from "~/lib/time"
 import type {
-  CountdownWidget,
   HabitWidget,
   NoteWidget,
   QuoteWidget,
@@ -481,17 +480,7 @@ export const BoardRow = forwardRef<HTMLElement, BoardRowProps>(function BoardRow
     )
   }
 
-  // A repeating countdown shows the next occurrence, computed on the fly so the
-  // stored target stays the anchor and every tab stays in sync without writes.
-  const resolvedTargetAt = nextCountdownTarget(
-    item.settings.targetAt,
-    item.settings.repeat,
-    now
-  )
-  const countdownItem: CountdownWidget =
-    resolvedTargetAt === item.settings.targetAt
-      ? item
-      : { ...item, settings: { ...item.settings, targetAt: resolvedTargetAt } }
+  const countdownItem = resolveCountdown(item, now)
 
   const repeatLabel =
     item.settings.repeat && item.settings.repeat !== "none"
@@ -501,7 +490,8 @@ export const BoardRow = forwardRef<HTMLElement, BoardRowProps>(function BoardRow
 
   const countdown = getCountdownParts(countdownItem, now)
 
-  if (item.settings.display === "progress") {
+  // A start date is the whole switch: with a span to fill, the card is a bar.
+  if (countdownItem.settings.startAt) {
     const fraction = getCountdownProgress(countdownItem, now)
     const percent = Math.round(fraction * 100)
     const status =

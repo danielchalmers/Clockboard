@@ -48,7 +48,12 @@ const storyState: DayboardState = {
       kind: "countdown",
       title: "Summer vacation",
       colorPreset: "slate",
-      settings: { targetAt: "2025-06-28T13:00:00.000Z" }
+      // A start turns this one into a progress bar, so the story shows both
+      // countdown presentations side by side.
+      settings: {
+        targetAt: "2025-06-28T13:00:00.000Z",
+        startAt: "2025-04-01T13:00:00.000Z"
+      }
     },
     {
       id: "emma-birthday",

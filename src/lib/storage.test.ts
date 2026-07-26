@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { toDayKey } from "./habit"
-import type { DayboardState, HabitWidget } from "./types"
+import type { CountdownWidget, DayboardState, HabitWidget } from "./types"
 
 const STORAGE_KEY = "dayboard-state"
 
@@ -144,6 +144,50 @@ describe("readDayboardState", () => {
     expect(habit.settings.history).toHaveLength(7)
     expect(habit.settings.history).toContain("2026-07-09")
     expect(habit.settings.history).not.toContain("2026-07-02")
+  })
+
+  it("retires a legacy countdown display setting", async () => {
+    const { store } = stubChromeStorage()
+    store.set(STORAGE_KEY, {
+      widgets: [
+        {
+          id: "kept",
+          kind: "countdown",
+          title: "Year",
+          colorPreset: "rose",
+          settings: {
+            targetAt: "2026-12-31T00:00:00.000Z",
+            startAt: "2026-01-01T00:00:00.000Z",
+            display: "progress"
+          }
+        },
+        {
+          id: "dropped",
+          kind: "countdown",
+          title: "Launch",
+          colorPreset: "indigo",
+          settings: {
+            targetAt: "2026-12-31T00:00:00.000Z",
+            startAt: "2026-01-01T00:00:00.000Z",
+            display: "text"
+          }
+        }
+      ]
+    })
+
+    const { readDayboardState } = await import("./storage")
+    const state = await readDayboardState()
+    const [kept, dropped] = state.widgets as CountdownWidget[]
+
+    // The old key goes either way; a card that was showing text keeps showing
+    // it rather than turning into a bar it never had.
+    expect(kept!.settings).toEqual({
+      targetAt: "2026-12-31T00:00:00.000Z",
+      startAt: "2026-01-01T00:00:00.000Z"
+    })
+    expect(dropped!.settings).toEqual({
+      targetAt: "2026-12-31T00:00:00.000Z"
+    })
   })
 
   it("sanitizes malformed settings fields back to their defaults", async () => {

@@ -90,14 +90,52 @@ export const formatTimeZoneName = (date: Date, timeZone: string): string => {
   return parts.find((part) => part.type === "timeZoneName")?.value || timeZone
 }
 
-// For a repeating countdown, roll the target forward (in calendar steps, so the
-// time of day is preserved across DST) to the next occurrence at or after now.
-// Non-repeating or still-future targets are returned unchanged.
-export const nextCountdownTarget = (
+// Move an instant forward by whole repeat steps, using calendar arithmetic so
+// the time of day survives DST and a monthly countdown keeps its day number
+// instead of drifting the way repeated single steps would.
+const advanceByRepeat = (
+  base: Date,
+  repeat: CountdownRepeat | undefined,
+  steps: number
+): Date => {
+  const next = new Date(base)
+
+  if (!repeat || repeat === "none" || steps <= 0) {
+    return next
+  }
+
+  if (repeat === "hourly") {
+    next.setHours(next.getHours() + steps)
+  } else if (repeat === "daily") {
+    next.setDate(next.getDate() + steps)
+  } else if (repeat === "weekly") {
+    next.setDate(next.getDate() + steps * 7)
+  } else if (repeat === "monthly") {
+    next.setMonth(next.getMonth() + steps)
+  } else {
+    next.setFullYear(next.getFullYear() + steps)
+  }
+
+  return next
+}
+
+const APPROXIMATE_STEP_MS: Record<Exclude<CountdownRepeat, "none">, number> = {
+  hourly: 3_600_000,
+  daily: 86_400_000,
+  weekly: 604_800_000,
+  monthly: 2_629_746_000,
+  yearly: 31_556_952_000
+}
+
+// How many repeat steps a stored target has to move to land on its first
+// occurrence after now. The count is estimated from the elapsed span and then
+// nudged into place, so an hourly countdown left alone for a year costs a
+// couple of comparisons rather than thousands of iterations.
+const countdownRepeatSteps = (
   targetAt: string,
   repeat: CountdownRepeat | undefined,
-  now = new Date()
-): string => {
+  now: Date
+): number => {
   const base = new Date(targetAt)
 
   if (
@@ -106,28 +144,70 @@ export const nextCountdownTarget = (
     repeat === "none" ||
     base.getTime() > now.getTime()
   ) {
-    return targetAt
+    return 0
   }
 
-  const next = new Date(base)
-  const nowMs = now.getTime()
-  let guard = 0
+  let steps = Math.max(
+    0,
+    Math.floor((now.getTime() - base.getTime()) / APPROXIMATE_STEP_MS[repeat])
+  )
 
-  while (next.getTime() <= nowMs && guard < 6000) {
-    if (repeat === "daily") {
-      next.setDate(next.getDate() + 1)
-    } else if (repeat === "weekly") {
-      next.setDate(next.getDate() + 7)
-    } else if (repeat === "monthly") {
-      next.setMonth(next.getMonth() + 1)
-    } else {
-      next.setFullYear(next.getFullYear() + 1)
+  while (advanceByRepeat(base, repeat, steps).getTime() <= now.getTime()) {
+    steps += 1
+  }
+
+  while (
+    steps > 0 &&
+    advanceByRepeat(base, repeat, steps - 1).getTime() > now.getTime()
+  ) {
+    steps -= 1
+  }
+
+  return steps
+}
+
+// Resolve what a countdown means right now: a repeating one shows its next
+// occurrence, and a start that cannot fill a bar is dropped. Both ends of a
+// repeating span move together so the bar keeps its length each cycle instead
+// of stretching from the original start forever. The result is computed on the
+// fly — the stored widget stays the anchor, so every tab agrees without writes.
+export const resolveCountdown = (
+  widget: CountdownWidget,
+  now = new Date()
+): CountdownWidget => {
+  const { targetAt, startAt, repeat } = widget.settings
+  const target = new Date(targetAt)
+
+  // Nothing to resolve against an unreadable target; the card says so instead.
+  if (Number.isNaN(target.getTime())) {
+    return widget
+  }
+
+  const start = startAt ? new Date(startAt) : null
+  const steps = countdownRepeatSteps(targetAt, repeat, now)
+
+  // A start that does not parse, or that does not sit before the target, is not
+  // a span a bar can fill; the card falls back to the remaining-time text.
+  const hasSpan =
+    start !== null &&
+    !Number.isNaN(start.getTime()) &&
+    start.getTime() < target.getTime()
+
+  if (steps === 0 && hasSpan === Boolean(startAt)) {
+    return widget
+  }
+
+  return {
+    ...widget,
+    settings: {
+      ...widget.settings,
+      targetAt: advanceByRepeat(target, repeat, steps).toISOString(),
+      startAt:
+        hasSpan && start
+          ? advanceByRepeat(start, repeat, steps).toISOString()
+          : undefined
     }
-
-    guard += 1
   }
-
-  return next.toISOString()
 }
 
 export const getCountdownParts = (

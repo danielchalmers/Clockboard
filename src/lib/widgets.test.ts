@@ -41,6 +41,18 @@ describe("createWidget", () => {
     // so seeing variety proves the pick is actually random.
     expect(new Set(presets).size).toBeGreaterThan(1)
   })
+
+  it("starts a countdown's span at the moment it is added", () => {
+    const now = new Date(2026, 5, 19, 12, 34, 0)
+    const countdown = createActualWidget("countdown", now)
+
+    // A start is what makes the card a progress bar, so a brand-new countdown
+    // fills toward its target without anyone choosing a display.
+    expect(countdown.settings.startAt).toBe(now.toISOString())
+    expect(new Date(countdown.settings.targetAt).getTime()).toBeGreaterThan(
+      now.getTime()
+    )
+  })
 })
 
 describe("moveWidgetToIndex", () => {

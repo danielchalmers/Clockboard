@@ -1078,7 +1078,7 @@ test("add and edit countdown works without a time-zone field", async ({
   await expect(page.getByRole("heading", { name: "Launch day" })).toBeVisible()
 })
 
-test("a countdown can be shown as a progress bar", async ({
+test("a new countdown fills a progress bar from when it was added", async ({
   page,
   extensionId
 }) => {
@@ -1086,10 +1086,13 @@ test("a countdown can be shown as a progress bar", async ({
 
   await page.getByRole("button", { name: "Add widget" }).click()
   await page.getByRole("button", { name: "Add countdown" }).click()
+
+  // The start is prefilled with the moment the widget was added, so the bar
+  // needs no setup at all.
+  await expect(page.getByLabel("Starting from")).not.toHaveValue("")
   await page.getByLabel("Name").fill("Project")
-  await page.getByLabel("When").fill("2026-12-31T00:00")
-  await page.getByLabel("Display").selectOption("progress")
-  await page.getByLabel("Starting from").fill("2026-01-01T00:00")
+  await page.getByLabel("When").fill("2099-12-31T00:00")
+  await page.getByLabel("Starting from").fill("2020-01-01T00:00")
   await page.getByRole("button", { name: "Save countdown" }).click()
 
   const card = page
@@ -1111,6 +1114,35 @@ test("a countdown can be shown as a progress bar", async ({
   ).toBeVisible()
 })
 
+test("clearing a countdown's start goes back to the time remaining", async ({
+  page,
+  extensionId
+}) => {
+  // A tall viewport keeps the appended widget and its context menu on screen, so
+  // editing it never has to scroll (scrolling dismisses an open widget menu).
+  await page.setViewportSize({ width: 1280, height: 1600 })
+  await openNewTab(page, extensionId)
+
+  await page.getByRole("button", { name: "Add widget" }).click()
+  await page.getByRole("button", { name: "Add countdown" }).click()
+  await page.getByLabel("Name").fill("Project")
+  await page.getByLabel("When").fill("2099-12-31T00:00")
+  await page.getByRole("button", { name: "Save countdown" }).click()
+
+  const card = page
+    .locator(".board-row")
+    .filter({ has: page.getByRole("heading", { name: "Project" }) })
+  await expect(card.getByRole("progressbar")).toBeVisible()
+
+  await openWidgetMenu(page, "Project")
+  await page.getByRole("menuitem", { name: "Edit Project" }).click()
+  await page.getByLabel("Starting from").fill("")
+  await page.getByRole("button", { name: "Save changes" }).click()
+
+  await expect(card.getByRole("progressbar")).toHaveCount(0)
+  await expect(card.getByText("from now")).toBeVisible()
+})
+
 test("a recurring countdown rolls forward to its next occurrence", async ({
   page,
   extensionId
@@ -1123,6 +1155,7 @@ test("a recurring countdown rolls forward to its next occurrence", async ({
   // A target well in the past; weekly repeat should surface a future occurrence.
   await page.getByLabel("When").fill("2020-01-06T09:00")
   await page.getByLabel("Repeats").selectOption("weekly")
+  await page.getByLabel("Starting from").fill("")
   await page.getByRole("button", { name: "Save countdown" }).click()
 
   const card = page
@@ -1133,6 +1166,32 @@ test("a recurring countdown rolls forward to its next occurrence", async ({
   await expect(card.getByText("from now")).toBeVisible()
   await expect(card.locator(".board-row__detail")).toContainText(
     "repeats weekly"
+  )
+})
+
+test("an hourly countdown rolls forward within the hour", async ({
+  page,
+  extensionId
+}) => {
+  await openNewTab(page, extensionId)
+
+  await page.getByRole("button", { name: "Add widget" }).click()
+  await page.getByRole("button", { name: "Add countdown" }).click()
+  await page.getByLabel("Name").fill("Stand up and stretch")
+  // Years of missed occurrences still resolve to the coming hour.
+  await page.getByLabel("When").fill("2020-01-06T09:15")
+  await page.getByLabel("Repeats").selectOption("hourly")
+  await page.getByLabel("Starting from").fill("")
+  await page.getByRole("button", { name: "Save countdown" }).click()
+
+  const card = page
+    .locator(".board-row")
+    .filter({ has: page.getByRole("heading", { name: "Stand up and stretch" }) })
+
+  // The next occurrence is always under an hour out, so it never reads as past.
+  await expect(card.getByText("ago")).toHaveCount(0)
+  await expect(card.locator(".board-row__detail")).toContainText(
+    "repeats hourly"
   )
 })
 

@@ -9,7 +9,6 @@ import {
 import { quotesToText, textToQuotes } from "~/lib/quotes"
 import { msToParts, partsToMs, type DurationParts } from "~/lib/timers"
 import type {
-  CountdownDisplay,
   CountdownRepeat,
   QuoteRotation,
   Widget,
@@ -109,35 +108,12 @@ export const ItemDialog = ({
     setDraft((current) =>
       current?.kind === "countdown" && targetAt
         ? {
-            // Preserve display/startAt/repeat when only the target changes.
+            // Preserve startAt/repeat when only the target changes.
             ...current,
             settings: { ...current.settings, targetAt }
           }
         : current
     )
-  }
-
-  const updateDisplay = (value: string) => {
-    const display = value as CountdownDisplay
-
-    setDraft((current) => {
-      if (current?.kind !== "countdown") {
-        return current
-      }
-
-      return {
-        ...current,
-        settings: {
-          ...current.settings,
-          display,
-          // Progress needs a span start; default it to now if none is set yet.
-          startAt:
-            display === "progress" && !current.settings.startAt
-              ? new Date().toISOString()
-              : current.settings.startAt
-        }
-      }
-    })
   }
 
   const updateRepeat = (value: string) => {
@@ -151,15 +127,22 @@ export const ItemDialog = ({
     )
   }
 
+  // Clearing the field is a real choice, not an intermediate state: an empty
+  // start drops the progress bar and puts the card back to time remaining.
   const updateStartAt = (value: string) => {
     setStartInput(value)
     const startAt = dateTimeInputValueToIsoInstant(value)
 
-    setDraft((current) =>
-      current?.kind === "countdown" && startAt
-        ? { ...current, settings: { ...current.settings, startAt } }
-        : current
-    )
+    setDraft((current) => {
+      if (current?.kind !== "countdown" || (value !== "" && !startAt)) {
+        return current
+      }
+
+      return {
+        ...current,
+        settings: { ...current.settings, startAt: startAt ?? undefined }
+      }
+    })
   }
 
   const updateQuotes = (value: string) => {
@@ -304,6 +287,7 @@ export const ItemDialog = ({
                     onChange={(event) => updateRepeat(event.currentTarget.value)}
                     value={draft.settings.repeat ?? "none"}>
                     <option value="none">Never</option>
+                    <option value="hourly">Hourly</option>
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
@@ -312,39 +296,20 @@ export const ItemDialog = ({
                 </label>
 
                 <label className="form-label-group">
-                  <span>Display</span>
-                  <select
-                    onChange={(event) => updateDisplay(event.currentTarget.value)}
-                    value={draft.settings.display ?? "text"}>
-                    <option value="text">Time remaining</option>
-                    <option value="progress">Progress bar</option>
-                  </select>
+                  <span>Starting from</span>
+                  <input
+                    onChange={(event) => updateStartAt(event.currentTarget.value)}
+                    type="datetime-local"
+                    value={
+                      startInput ??
+                      isoInstantToDateTimeInputValue(draft.settings.startAt ?? "")
+                    }
+                  />
                 </label>
-
-                {draft.settings.display === "progress" ? (
-                  <>
-                    <label className="form-label-group">
-                      <span>Starting from</span>
-                      <input
-                        onChange={(event) =>
-                          updateStartAt(event.currentTarget.value)
-                        }
-                        required
-                        type="datetime-local"
-                        value={
-                          startInput ??
-                          isoInstantToDateTimeInputValue(
-                            draft.settings.startAt ?? ""
-                          )
-                        }
-                      />
-                    </label>
-                    <p className="form-note">
-                      The bar fills from this date (when the countdown began) to
-                      the target.
-                    </p>
-                  </>
-                ) : null}
+                <p className="form-note">
+                  The card fills a bar from here to the target. Clear it to show
+                  the time remaining instead.
+                </p>
               </>
             ) : null}
 
