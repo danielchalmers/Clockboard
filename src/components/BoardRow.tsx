@@ -5,6 +5,7 @@ import {
   useState,
   type ComponentPropsWithoutRef,
   type CSSProperties,
+  type KeyboardEvent,
   type ReactNode
 } from "react"
 
@@ -301,6 +302,16 @@ const HabitBody = ({
   const done = isDoneToday(history, now)
   const week = weekDays(now)
   const todayKey = toDayKey(now)
+  // Days that haven't arrived can't be marked, so navigation stops at today.
+  const lastMarkable = Math.max(
+    week.findIndex((day) => toDayKey(day) === todayKey),
+    0
+  )
+  const dots = useRef<(HTMLButtonElement | null)[]>([])
+  // The row is a single tab stop — today, until the arrows move it — rather
+  // than seven, which a board of habits would turn into a long walk.
+  const [focused, setFocused] = useState<number | null>(null)
+  const tabStop = focused ?? lastMarkable
 
   const toggle = (day: Date) =>
     onWidgetChange?.({
@@ -308,9 +319,27 @@ const HabitBody = ({
       settings: { history: toggleDay(history, day) }
     })
 
+  const moveFocus = (event: KeyboardEvent<HTMLButtonElement>, from: number) => {
+    const to = {
+      ArrowLeft: from - 1,
+      ArrowRight: from + 1,
+      Home: 0,
+      End: lastMarkable
+    }[event.key]
+
+    if (to === undefined) {
+      return
+    }
+
+    event.preventDefault()
+    const next = Math.min(Math.max(to, 0), lastMarkable)
+    setFocused(next)
+    dots.current[next]?.focus()
+  }
+
   return (
     <>
-      <div className="habit-week" role="group" aria-label="This week">
+      <div className="habit-week">
         {/* One narrow letter per column. The dots carry their own full date,
             so the headers are decoration for screen readers. */}
         <div className="habit-weekdays" aria-hidden="true">
@@ -318,8 +347,14 @@ const HabitBody = ({
             <span key={index}>{letter}</span>
           ))}
         </div>
-        <div className="habit-days">
-          {week.map((day) => {
+        {/* A toolbar rather than a plain group: it tells a screen reader that
+            the arrows walk the row, which is what the roving tab stop does. */}
+        <div
+          aria-label="This week"
+          aria-orientation="horizontal"
+          className="habit-days"
+          role="toolbar">
+          {week.map((day, index) => {
             const key = toDayKey(day)
             const label = formatDayLabel(day)
             // Day keys sort chronologically as strings, so a plain compare
@@ -341,6 +376,11 @@ const HabitBody = ({
                 disabled={key > todayKey}
                 key={key}
                 onClick={() => toggle(day)}
+                onKeyDown={(event) => moveFocus(event, index)}
+                ref={(node) => {
+                  dots.current[index] = node
+                }}
+                tabIndex={index === tabStop ? 0 : -1}
                 title={label}
                 type="button">
                 <span className="habit-day__dot" />

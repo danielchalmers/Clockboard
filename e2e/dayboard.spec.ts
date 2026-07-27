@@ -1025,7 +1025,7 @@ test("add habit flow marks today and persists", async ({
     .locator(".board-row")
     .filter({ has: page.getByRole("heading", { name: "Read" }) })
 
-  await expect(card.getByRole("group", { name: "This week" })).toBeVisible()
+  await expect(card.getByRole("toolbar", { name: "This week" })).toBeVisible()
   await expect(card.locator(".habit-day")).toHaveCount(7)
 
   const today = card.locator(".habit-day--today")
@@ -1073,6 +1073,16 @@ test("a habit dot fills in a day that was missed", async ({
     card.getByRole("button", { name: "Thursday, March 5" })
   ).toBeDisabled()
 
+  // Arrows walk the row and mark a day without waking the card's own keyboard
+  // drag, which listens for the same keys one level up.
+  await card.getByRole("button", { name: "Monday, March 2" }).focus()
+  await page.keyboard.press("ArrowLeft")
+  const sunday = card.getByRole("button", { name: "Sunday, March 1" })
+  await expect(sunday).toBeFocused()
+  await page.keyboard.press("Enter")
+  await expect(sunday).toHaveAttribute("aria-pressed", "true")
+  await expect(page.locator(".board-row--dragging")).toHaveCount(0)
+
   const settings = await page.evaluate(async () => {
     const stored = await chrome.storage.sync.get("dayboard-state")
     const { widgets } = stored["dayboard-state"] as {
@@ -1082,7 +1092,7 @@ test("a habit dot fills in a day that was missed", async ({
     return widgets.find((widget) => widget.title === "Read")?.settings
   })
 
-  expect(settings).toEqual({ history: ["2026-03-02"] })
+  expect(settings).toEqual({ history: ["2026-03-01", "2026-03-02"] })
 })
 
 test("a habit marked after midnight credits the new day", async ({
