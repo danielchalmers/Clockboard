@@ -1075,12 +1075,12 @@ test("a habit dot fills in a day that was missed", async ({
 
   // Arrows walk the row and mark a day without waking the card's own keyboard
   // drag, which listens for the same keys one level up.
-  await card.getByRole("button", { name: "Monday, March 2" }).focus()
+  await card.getByRole("button", { name: "Wednesday, March 4" }).focus()
   await page.keyboard.press("ArrowLeft")
-  const sunday = card.getByRole("button", { name: "Sunday, March 1" })
-  await expect(sunday).toBeFocused()
+  const tuesday = card.getByRole("button", { name: "Tuesday, March 3" })
+  await expect(tuesday).toBeFocused()
   await page.keyboard.press("Enter")
-  await expect(sunday).toHaveAttribute("aria-pressed", "true")
+  await expect(tuesday).toHaveAttribute("aria-pressed", "true")
   await expect(page.locator(".board-row--dragging")).toHaveCount(0)
 
   const settings = await page.evaluate(async () => {
@@ -1092,7 +1092,7 @@ test("a habit dot fills in a day that was missed", async ({
     return widgets.find((widget) => widget.title === "Read")?.settings
   })
 
-  expect(settings).toEqual({ history: ["2026-03-01", "2026-03-02"] })
+  expect(settings).toEqual({ history: ["2026-03-02", "2026-03-03"] })
 })
 
 test("a habit marked after midnight credits the new day", async ({

@@ -59,51 +59,34 @@ export const normalizeHistory = (value: unknown): string[] =>
       )
     : []
 
-interface WeekInfo {
-  firstDay?: number
-}
+// The week rolls over on Monday, in `Date.getDay` numbering. This was read
+// from the locale for a while, which sounds better than it works: the browser
+// exposes no way to see the first-day-of-week a user picked in Windows or
+// macOS, so `Intl.Locale` only ever answers what the region conventionally
+// does — an en-US board showed Sunday no matter what the machine was set to.
+// One fixed, standard week (ISO-8601) beats a guess that can't be corrected
+// without adding a setting.
+export const WEEK_START_DAY = 1
 
-type LocaleWithWeekInfo = Intl.Locale & {
-  getWeekInfo?: () => WeekInfo
-  weekInfo?: WeekInfo
-}
-
-// Which weekday the user's week rolls over on: Sunday in the US, Monday across
-// most of Europe. `Intl.Locale` reports it as 1 (Monday) through 7 (Sunday),
-// which `% 7` turns into the 0-is-Sunday numbering `Date.getDay` uses. Older
-// engines expose the same data as a `weekInfo` property instead of a method,
-// and anything that has neither falls back to Sunday.
-export const weekStartDay = (
-  locale = typeof navigator === "undefined" ? "en-US" : navigator.language
-): number => {
-  try {
-    const resolved = new Intl.Locale(locale) as LocaleWithWeekInfo
-    const info = resolved.getWeekInfo?.() ?? resolved.weekInfo
-
-    return typeof info?.firstDay === "number" ? info.firstDay % 7 : 0
-  } catch {
-    return 0
-  }
-}
-
-// Midnight on the first day of the week `date` falls in.
-export const startOfWeek = (date: Date, firstDay = weekStartDay()): Date => {
+// Midnight on the Monday of the week `date` falls in.
+export const startOfWeek = (date: Date): Date => {
   const start = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const shift = (start.getDay() - WEEK_START_DAY + DAYS_PER_WEEK) % DAYS_PER_WEEK
 
-  return addDays(start, -((start.getDay() - firstDay + DAYS_PER_WEEK) % DAYS_PER_WEEK))
+  return addDays(start, -shift)
 }
 
-// The week the card draws, from its first day to its last. It holds its shape
-// as the days fill in rather than sliding a day left every midnight.
-export const weekDays = (now: Date, firstDay = weekStartDay()): Date[] => {
-  const start = startOfWeek(now, firstDay)
+// The week the card draws, from Monday to Sunday. It holds its shape as the
+// days fill in rather than sliding a day left every midnight.
+export const weekDays = (now: Date): Date[] => {
+  const start = startOfWeek(now)
 
   return Array.from({ length: DAYS_PER_WEEK }, (_, day) => addDays(start, day))
 }
 
 // A habit card redraws with every tick of the board's clock, and each one
-// formats a fortnight of dates, so the formatters are built once rather than
-// per render — the locale can't change without a reload anyway.
+// formats a week of dates, so the formatters are built once rather than per
+// render — the locale can't change without a reload anyway.
 const rangeFormat = new Intl.DateTimeFormat(undefined, {
   month: "short",
   day: "numeric"
@@ -128,12 +111,8 @@ export const formatWeekRange = (days: Date[]): string => {
 // The full date a dot stands for, for its accessible name.
 export const formatDayLabel = (date: Date): string => dayLabelFormat.format(date)
 
-// The column headers above the dots: one narrow letter per weekday.
-export const weekdayInitials = (firstDay = weekStartDay()): string[] => {
-  // Any week works for the headers; 2024-01-07 was a Sunday.
-  const sunday = new Date(2024, 0, 7)
-
-  return Array.from({ length: DAYS_PER_WEEK }, (_, day) =>
-    initialFormat.format(addDays(sunday, (firstDay + day) % DAYS_PER_WEEK))
-  )
-}
+// The column headers above the dots: one narrow letter per weekday, still
+// named in the user's language even though the week itself always starts on
+// Monday. Any Monday works for the headers; 2024-01-01 was one.
+export const weekdayInitials = (): string[] =>
+  weekDays(new Date(2024, 0, 1)).map((day) => initialFormat.format(day))

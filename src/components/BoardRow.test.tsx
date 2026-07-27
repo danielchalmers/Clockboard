@@ -221,8 +221,8 @@ describe("BoardRow", () => {
     fireEvent.click(tomorrow)
 
     expect(onWidgetChange).not.toHaveBeenCalled()
-    // Wednesday of a Sunday-first week leaves Thursday through Saturday ahead.
-    expect(container.querySelectorAll(".habit-day--future")).toHaveLength(3)
+    // Wednesday leaves Thursday through Sunday ahead of it.
+    expect(container.querySelectorAll(".habit-day--future")).toHaveLength(4)
   })
 
   it("names the week the habit dots cover", () => {
@@ -240,7 +240,7 @@ describe("BoardRow", () => {
     expect(
       screen.getByRole("toolbar", { name: "This week" })
     ).toBeInTheDocument()
-    expect(screen.getByText(/Mar 1\s*–\s*7/)).toBeInTheDocument()
+    expect(screen.getByText(/Mar 2\s*–\s*8/)).toBeInTheDocument()
     // Each dot names its own day for a pointer as well as a screen reader.
     expect(
       screen.getByRole("button", { name: formatDayLabel(now) })
@@ -265,7 +265,7 @@ describe("BoardRow", () => {
 
     // Today is the row's only tab stop, so a board of habits stays walkable.
     expect(dot(4)).toHaveAttribute("tabindex", "0")
-    expect(dot(1)).toHaveAttribute("tabindex", "-1")
+    expect(dot(2)).toHaveAttribute("tabindex", "-1")
 
     dot(4).focus()
     fireEvent.keyDown(dot(4), { key: "ArrowLeft" })
@@ -274,14 +274,14 @@ describe("BoardRow", () => {
     expect(dot(4)).toHaveAttribute("tabindex", "-1")
 
     fireEvent.keyDown(dot(3), { key: "Home" })
-    expect(dot(1)).toHaveFocus()
+    expect(dot(2)).toHaveFocus()
 
-    // Left from the first day and right past today both stay put: there is
-    // nothing behind Sunday, and the days ahead cannot be marked.
-    fireEvent.keyDown(dot(1), { key: "ArrowLeft" })
-    expect(dot(1)).toHaveFocus()
+    // Left from Monday and right past today both stay put: there is nothing
+    // behind the start of the week, and the days ahead cannot be marked.
+    fireEvent.keyDown(dot(2), { key: "ArrowLeft" })
+    expect(dot(2)).toHaveFocus()
 
-    fireEvent.keyDown(dot(1), { key: "End" })
+    fireEvent.keyDown(dot(2), { key: "End" })
     expect(dot(4)).toHaveFocus()
     fireEvent.keyDown(dot(4), { key: "ArrowRight" })
     expect(dot(4)).toHaveFocus()

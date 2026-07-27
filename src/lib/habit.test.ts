@@ -9,11 +9,10 @@ import {
   toDayKey,
   toggleDay,
   weekdayInitials,
-  weekDays,
-  weekStartDay
+  weekDays
 } from "./habit"
 
-// A Friday, so the Sunday-first and Monday-first weeks start on different days.
+// A Friday, so the week has days on both sides of today.
 const now = new Date(2026, 5, 19, 9, 0, 0)
 const key = (offset: number) => {
   const d = new Date(now)
@@ -85,54 +84,40 @@ describe("normalizeHistory", () => {
   })
 })
 
-describe("weekStartDay", () => {
-  it("reads the first weekday from the locale", () => {
-    expect(weekStartDay("en-US")).toBe(0)
-    expect(weekStartDay("en-GB")).toBe(1)
-    expect(weekStartDay("fr-FR")).toBe(1)
-  })
-
-  it("falls back to Sunday for a locale it cannot parse", () => {
-    expect(weekStartDay("not a locale")).toBe(0)
-  })
-})
-
 describe("startOfWeek", () => {
-  it("rolls back to the locale's first weekday at midnight", () => {
-    expect(toDayKey(startOfWeek(now, 0))).toBe("2026-06-14")
-    expect(toDayKey(startOfWeek(now, 1))).toBe("2026-06-15")
-    expect(startOfWeek(now, 0).getHours()).toBe(0)
+  it("rolls back to Monday at midnight", () => {
+    expect(toDayKey(startOfWeek(now))).toBe("2026-06-15")
+    expect(startOfWeek(now).getHours()).toBe(0)
   })
 
-  it("keeps a day that is already the first weekday", () => {
-    const sunday = new Date(2026, 5, 14, 22, 0, 0)
+  it("keeps a day that is already a Monday", () => {
+    const monday = new Date(2026, 5, 15, 22, 0, 0)
 
-    expect(toDayKey(startOfWeek(sunday, 0))).toBe("2026-06-14")
+    expect(toDayKey(startOfWeek(monday))).toBe("2026-06-15")
+  })
+
+  it("treats Sunday as the end of the week it closes, not the start", () => {
+    const sunday = new Date(2026, 5, 21, 9, 0, 0)
+
+    expect(toDayKey(startOfWeek(sunday))).toBe("2026-06-15")
   })
 })
 
 describe("weekDays", () => {
-  it("runs the whole week today falls in, past today", () => {
-    expect(weekDays(now, 0).map(toDayKey)).toEqual([
-      "2026-06-14",
+  it("runs Monday to Sunday around today", () => {
+    expect(weekDays(now).map(toDayKey)).toEqual([
       "2026-06-15",
       "2026-06-16",
       "2026-06-17",
       "2026-06-18",
       "2026-06-19",
-      "2026-06-20"
+      "2026-06-20",
+      "2026-06-21"
     ])
   })
 
-  it("shifts with a Monday-first locale", () => {
-    const week = weekDays(now, 1).map(toDayKey)
-
-    expect(week[0]).toBe("2026-06-15")
-    expect(week[6]).toBe("2026-06-21")
-  })
-
   it("never draws a day the history has already pruned", () => {
-    expect(normalizeHistory(weekDays(now, 1).map(toDayKey))).toHaveLength(
+    expect(normalizeHistory(weekDays(now).map(toDayKey))).toHaveLength(
       STORED_DAYS
     )
   })
@@ -140,17 +125,16 @@ describe("weekDays", () => {
 
 describe("formatWeekRange", () => {
   it("reads as a date range and folds a shared month", () => {
-    expect(formatWeekRange(weekDays(now, 0))).toMatch(/Jun 14\s*–\s*20/)
-    expect(formatWeekRange(weekDays(new Date(2026, 6, 1), 0))).toMatch(
-      /Jun 28\s*–\s*Jul 4/
+    expect(formatWeekRange(weekDays(now))).toMatch(/Jun 15\s*–\s*21/)
+    expect(formatWeekRange(weekDays(new Date(2026, 6, 1)))).toMatch(
+      /Jun 29\s*–\s*Jul 5/
     )
     expect(formatWeekRange([])).toBe("")
   })
 })
 
 describe("weekdayInitials", () => {
-  it("starts on the locale's first weekday", () => {
-    expect(weekdayInitials(0)).toEqual(["S", "M", "T", "W", "T", "F", "S"])
-    expect(weekdayInitials(1)).toEqual(["M", "T", "W", "T", "F", "S", "S"])
+  it("starts on Monday", () => {
+    expect(weekdayInitials()).toEqual(["M", "T", "W", "T", "F", "S", "S"])
   })
 })
