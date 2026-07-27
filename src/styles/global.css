@@ -544,10 +544,14 @@ details > summary::-webkit-details-marker {
 
 /* ── Board Layout ──────────────────────────────────────────────────────── */
 
+/* `auto-fill`, not `auto-fit`: auto-fit collapses the tracks nothing landed in,
+   so a lone card — one archived widget, or a board pared down to a single
+   widget — stretched itself across every column it could reach. Keeping the
+   empty tracks holds every card at one column's width, whatever the count. */
 .board-list {
   display: grid;
   gap: 28px;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
 }
 
 /* ── Archive ───────────────────────────────────────────────────────────── */
