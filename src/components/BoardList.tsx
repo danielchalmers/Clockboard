@@ -84,6 +84,28 @@ const FORM_FIELD_SELECTOR =
 const isFromInteractiveControl = (event: { target: EventTarget | null }) =>
   Boolean((event.target as HTMLElement | null)?.closest(FORM_FIELD_SELECTOR))
 
+// Right-clicking a stretch of selected text is a reach for Copy, not for the
+// card's own menu, so the card steps aside and lets the browser's menu through.
+// Only a selection inside this card counts — a leftover highlight somewhere
+// else on the page should not disarm the menu here.
+export const hasSelectionWithin = (card: HTMLElement): boolean => {
+  const selection = card.ownerDocument.defaultView?.getSelection()
+
+  if (!selection || selection.isCollapsed) {
+    return false
+  }
+
+  for (let index = 0; index < selection.rangeCount; index += 1) {
+    const range = selection.getRangeAt(index)
+
+    if (!range.collapsed && card.contains(range.commonAncestorContainer)) {
+      return true
+    }
+  }
+
+  return false
+}
+
 interface OpenMenu {
   id: string
   x: number
@@ -383,8 +405,12 @@ const SortableBoardRow = memo(({
       return
     }
 
-    // Let a note's textarea (etc.) keep its native copy/paste menu.
-    if (isFromInteractiveControl(event)) {
+    // Let a note's textarea (etc.) keep its native copy/paste menu, and step
+    // aside entirely when there is text selected on this card to copy.
+    if (
+      isFromInteractiveControl(event) ||
+      hasSelectionWithin(event.currentTarget)
+    ) {
       return
     }
 

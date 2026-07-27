@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { createEvent, fireEvent, render, screen } from "@testing-library/react"
 import { beforeAll, describe, expect, it, vi } from "vitest"
 
 import { BoardList, isDaySensitive, isTimeSensitive } from "./BoardList"
@@ -298,6 +298,39 @@ describe("BoardList", () => {
 
     fireEvent.keyDown(panel, { key: "End" })
     expect(document.activeElement).toBe(edit)
+  })
+
+  it("leaves the native menu alone when text on the card is selected", () => {
+    const { container } = renderBoard()
+
+    const card = container.querySelector(".board-row--draggable") as HTMLElement
+    const title = card.querySelector(".board-row__title") as HTMLElement
+    const selection = window.getSelection()!
+    const range = document.createRange()
+    range.selectNodeContents(title)
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    const event = createEvent.contextMenu(card, { clientX: 10, clientY: 10 })
+    fireEvent(card, event)
+
+    expect(event.defaultPrevented).toBe(false)
+    expect(screen.queryByLabelText("Actions for Local time")).not.toBeInTheDocument()
+  })
+
+  it("still opens its own menu when the selection sits on another card", () => {
+    const { container } = renderBoard()
+
+    const cards = container.querySelectorAll<HTMLElement>(".board-row--draggable")
+    const selection = window.getSelection()!
+    const range = document.createRange()
+    range.selectNodeContents(cards[1]!.querySelector(".board-row__title")!)
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    fireEvent.contextMenu(cards[0]!, { clientX: 10, clientY: 10 })
+
+    expect(screen.getByLabelText("Actions for Local time")).toBeInTheDocument()
   })
 
   it("closes the menu when an item is chosen", () => {
