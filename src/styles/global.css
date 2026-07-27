@@ -905,7 +905,9 @@ details > summary::-webkit-details-marker {
    padded outer ring as the drag handle. Grabbing the border starts a drag while
    the body text — and the empty space between rows — stay non-draggable. */
 .board-row__frame {
-  --frame-ring: 12px;
+  /* Wide enough to grab without aiming. The card's own padding is 24-30px, so
+     an 18px ring still stops short of the text and controls inside. */
+  --frame-ring: 18px;
   position: absolute;
   inset: 0;
   z-index: 0;
