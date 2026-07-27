@@ -89,8 +89,13 @@ export const BoardDnd = ({
   const [restorePreview, setRestorePreview] = useState<Widget[] | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor, {
+      // Any movement at all lifts the card. An 8px threshold meant the pointer
+      // ran ahead of the card for the first few pixels of every drag, which
+      // reads as lag rather than as a deliberate guard — and the drag handle is
+      // the card's own ring, where there is no click for a threshold to
+      // protect.
       activationConstraint: {
-        distance: 8
+        distance: 0
       }
     }),
     useSensor(KeyboardSensor, {
