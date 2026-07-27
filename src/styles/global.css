@@ -19,6 +19,11 @@
   --surface-strong: hsl(40, 20%, 94%);
   --accent: Highlight;
   --accent-text: HighlightText;
+  /* Pressed states stay in the accent's own family — shaded toward black
+     rather than blended with the page ink, which used to turn a colored
+     accent gray under the pointer. */
+  --accent-hover: color-mix(in srgb, var(--accent) 88%, #000);
+  --accent-active: color-mix(in srgb, var(--accent) 78%, #000);
   --danger: #e03131;
 
   /* Shadows */
@@ -154,6 +159,12 @@ a {
   text-decoration: none;
 }
 
+/* Highlighting text anywhere on the board picks up the browser's accent, the
+   same color the primary buttons and focus rings are drawn from. */
+::selection {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
 /* ── Page Layout ───────────────────────────────────────────────────────── */
 
 /* The board floats in the middle of the viewport: clear of the omnibox
@@ -236,11 +247,11 @@ a {
 }
 
 .primary-button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 90%, var(--text));
+  background: var(--accent-hover);
 }
 
 .primary-button:active:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 84%, var(--text));
+  background: var(--accent-active);
 }
 
 .secondary-button {
@@ -1010,6 +1021,12 @@ label.form-label-group span,
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+input,
+select,
+textarea {
+  caret-color: var(--accent);
 }
 
 input,
