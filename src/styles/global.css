@@ -1072,10 +1072,15 @@ details > summary::-webkit-details-marker {
   box-shadow: var(--shadow-card-hover);
 }
 
-/* The in-list card while it is being dragged: a calm, dimmed placeholder that
-   holds the slot. The lifted card the cursor carries is the drag overlay. */
+/* The in-list card while it is being dragged. The overlay under the cursor is
+   already the card, so drawing a faded second copy in the slot just made it
+   look like the widget had been duplicated. Hide it and let the gap the other
+   cards open up be the only thing that marks where it will land. The slot
+   itself has to stay — it is the drop target the sort is measured against —
+   and it goes transparent rather than `visibility: hidden`, which would drop
+   the card out of the accessibility tree and blur it mid keyboard drag. */
 .board-row--dragging {
-  opacity: 0.4;
+  opacity: 0;
   animation: none !important;
   transition: none !important;
 }
