@@ -541,6 +541,33 @@ test("the menu's Move back reorders even after a widget was archived", async ({
   ])
 })
 
+test("right-clicking selected text gets the browser's menu, not the card's", async ({
+  page,
+  extensionId
+}) => {
+  await openNewTab(page, extensionId)
+
+  const quote = page.locator(".quote-text")
+  const box = await quote.boundingBox()
+
+  if (!box) {
+    throw new Error("Unable to measure the quote")
+  }
+
+  // Triple-click is the ordinary way to select a line, and it is the case that
+  // matters: the range Chrome builds runs past the end of the block, so the
+  // card has to notice a selection that overlaps it rather than one contained
+  // by it.
+  await quote.click({ clickCount: 3 })
+  await page.mouse.click(box.x + 40, box.y + 12, { button: "right" })
+  await expect(page.locator(".card-menu__panel")).toHaveCount(0)
+
+  // With nothing selected, the card's own menu is back.
+  await page.mouse.click(box.x + 40, box.y + box.height + 4)
+  await page.mouse.click(box.x + 40, box.y + 12, { button: "right" })
+  await expect(page.locator(".card-menu__panel")).toHaveCount(1)
+})
+
 test("dragging across a widget body selects text instead of reordering", async ({
   page,
   extensionId

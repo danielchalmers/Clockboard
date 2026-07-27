@@ -318,6 +318,27 @@ describe("BoardList", () => {
     expect(screen.queryByLabelText("Actions for Local time")).not.toBeInTheDocument()
   })
 
+  // Triple-clicking a line is the most ordinary way to select one, and Chrome
+  // runs the resulting range past the end of the block it started in — so the
+  // range's common ancestor lands outside the card entirely.
+  it("leaves the native menu alone when the selection runs past the card", () => {
+    const { container } = renderBoard()
+
+    const cards = container.querySelectorAll<HTMLElement>(".board-row--draggable")
+    const selection = window.getSelection()!
+    const range = document.createRange()
+    range.setStart(cards[0]!.querySelector(".board-row__title")!, 0)
+    range.setEnd(cards[1]!.querySelector(".board-row__title")!, 0)
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    const event = createEvent.contextMenu(cards[0]!, { clientX: 10, clientY: 10 })
+    fireEvent(cards[0]!, event)
+
+    expect(event.defaultPrevented).toBe(false)
+    expect(screen.queryByLabelText("Actions for Local time")).not.toBeInTheDocument()
+  })
+
   it("still opens its own menu when the selection sits on another card", () => {
     const { container } = renderBoard()
 

@@ -86,8 +86,14 @@ const isFromInteractiveControl = (event: { target: EventTarget | null }) =>
 
 // Right-clicking a stretch of selected text is a reach for Copy, not for the
 // card's own menu, so the card steps aside and lets the browser's menu through.
-// Only a selection inside this card counts — a leftover highlight somewhere
-// else on the page should not disarm the menu here.
+// Only a selection touching this card counts — a leftover highlight elsewhere
+// on the page should not disarm the menu here.
+//
+// The test is whether the range overlaps the card, not where its common
+// ancestor sits: triple-clicking a quote selects the whole block and Chrome
+// runs the range on to the start of the next one, which lifts the common
+// ancestor clear out of the card and made that check miss the most ordinary
+// way of selecting a line.
 export const hasSelectionWithin = (card: HTMLElement): boolean => {
   const selection = card.ownerDocument.defaultView?.getSelection()
 
@@ -98,7 +104,7 @@ export const hasSelectionWithin = (card: HTMLElement): boolean => {
   for (let index = 0; index < selection.rangeCount; index += 1) {
     const range = selection.getRangeAt(index)
 
-    if (!range.collapsed && card.contains(range.commonAncestorContainer)) {
+    if (!range.collapsed && range.intersectsNode(card)) {
       return true
     }
   }
