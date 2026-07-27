@@ -49,14 +49,16 @@ const MenuIcon = ({ name }: { name: keyof typeof MENU_ICON_PATHS }) => (
   </svg>
 )
 
-const ADD_MENU_KINDS: { kind: WidgetKind; label: string }[] = [
-  { kind: "clock", label: "Clock" },
-  { kind: "countdown", label: "Countdown" },
-  { kind: "note", label: "Note" },
-  { kind: "quote", label: "Quote" },
-  { kind: "stopwatch", label: "Stopwatch" },
-  { kind: "timer", label: "Timer" },
-  { kind: "habit", label: "Habit" }
+// A line apiece so the menu says what each kind is for, rather than leaving
+// "Add quote" and "Add note" to be told apart by guesswork.
+const ADD_MENU_KINDS: { kind: WidgetKind; label: string; hint: string }[] = [
+  { kind: "clock", label: "Clock", hint: "The time in any time zone" },
+  { kind: "countdown", label: "Countdown", hint: "Time left until a moment" },
+  { kind: "note", label: "Note", hint: "A scratchpad that saves itself" },
+  { kind: "quote", label: "Quote", hint: "A line from a list you write" },
+  { kind: "stopwatch", label: "Stopwatch", hint: "Count up from zero" },
+  { kind: "timer", label: "Timer", hint: "Count down to zero" },
+  { kind: "habit", label: "Habit", hint: "Mark today, see your week" }
 ]
 
 // The new tab page doubles as the extension's options page. When the browser
@@ -263,9 +265,14 @@ export function NewTabPage() {
                 </svg>
               </summary>
               <div className="add-menu__panel">
-                {ADD_MENU_KINDS.map(({ kind, label }) => (
+                {ADD_MENU_KINDS.map(({ kind, label, hint }) => (
                   <button
-                    className="menu-button"
+                    // The subtitle would otherwise land in the accessible name
+                    // and bury the action, so name the button and offer the
+                    // line as its description.
+                    aria-describedby={`add-${kind}-hint`}
+                    aria-label={`Add ${label.toLowerCase()}`}
+                    className="menu-button menu-button--described"
                     key={kind}
                     onClick={() => addItem(kind)}
                     type="button">
@@ -274,7 +281,14 @@ export function NewTabPage() {
                       className={`menu-chip menu-chip--${kind}`}>
                       <WidgetIcon kind={kind} size={18} />
                     </span>
-                    Add {label.toLowerCase()}
+                    <span className="menu-button__text">
+                      <span className="menu-button__label">
+                        Add {label.toLowerCase()}
+                      </span>
+                      <span className="menu-button__hint" id={`add-${kind}-hint`}>
+                        {hint}
+                      </span>
+                    </span>
                   </button>
                 ))}
               </div>
