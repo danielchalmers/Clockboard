@@ -49,16 +49,17 @@ const MenuIcon = ({ name }: { name: keyof typeof MENU_ICON_PATHS }) => (
   </svg>
 )
 
-// A line apiece so the menu says what each kind is for, rather than leaving
-// "Add quote" and "Add note" to be told apart by guesswork.
+// A line apiece so the menu says what each kind is, rather than leaving "Add
+// quote" and "Add note" to be told apart by guesswork. Plain descriptions of
+// what the card shows — this is a menu, not a place to sell the widget.
 const ADD_MENU_KINDS: { kind: WidgetKind; label: string; hint: string }[] = [
-  { kind: "clock", label: "Clock", hint: "The time in any time zone" },
-  { kind: "countdown", label: "Countdown", hint: "Time left until a moment" },
-  { kind: "note", label: "Note", hint: "A scratchpad that saves itself" },
-  { kind: "quote", label: "Quote", hint: "A line from a list you write" },
-  { kind: "stopwatch", label: "Stopwatch", hint: "Count up from zero" },
-  { kind: "timer", label: "Timer", hint: "Count down to zero" },
-  { kind: "habit", label: "Habit", hint: "Mark today, see your week" }
+  { kind: "clock", label: "Clock", hint: "Current time in a time zone" },
+  { kind: "countdown", label: "Countdown", hint: "Time left until a date" },
+  { kind: "note", label: "Note", hint: "Editable text on the card" },
+  { kind: "quote", label: "Quote", hint: "A line from your list" },
+  { kind: "stopwatch", label: "Stopwatch", hint: "Time counted up from zero" },
+  { kind: "timer", label: "Timer", hint: "Time counted down to zero" },
+  { kind: "habit", label: "Habit", hint: "Daily marks over a week" }
 ]
 
 // The new tab page doubles as the extension's options page. When the browser
