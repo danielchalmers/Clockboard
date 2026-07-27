@@ -1,14 +1,18 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  formatWeekRange,
   isDoneOn,
   normalizeHistory,
-  recentDays,
+  startOfWeek,
+  STORED_DAYS,
   toDayKey,
-  toggleToday,
-  VISIBLE_DAYS
+  toggleDay,
+  weekdayInitials,
+  weekDays
 } from "./habit"
 
+// A Friday, so the week has days on both sides of today.
 const now = new Date(2026, 5, 19, 9, 0, 0)
 const key = (offset: number) => {
   const d = new Date(now)
@@ -21,21 +25,27 @@ const day = (offset: number) => {
   return d
 }
 
-describe("toggleToday", () => {
-  it("adds today when missing and removes it when present", () => {
-    const added = toggleToday([], now)
+describe("toggleDay", () => {
+  it("adds a day when missing and removes it when present", () => {
+    const added = toggleDay([], now)
     expect(added).toEqual([key(0)])
-    expect(toggleToday(added, now)).toEqual([])
+    expect(toggleDay(added, now)).toEqual([])
+  })
+
+  it("marks an earlier day without touching today", () => {
+    const result = toggleDay([key(0)], day(-3))
+
+    expect(result).toEqual([key(-3), key(0)])
   })
 
   it("keeps only the newest week of entries", () => {
-    const crowded = Array.from({ length: 10 }, (_, offset) => key(-offset - 1))
+    const crowded = Array.from({ length: 20 }, (_, offset) => key(-offset - 1))
 
-    const result = toggleToday(crowded, now)
+    const result = toggleDay(crowded, now)
 
-    expect(result).toHaveLength(VISIBLE_DAYS)
+    expect(result).toHaveLength(STORED_DAYS)
     expect(result).toContain(key(0))
-    expect(result).not.toContain(key(-10))
+    expect(result).not.toContain(key(-20))
   })
 })
 
@@ -57,7 +67,7 @@ describe("normalizeHistory", () => {
     const result = normalizeHistory(years)
 
     expect(result).toEqual(
-      Array.from({ length: VISIBLE_DAYS }, (_, i) => key(i - VISIBLE_DAYS + 1))
+      Array.from({ length: STORED_DAYS }, (_, i) => key(i - STORED_DAYS + 1))
     )
   })
 
@@ -74,11 +84,57 @@ describe("normalizeHistory", () => {
   })
 })
 
-describe("recentDays", () => {
-  it("returns the last N days, oldest first, ending today", () => {
-    const days = recentDays(now, 7).map(toDayKey)
-    expect(days).toHaveLength(7)
-    expect(days[6]).toBe(key(0))
-    expect(days[0]).toBe(key(-6))
+describe("startOfWeek", () => {
+  it("rolls back to Monday at midnight", () => {
+    expect(toDayKey(startOfWeek(now))).toBe("2026-06-15")
+    expect(startOfWeek(now).getHours()).toBe(0)
+  })
+
+  it("keeps a day that is already a Monday", () => {
+    const monday = new Date(2026, 5, 15, 22, 0, 0)
+
+    expect(toDayKey(startOfWeek(monday))).toBe("2026-06-15")
+  })
+
+  it("treats Sunday as the end of the week it closes, not the start", () => {
+    const sunday = new Date(2026, 5, 21, 9, 0, 0)
+
+    expect(toDayKey(startOfWeek(sunday))).toBe("2026-06-15")
+  })
+})
+
+describe("weekDays", () => {
+  it("runs Monday to Sunday around today", () => {
+    expect(weekDays(now).map(toDayKey)).toEqual([
+      "2026-06-15",
+      "2026-06-16",
+      "2026-06-17",
+      "2026-06-18",
+      "2026-06-19",
+      "2026-06-20",
+      "2026-06-21"
+    ])
+  })
+
+  it("never draws a day the history has already pruned", () => {
+    expect(normalizeHistory(weekDays(now).map(toDayKey))).toHaveLength(
+      STORED_DAYS
+    )
+  })
+})
+
+describe("formatWeekRange", () => {
+  it("reads as a date range and folds a shared month", () => {
+    expect(formatWeekRange(weekDays(now))).toMatch(/Jun 15\s*–\s*21/)
+    expect(formatWeekRange(weekDays(new Date(2026, 6, 1)))).toMatch(
+      /Jun 29\s*–\s*Jul 5/
+    )
+    expect(formatWeekRange([])).toBe("")
+  })
+})
+
+describe("weekdayInitials", () => {
+  it("starts on Monday", () => {
+    expect(weekdayInitials()).toEqual(["M", "T", "W", "T", "F", "S", "S"])
   })
 })

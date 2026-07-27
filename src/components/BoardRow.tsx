@@ -5,6 +5,7 @@ import {
   useState,
   type ComponentPropsWithoutRef,
   type CSSProperties,
+  type KeyboardEvent,
   type ReactNode
 } from "react"
 
@@ -29,12 +30,14 @@ import { getPresetCssVars } from "~/lib/colors"
 import { WidgetIcon } from "~/components/WidgetIcon"
 import { playChime, primeChime } from "~/lib/chime"
 import {
+  formatDayLabel,
+  formatWeekRange,
   isDoneOn,
   isDoneToday,
-  recentDays,
   toDayKey,
-  toggleToday,
-  VISIBLE_DAYS
+  toggleDay,
+  weekdayInitials,
+  weekDays
 } from "~/lib/habit"
 import { cleanQuotes, dailyQuoteIndex } from "~/lib/quotes"
 import {
@@ -297,44 +300,107 @@ const HabitBody = ({
 }) => {
   const { history } = item.settings
   const done = isDoneToday(history, now)
-  const days = recentDays(now, VISIBLE_DAYS)
+  const week = weekDays(now)
   const todayKey = toDayKey(now)
-  const doneCount = days.filter((day) => isDoneOn(history, day)).length
+  // Days that haven't arrived can't be marked, so navigation stops at today.
+  const lastMarkable = Math.max(
+    week.findIndex((day) => toDayKey(day) === todayKey),
+    0
+  )
+  const dots = useRef<(HTMLButtonElement | null)[]>([])
+  // The row is a single tab stop — today, until the arrows move it — rather
+  // than seven, which a board of habits would turn into a long walk.
+  const [focused, setFocused] = useState<number | null>(null)
+  const tabStop = focused ?? lastMarkable
 
-  const toggle = () =>
+  const toggle = (day: Date) =>
     onWidgetChange?.({
       ...item,
-      settings: { history: toggleToday(history, now) }
+      settings: { history: toggleDay(history, day) }
     })
+
+  const moveFocus = (event: KeyboardEvent<HTMLButtonElement>, from: number) => {
+    const to = {
+      ArrowLeft: from - 1,
+      ArrowRight: from + 1,
+      Home: 0,
+      End: lastMarkable
+    }[event.key]
+
+    if (to === undefined) {
+      return
+    }
+
+    event.preventDefault()
+    const next = Math.min(Math.max(to, 0), lastMarkable)
+    setFocused(next)
+    dots.current[next]?.focus()
+  }
 
   return (
     <>
-      <div
-        className="habit-days"
-        role="img"
-        aria-label={`Done ${doneCount} of the past ${VISIBLE_DAYS} days`}>
-        {days.map((day) => {
-          const key = toDayKey(day)
-          const className = [
-            "habit-day",
-            isDoneOn(history, day) ? "habit-day--done" : "",
-            key === todayKey ? "habit-day--today" : ""
-          ]
-            .filter(Boolean)
-            .join(" ")
+      <div className="habit-week">
+        {/* One narrow letter per column. The dots carry their own full date,
+            so the headers are decoration for screen readers. */}
+        <div className="habit-weekdays" aria-hidden="true">
+          {weekdayInitials().map((letter, index) => (
+            <span key={index}>{letter}</span>
+          ))}
+        </div>
+        {/* A toolbar rather than a plain group: it tells a screen reader that
+            the arrows walk the row, which is what the roving tab stop does. */}
+        <div
+          aria-label="This week"
+          aria-orientation="horizontal"
+          className="habit-days"
+          role="toolbar">
+          {week.map((day, index) => {
+            const key = toDayKey(day)
+            const label = formatDayLabel(day)
+            // Day keys sort chronologically as strings, so a plain compare
+            // tells a day that hasn't arrived from one that has.
+            const className = [
+              "habit-day",
+              isDoneOn(history, day) ? "habit-day--done" : "",
+              key === todayKey ? "habit-day--today" : "",
+              key > todayKey ? "habit-day--future" : ""
+            ]
+              .filter(Boolean)
+              .join(" ")
 
-          return <span className={className} key={key} />
-        })}
+            return (
+              <button
+                aria-label={label}
+                aria-pressed={isDoneOn(history, day)}
+                className={className}
+                disabled={key > todayKey}
+                key={key}
+                onClick={() => toggle(day)}
+                onKeyDown={(event) => moveFocus(event, index)}
+                ref={(node) => {
+                  dots.current[index] = node
+                }}
+                tabIndex={index === tabStop ? 0 : -1}
+                title={label}
+                type="button">
+                <span className="habit-day__dot" />
+              </button>
+            )
+          })}
+        </div>
       </div>
-      <p className="board-row__meta">past {VISIBLE_DAYS} days</p>
-      <div className="timer-controls">
+      {/* The week's dates share the button's line rather than taking one of
+          their own: with the weekday letters above the dots, a card that can't
+          grow has no height left for a third row. */}
+      <div className="habit-footer">
         <button
           aria-pressed={done}
           className={`timer-button${done ? "" : " timer-button--primary"}`}
-          onClick={toggle}
+          onClick={() => toggle(now)}
           type="button">
           {done ? "Done today ✓" : "Mark today"}
         </button>
+        <p className="board-row__meta">{formatWeekRange(week)}</p>
       </div>
     </>
   )

@@ -848,6 +848,7 @@ details > summary::-webkit-details-marker {
   margin-block-start: 14px;
 }
 
+
 .timer-button {
   align-items: center;
   background: color-mix(in srgb, var(--card-bg-resolved) 50%, var(--surface));
@@ -886,30 +887,98 @@ details > summary::-webkit-details-marker {
   font-weight: 600;
 }
 
-/* Habit week dots — the card's main content, so they read larger than when
-   they sat under a number. */
-.habit-days {
-  display: flex;
-  gap: 10px;
-  margin-block: 14px 4px;
+/* Habit week — the card's main content: the current week as a row of dots
+   under its weekday letters, so the row reads as the week it is rather than
+   as seven unlabeled days. */
+.habit-week {
+  display: grid;
+  gap: 8px;
+  margin-block: 6px 0;
 }
 
+/* The action and the week's dates share the last line, so a habit with a
+   two-line title still has room for its button. */
+.habit-footer {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-block-start: 14px;
+}
+
+/* The dates only say which week the dots belong to — a hint to reach for, not
+   something to read every time the card is glanced at. */
+.habit-footer .board-row__meta {
+  opacity: 0.6;
+}
+
+.habit-weekdays,
+.habit-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.habit-weekdays {
+  color: var(--card-tint-resolved);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-align: center;
+}
+
+/* The button spans its whole column so the target is comfortable, while the
+   dot inside stays the small mark it always was. */
 .habit-day {
+  align-items: center;
+  background: none;
+  border: 0;
+  /* Rounded so the app's shared focus ring traces the target, not a box. */
+  border-radius: 999px;
+  block-size: 26px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+.habit-day__dot {
   background: color-mix(in srgb, var(--card-accent-resolved) 16%, transparent);
   block-size: 18px;
   border-radius: 50%;
   inline-size: 18px;
-  transition: background-color var(--t-fast);
+  transition:
+    background-color var(--t-fast),
+    box-shadow var(--t-fast);
 }
 
-.habit-day--done {
+.habit-day--done .habit-day__dot {
   background: var(--card-accent-resolved);
 }
 
-.habit-day--today {
+.habit-day:hover:not(:disabled) .habit-day__dot {
+  background: color-mix(in srgb, var(--card-accent-resolved) 45%, transparent);
+}
+
+.habit-day--done:hover:not(:disabled) .habit-day__dot {
+  background: color-mix(in srgb, var(--card-accent-resolved) 78%, var(--card-bg-resolved));
+}
+
+.habit-day--today .habit-day__dot {
   box-shadow:
     0 0 0 2px var(--card-bg-resolved),
     0 0 0 3.5px color-mix(in srgb, var(--card-accent-resolved) 55%, transparent);
+}
+
+/* Days that haven't arrived hold their column open without inviting a click. */
+.habit-day--future {
+  cursor: default;
+}
+
+.habit-day--future .habit-day__dot {
+  background: none;
+  box-shadow: inset 0 0 0 1.5px
+    color-mix(in srgb, var(--card-accent-resolved) 18%, transparent);
 }
 
 /* Timer length editor */

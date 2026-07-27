@@ -68,6 +68,15 @@ const storyState: DayboardState = {
       title: "Christmas",
       colorPreset: "slate",
       settings: { targetAt: "2025-12-25T06:00:00.000Z" }
+    },
+    {
+      id: "morning-walk",
+      kind: "habit",
+      title: "Morning walk",
+      colorPreset: "slate",
+      // A partly filled week around the story's Friday: some days done, today
+      // still open, the weekend ahead.
+      settings: { history: ["2025-05-05", "2025-05-06", "2025-05-08"] }
     }
   ],
   settings: { name: "" }
