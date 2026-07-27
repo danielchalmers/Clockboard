@@ -62,31 +62,31 @@ test("new tab page renders the default widgets and editing controls", async ({
   await expect(
     page.getByRole("heading", { name: /Good (morning|afternoon|evening|night)/ })
   ).toBeVisible()
-  await expect(page.getByText("Local time")).toBeVisible()
-  await expect(page.getByText("Tomorrow morning")).toBeVisible()
+  await expect(page.getByText("🕒 Local time")).toBeVisible()
+  await expect(page.getByText("🌅 Tomorrow morning")).toBeVisible()
   await expect(page.getByRole("button", { name: "Add widget" })).toBeVisible()
-  await expect(page.getByLabel("Actions for Local time")).toHaveCount(0)
+  await expect(page.getByLabel("Actions for 🕒 Local time")).toHaveCount(0)
 
   await page.getByRole("button", { name: "Add widget" }).click()
   await expect(page.getByRole("button", { name: "Add clock" })).toBeVisible()
   await expect(page.getByRole("button", { name: "Add countdown" })).toBeVisible()
 
-  await openWidgetMenu(page, "Tomorrow morning")
+  await openWidgetMenu(page, "🌅 Tomorrow morning")
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning back" })
+    page.getByRole("menuitem", { name: "Move 🌅 Tomorrow morning back" })
   ).toBeVisible()
   await expect(
-    page.getByRole("button", { name: "Reorder Tomorrow morning" })
+    page.getByRole("button", { name: "Reorder 🌅 Tomorrow morning" })
   ).toHaveCount(0)
 
   const titles = page.locator(".board-row h2")
   await expect(titles).toHaveText([
-    "Local time",
-    "Tomorrow morning",
-    "Welcome",
-    "Today's reminder",
-    "Daily walk",
-    "This year"
+    "🕒 Local time",
+    "🌅 Tomorrow morning",
+    "👋 Welcome",
+    "💬 Today's reminder",
+    "🚶 Daily walk",
+    "📅 This year"
   ])
 })
 
@@ -184,7 +184,7 @@ test("exports the board to a file and imports one back", async ({
   ])
   expect(download.suggestedFilename()).toBe("dayboard.json")
   const path = await download.path()
-  expect(readFileSync(path, "utf8")).toContain("Local time")
+  expect(readFileSync(path, "utf8")).toContain("🕒 Local time")
 
   // Importing a different board replaces what is on screen.
   const board = {
@@ -208,7 +208,7 @@ test("exports the board to a file and imports one back", async ({
   await expect(
     page.getByRole("heading", { name: "Imported City" })
   ).toBeVisible()
-  await expect(page.getByText("Local time")).toHaveCount(0)
+  await expect(page.getByText("🕒 Local time")).toHaveCount(0)
   await expect(page.getByRole("dialog", { name: "Options" })).toHaveCount(0)
 })
 
@@ -231,7 +231,7 @@ test("a bad import shows an error and leaves the board intact", async ({
   ).toBeVisible()
   // The dialog stays open and the existing board is untouched.
   await expect(page.getByRole("dialog", { name: "Options" })).toBeVisible()
-  await expect(page.getByText("Local time")).toBeVisible()
+  await expect(page.getByText("🕒 Local time")).toBeVisible()
 })
 
 test("the board just works: drag handles on, responsive grid, knob-free options", async ({
@@ -301,7 +301,7 @@ test("widget menu spawns under the cursor and breaks free of the card", async ({
 
   const card = page
     .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Local time" }) })
+    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
   const cardBox = await card.boundingBox()
 
   if (!cardBox) {
@@ -318,7 +318,7 @@ test("widget menu spawns under the cursor and breaks free of the card", async ({
   const menu = page.locator(".card-menu")
   await expect(menu).toBeVisible()
   await expect(
-    page.getByRole("menuitem", { name: "Edit Local time" })
+    page.getByRole("menuitem", { name: "Edit 🕒 Local time" })
   ).toBeVisible()
 
   const menuBox = await menu.boundingBox()
@@ -349,7 +349,7 @@ test("widget menu stays within the viewport when opened near the screen edge", a
 
   const card = page
     .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Local time" }) })
+    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
   const cardBox = await card.boundingBox()
 
   if (!cardBox) {
@@ -396,7 +396,7 @@ test("widget menu supports keyboard navigation", async ({
 
   const card = page
     .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Tomorrow morning" }) })
+    .filter({ has: page.getByRole("heading", { name: "🌅 Tomorrow morning" }) })
 
   // Open the menu from the keyboard, with no pointer involved.
   await card.focus()
@@ -406,30 +406,30 @@ test("widget menu supports keyboard navigation", async ({
   await expect(menu).toBeVisible()
 
   // Focus lands on the first enabled item, and arrow keys move between items.
-  // "Tomorrow morning" sits among other widgets, so both Move back and Move next
+  // "🌅 Tomorrow morning" sits among other widgets, so both Move back and Move next
   // are enabled and arrow keys step through every item in turn.
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning back" })
+    page.getByRole("menuitem", { name: "Move 🌅 Tomorrow morning back" })
   ).toBeFocused()
 
   await page.keyboard.press("ArrowDown")
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning next" })
+    page.getByRole("menuitem", { name: "Move 🌅 Tomorrow morning next" })
   ).toBeFocused()
 
   await page.keyboard.press("ArrowDown")
   await expect(
-    page.getByRole("menuitem", { name: "Edit Tomorrow morning" })
+    page.getByRole("menuitem", { name: "Edit 🌅 Tomorrow morning" })
   ).toBeFocused()
 
   await page.keyboard.press("End")
   await expect(
-    page.getByRole("menuitem", { name: "Delete Tomorrow morning" })
+    page.getByRole("menuitem", { name: "Delete 🌅 Tomorrow morning" })
   ).toBeFocused()
 
   await page.keyboard.press("ArrowDown")
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning back" })
+    page.getByRole("menuitem", { name: "Move 🌅 Tomorrow morning back" })
   ).toBeFocused() // wraps back to the first item
 
   // Escape closes the menu and returns focus to the card that opened it.
@@ -446,7 +446,7 @@ test("widget menu closes on resize and returns focus to its card", async ({
 
   const card = page
     .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Tomorrow morning" }) })
+    .filter({ has: page.getByRole("heading", { name: "🌅 Tomorrow morning" }) })
 
   await card.focus()
   await card.press("ContextMenu")
@@ -454,7 +454,7 @@ test("widget menu closes on resize and returns focus to its card", async ({
   const menu = page.locator(".card-menu")
   await expect(menu).toBeVisible()
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning back" })
+    page.getByRole("menuitem", { name: "Move 🌅 Tomorrow morning back" })
   ).toBeFocused()
 
   // The menu is pinned to the cursor, so a resize closes it...
@@ -472,23 +472,23 @@ test("reordering changes the visible order and persists after reload", async ({
 
   const titles = page.locator(".board-row h2")
   const defaultOrder = [
-    "Local time",
-    "Tomorrow morning",
-    "Welcome",
-    "Today's reminder",
-    "Daily walk",
-    "This year"
+    "🕒 Local time",
+    "🌅 Tomorrow morning",
+    "👋 Welcome",
+    "💬 Today's reminder",
+    "🚶 Daily walk",
+    "📅 This year"
   ]
   const swappedOrder = [
-    "Tomorrow morning",
-    "Local time",
-    "Welcome",
-    "Today's reminder",
-    "Daily walk",
-    "This year"
+    "🌅 Tomorrow morning",
+    "🕒 Local time",
+    "👋 Welcome",
+    "💬 Today's reminder",
+    "🚶 Daily walk",
+    "📅 This year"
   ]
   await expect(titles).toHaveText(defaultOrder)
-  await dragWidget(page, "Tomorrow morning", "Local time")
+  await dragWidget(page, "🌅 Tomorrow morning", "🕒 Local time")
 
   await expect(titles).toHaveText(swappedOrder)
 
@@ -508,8 +508,8 @@ test("the menu's Move back reorders even after a widget was archived", async ({
   // Archive one widget, then add a new one. The new widget lands after the
   // archived one in storage, so the active widgets are no longer contiguous —
   // the case where Move back/next used to silently do nothing.
-  await openWidgetMenu(page, "This year")
-  await page.getByRole("menuitem", { name: "Archive This year" }).click()
+  await openWidgetMenu(page, "📅 This year")
+  await page.getByRole("menuitem", { name: "Archive 📅 This year" }).click()
 
   await page.getByRole("button", { name: "Add widget" }).click()
   await page.getByRole("button", { name: "Add clock" }).click()
@@ -518,11 +518,11 @@ test("the menu's Move back reorders even after a widget was archived", async ({
 
   const titles = page.locator(".board-list").first().locator("h2")
   await expect(titles).toHaveText([
-    "Local time",
-    "Tomorrow morning",
-    "Welcome",
-    "Today's reminder",
-    "Daily walk",
+    "🕒 Local time",
+    "🌅 Tomorrow morning",
+    "👋 Welcome",
+    "💬 Today's reminder",
+    "🚶 Daily walk",
     "New clock"
   ])
 
@@ -532,12 +532,12 @@ test("the menu's Move back reorders even after a widget was archived", async ({
   await page.getByRole("menuitem", { name: "Move New clock back" }).click()
 
   await expect(titles).toHaveText([
-    "Local time",
-    "Tomorrow morning",
-    "Welcome",
-    "Today's reminder",
+    "🕒 Local time",
+    "🌅 Tomorrow morning",
+    "👋 Welcome",
+    "💬 Today's reminder",
     "New clock",
-    "Daily walk"
+    "🚶 Daily walk"
   ])
 })
 
@@ -549,16 +549,16 @@ test("dragging across a widget body selects text instead of reordering", async (
 
   const titles = page.locator(".board-row h2")
   const defaultOrder = [
-    "Local time",
-    "Tomorrow morning",
-    "Welcome",
-    "Today's reminder",
-    "Daily walk",
-    "This year"
+    "🕒 Local time",
+    "🌅 Tomorrow morning",
+    "👋 Welcome",
+    "💬 Today's reminder",
+    "🚶 Daily walk",
+    "📅 This year"
   ]
   await expect(titles).toHaveText(defaultOrder)
 
-  const heading = page.getByRole("heading", { name: "Local time" })
+  const heading = page.getByRole("heading", { name: "🕒 Local time" })
   const box = await heading.boundingBox()
 
   if (!box) {
@@ -593,18 +593,18 @@ test("the empty middle of a card is not a drag handle", async ({
 
   const titles = page.locator(".board-row h2")
   const defaultOrder = [
-    "Local time",
-    "Tomorrow morning",
-    "Welcome",
-    "Today's reminder",
-    "Daily walk",
-    "This year"
+    "🕒 Local time",
+    "🌅 Tomorrow morning",
+    "👋 Welcome",
+    "💬 Today's reminder",
+    "🚶 Daily walk",
+    "📅 This year"
   ]
   await expect(titles).toHaveText(defaultOrder)
 
   const card = page
     .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Local time" }) })
+    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
   const cardBox = await card.boundingBox()
   const headerBox = await card.locator(".board-row__header").boundingBox()
 
@@ -651,7 +651,7 @@ test("only the draggable frame lights the card up on hover", async ({
     })
 
   // Hovering the body (the heading text) leaves the card calm.
-  const heading = page.getByRole("heading", { name: "Local time" })
+  const heading = page.getByRole("heading", { name: "🕒 Local time" })
   await heading.hover()
   const calm = await readStyle()
 
@@ -679,15 +679,15 @@ test("dropdowns close when clicking outside them", async ({
     .click()
   await expect(page.getByRole("button", { name: "Add clock" })).not.toBeVisible()
 
-  await openWidgetMenu(page, "Tomorrow morning")
+  await openWidgetMenu(page, "🌅 Tomorrow morning")
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning back" })
+    page.getByRole("menuitem", { name: "Move 🌅 Tomorrow morning back" })
   ).toBeVisible()
   await page
     .getByRole("heading", { name: /Good (morning|afternoon|evening|night)/ })
     .click()
   await expect(
-    page.getByRole("menuitem", { name: "Move Tomorrow morning back" })
+    page.getByRole("menuitem", { name: "Move 🌅 Tomorrow morning back" })
   ).not.toBeVisible()
 })
 
@@ -1233,10 +1233,10 @@ test("editing a recurring countdown's time keeps its other settings", async ({
 test("edit dialog opens for an existing clock", async ({ page, extensionId }) => {
   await openNewTab(page, extensionId)
 
-  await openWidgetMenu(page, "Local time")
-  await page.getByRole("menuitem", { name: "Edit Local time" }).click()
+  await openWidgetMenu(page, "🕒 Local time")
+  await page.getByRole("menuitem", { name: "Edit 🕒 Local time" }).click()
   await expect(page.getByRole("dialog", { name: "Edit clock" })).toBeVisible()
-  await expect(page.getByLabel("Name")).toHaveValue("Local time")
+  await expect(page.getByLabel("Name")).toHaveValue("🕒 Local time")
   await expect(page.getByLabel("Time zone")).toBeVisible()
 })
 
@@ -1246,8 +1246,8 @@ test("clicking the backdrop saves the edit dialog", async ({
 }) => {
   await openNewTab(page, extensionId)
 
-  await openWidgetMenu(page, "Local time")
-  await page.getByRole("menuitem", { name: "Edit Local time" }).click()
+  await openWidgetMenu(page, "🕒 Local time")
+  await page.getByRole("menuitem", { name: "Edit 🕒 Local time" }).click()
   await expect(page.getByRole("dialog", { name: "Edit clock" })).toBeVisible()
 
   await page.getByLabel("Name").fill("Local HQ")
@@ -1270,8 +1270,8 @@ test("pressing Escape closes the edit dialog and discards changes", async ({
 }) => {
   await openNewTab(page, extensionId)
 
-  await openWidgetMenu(page, "Local time")
-  await page.getByRole("menuitem", { name: "Edit Local time" }).click()
+  await openWidgetMenu(page, "🕒 Local time")
+  await page.getByRole("menuitem", { name: "Edit 🕒 Local time" }).click()
   await expect(page.getByRole("dialog", { name: "Edit clock" })).toBeVisible()
 
   await page.getByLabel("Name").fill("Should not stick")
@@ -1282,20 +1282,20 @@ test("pressing Escape closes the edit dialog and discards changes", async ({
   await expect(
     page.getByRole("heading", { name: "Should not stick" })
   ).toHaveCount(0)
-  await expect(page.getByRole("heading", { name: "Local time" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "🕒 Local time" })).toBeVisible()
 })
 
 test("delete flow removes an existing widget", async ({ page, extensionId }) => {
   await openNewTab(page, extensionId)
 
-  await openWidgetMenu(page, "Tomorrow morning")
-  await page.getByRole("menuitem", { name: "Delete Tomorrow morning" }).click()
+  await openWidgetMenu(page, "🌅 Tomorrow morning")
+  await page.getByRole("menuitem", { name: "Delete 🌅 Tomorrow morning" }).click()
   await expect(
     page.getByRole("dialog", { name: "Delete countdown?" })
   ).toBeVisible()
   await page.getByRole("button", { name: "Delete widget" }).click()
 
-  await expect(page.getByText("Tomorrow morning")).toHaveCount(0)
+  await expect(page.getByText("🌅 Tomorrow morning")).toHaveCount(0)
 })
 
 test("archiving from the menu hides a widget and it can be restored", async ({
@@ -1309,28 +1309,28 @@ test("archiving from the menu hides a widget and it can be restored", async ({
   await openNewTab(page, extensionId)
 
   // Archive from the keyboard-accessible context menu.
-  await openWidgetMenu(page, "Tomorrow morning")
+  await openWidgetMenu(page, "🌅 Tomorrow morning")
   await page
-    .getByRole("menuitem", { name: "Archive Tomorrow morning" })
+    .getByRole("menuitem", { name: "Archive 🌅 Tomorrow morning" })
     .click()
 
   // It leaves the board and the archived section stays collapsed by default.
   await expect(
-    page.locator(".board-list").first().getByText("Tomorrow morning")
+    page.locator(".board-list").first().getByText("🌅 Tomorrow morning")
   ).toHaveCount(0)
   const toggle = page.getByRole("button", { name: "Show archived (1)" })
   await expect(toggle).toBeVisible()
 
   // Reveal it, then restore it back to the board.
   await toggle.click()
-  await expect(page.getByText("Tomorrow morning")).toBeVisible()
-  await openWidgetMenu(page, "Tomorrow morning")
+  await expect(page.getByText("🌅 Tomorrow morning")).toBeVisible()
+  await openWidgetMenu(page, "🌅 Tomorrow morning")
   await page
-    .getByRole("menuitem", { name: "Restore Tomorrow morning" })
+    .getByRole("menuitem", { name: "Restore 🌅 Tomorrow morning" })
     .click()
 
   await expect(
-    page.locator(".board-list").first().getByText("Tomorrow morning")
+    page.locator(".board-list").first().getByText("🌅 Tomorrow morning")
   ).toBeVisible()
   await expect(
     page.getByRole("button", { name: /Show archived/ })
@@ -1346,7 +1346,7 @@ test("dragging a widget onto the archive zone archives it", async ({
 
   const card = page
     .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Local time" }) })
+    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
   const box = await card.boundingBox()
   const viewport = page.viewportSize()
 
@@ -1379,7 +1379,7 @@ test("dragging a widget onto the archive zone archives it", async ({
   await page.mouse.up()
 
   await expect(
-    page.locator(".board-list").first().getByText("Local time")
+    page.locator(".board-list").first().getByText("🕒 Local time")
   ).toHaveCount(0)
   await expect(page.getByRole("button", { name: "Show archived (1)" })).toBeVisible()
 })
@@ -1393,7 +1393,7 @@ test("a card dragged toward the archive follows the cursor instead of snapping b
 
   const card = page
     .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Local time" }) })
+    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
   const box = await card.boundingBox()
 
   if (!box) {
@@ -1434,7 +1434,7 @@ test("a card dragged toward the archive follows the cursor instead of snapping b
 
   await page.mouse.up()
   await expect(
-    page.locator(".board-list").first().getByText("Local time")
+    page.locator(".board-list").first().getByText("🕒 Local time")
   ).toHaveCount(0)
 })
 
@@ -1449,20 +1449,20 @@ test("dragging an archived widget onto a board card restores it into that slot",
   await openNewTab(page, extensionId)
 
   // Archive then reveal the archived section.
-  await openWidgetMenu(page, "Tomorrow morning")
-  await page.getByRole("menuitem", { name: "Archive Tomorrow morning" }).click()
+  await openWidgetMenu(page, "🌅 Tomorrow morning")
+  await page.getByRole("menuitem", { name: "Archive 🌅 Tomorrow morning" }).click()
   await page.getByRole("button", { name: "Show archived (1)" }).click()
 
   const card = page
     .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Tomorrow morning" }) })
+    .filter({ has: page.getByRole("heading", { name: "🌅 Tomorrow morning" }) })
   const box = await card.boundingBox()
 
   // Aim for the first board card: dropping there must restore into slot one,
   // not just back onto the board somewhere.
   const target = page
     .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Local time" }) })
+    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
   const targetBox = await target.boundingBox()
 
   if (!box || !targetBox) {
@@ -1493,16 +1493,16 @@ test("dragging an archived widget onto a board card restores it into that slot",
       .locator(".board-list")
       .first()
       .locator(".board-row--dragging")
-      .filter({ has: page.getByRole("heading", { name: "Tomorrow morning" }) })
+      .filter({ has: page.getByRole("heading", { name: "🌅 Tomorrow morning" }) })
   ).toBeVisible()
 
   await expect(page.locator(".board-row--drop-target")).toBeVisible()
   await page.mouse.up()
 
   // It is back on the board in the exact slot it was dropped on — ahead of
-  // "Local time" — and the archived section is gone.
+  // "🕒 Local time" — and the archived section is gone.
   await expect(page.locator(".board-row h2").first()).toHaveText(
-    "Tomorrow morning"
+    "🌅 Tomorrow morning"
   )
   await expect(
     page.getByRole("button", { name: /Show archived/ })
@@ -1515,20 +1515,20 @@ test("edit and delete controls still work after reordering", async ({
 }) => {
   await openNewTab(page, extensionId)
 
-  await dragWidget(page, "Tomorrow morning", "Local time")
+  await dragWidget(page, "🌅 Tomorrow morning", "🕒 Local time")
 
   const titles = page.locator(".board-row h2")
   await expect(titles).toHaveText([
-    "Tomorrow morning",
-    "Local time",
-    "Welcome",
-    "Today's reminder",
-    "Daily walk",
-    "This year"
+    "🌅 Tomorrow morning",
+    "🕒 Local time",
+    "👋 Welcome",
+    "💬 Today's reminder",
+    "🚶 Daily walk",
+    "📅 This year"
   ])
 
-  await openWidgetMenu(page, "Tomorrow morning")
-  await page.getByRole("menuitem", { name: "Edit Tomorrow morning" }).click()
+  await openWidgetMenu(page, "🌅 Tomorrow morning")
+  await page.getByRole("menuitem", { name: "Edit 🌅 Tomorrow morning" }).click()
   await expect(
     page.getByRole("dialog", { name: "Edit countdown" })
   ).toBeVisible()

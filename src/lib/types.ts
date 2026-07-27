@@ -152,6 +152,8 @@ export const DEFAULT_TIME_ZONE =
 // The first-run board. It is intentionally pre-styled with a varied, calm mix of
 // widget kinds and curated colors so a brand-new tab feels customized at a glance
 // and shows what the board can do — rather than a blank two-card placeholder.
+// Each title opens with an emoji, both because it warms up the first board and
+// because it shows that a title is free text you can put anything in.
 // Everything here is editable; these are just inviting starting points.
 export const createDefaultWidgets = (now = new Date()): Widget[] => {
   // Tomorrow at 9am local, repeating daily so this anchor stays evergreen
@@ -170,7 +172,7 @@ export const createDefaultWidgets = (now = new Date()): Widget[] => {
     {
       id: "home-clock",
       kind: "clock",
-      title: "Local time",
+      title: "🕒 Local time",
       colorPreset: "sky",
       settings: {
         timeZone: DEFAULT_TIME_ZONE
@@ -179,7 +181,7 @@ export const createDefaultWidgets = (now = new Date()): Widget[] => {
     {
       id: "tomorrow-countdown",
       kind: "countdown",
-      title: "Tomorrow morning",
+      title: "🌅 Tomorrow morning",
       colorPreset: "indigo",
       settings: {
         targetAt: tomorrowMorning.toISOString(),
@@ -189,7 +191,7 @@ export const createDefaultWidgets = (now = new Date()): Widget[] => {
     {
       id: "welcome-note",
       kind: "note",
-      title: "Welcome",
+      title: "👋 Welcome",
       colorPreset: "emerald",
       settings: {
         text: "Good to have you here. This is your space for the day. Keep what helps, change what doesn't, and let the rest be quiet."
@@ -198,7 +200,7 @@ export const createDefaultWidgets = (now = new Date()): Widget[] => {
     {
       id: "reminder-quote",
       kind: "quote",
-      title: "Today's reminder",
+      title: "💬 Today's reminder",
       colorPreset: "violet",
       settings: {
         quotes: [
@@ -213,7 +215,7 @@ export const createDefaultWidgets = (now = new Date()): Widget[] => {
     {
       id: "daily-walk-habit",
       kind: "habit",
-      title: "Daily walk",
+      title: "🚶 Daily walk",
       colorPreset: "amber",
       settings: {
         history: []
@@ -222,7 +224,7 @@ export const createDefaultWidgets = (now = new Date()): Widget[] => {
     {
       id: "year-progress",
       kind: "countdown",
-      title: "This year",
+      title: "📅 This year",
       colorPreset: "rose",
       settings: {
         targetAt: yearEnd.toISOString(),
