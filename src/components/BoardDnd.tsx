@@ -5,6 +5,7 @@ import {
   MeasuringStrategy,
   PointerSensor,
   closestCenter,
+  useDndContext,
   useDroppable,
   useSensor,
   useSensors,
@@ -13,7 +14,7 @@ import {
   type DragStartEvent
 } from "@dnd-kit/core"
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable"
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 
 import { BoardRow } from "~/components/BoardRow"
 import { reorderWidgets, restoreWidget } from "~/lib/widgets"
@@ -55,6 +56,61 @@ const ArchiveDropZone = () => {
   )
 }
 
+// A keyboard drag ends on Space, Enter, or Tab and cancels on Escape, a window
+// resize, or the tab being hidden — and on nothing the pointer does. So a drag
+// started from the keyboard and then abandoned for the mouse simply stays up:
+// the lifted card hangs over the board, and because a sensor is still holding
+// the drag, every pointer drag after it is refused too — until the user happens
+// to guess Escape. Put the card down as soon as attention moves elsewhere.
+const EndStrandedKeyboardDrag = () => {
+  const { active, activatorEvent } = useDndContext()
+  const isKeyboardDrag =
+    Boolean(active) && activatorEvent instanceof KeyboardEvent
+
+  useEffect(() => {
+    if (!isKeyboardDrag) {
+      return
+    }
+
+    // The sensor's cancel is Escape on the document, so send one: that takes
+    // the normal path — teardown, onDragCancel, focus handed back — instead of
+    // needing a back door into dnd-kit.
+    const escape = () =>
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          bubbles: true,
+          code: "Escape",
+          key: "Escape"
+        })
+      )
+
+    let retry: number | undefined
+
+    const release = () => {
+      escape()
+      // The sensor attaches that key listener in a timeout of its own, so for
+      // the first task after the drag starts there is nothing listening yet.
+      // A second attempt on the next task is guaranteed to land behind it,
+      // because the sensor's timeout was queued first.
+      window.clearTimeout(retry)
+      retry = window.setTimeout(escape)
+    }
+
+    // Capture, so the common case releases before dnd-kit's pointer activator
+    // sees the press and the same press can start an ordinary drag.
+    document.addEventListener("pointerdown", release, true)
+    window.addEventListener("blur", release)
+
+    return () => {
+      window.clearTimeout(retry)
+      document.removeEventListener("pointerdown", release, true)
+      window.removeEventListener("blur", release)
+    }
+  }, [isKeyboardDrag])
+
+  return null
+}
+
 interface BoardDndProps {
   // The full storage list — both boards' cards — so any dragged id resolves.
   widgets: Widget[]
@@ -89,8 +145,13 @@ export const BoardDnd = ({
   const [restorePreview, setRestorePreview] = useState<Widget[] | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor, {
+      // Any movement at all lifts the card. An 8px threshold meant the pointer
+      // ran ahead of the card for the first few pixels of every drag, which
+      // reads as lag rather than as a deliberate guard — and the drag handle is
+      // the card's own ring, where there is no click for a threshold to
+      // protect.
       activationConstraint: {
-        distance: 8
+        distance: 0
       }
     }),
     useSensor(KeyboardSensor, {
@@ -225,6 +286,7 @@ export const BoardDnd = ({
       onDragOver={handleDragOver}
       onDragStart={handleDragStart}
       sensors={sensors}>
+      <EndStrandedKeyboardDrag />
       {children(restorePreview ?? widgets)}
       {activeItem && !activeItem.archived && onArchive ? (
         <ArchiveDropZone />

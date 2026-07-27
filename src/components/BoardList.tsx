@@ -84,6 +84,34 @@ const FORM_FIELD_SELECTOR =
 const isFromInteractiveControl = (event: { target: EventTarget | null }) =>
   Boolean((event.target as HTMLElement | null)?.closest(FORM_FIELD_SELECTOR))
 
+// Right-clicking a stretch of selected text is a reach for Copy, not for the
+// card's own menu, so the card steps aside and lets the browser's menu through.
+// Only a selection touching this card counts — a leftover highlight elsewhere
+// on the page should not disarm the menu here.
+//
+// The test is whether the range overlaps the card, not where its common
+// ancestor sits: triple-clicking a quote selects the whole block and Chrome
+// runs the range on to the start of the next one, which lifts the common
+// ancestor clear out of the card and made that check miss the most ordinary
+// way of selecting a line.
+export const hasSelectionWithin = (card: HTMLElement): boolean => {
+  const selection = card.ownerDocument.defaultView?.getSelection()
+
+  if (!selection || selection.isCollapsed) {
+    return false
+  }
+
+  for (let index = 0; index < selection.rangeCount; index += 1) {
+    const range = selection.getRangeAt(index)
+
+    if (!range.collapsed && range.intersectsNode(card)) {
+      return true
+    }
+  }
+
+  return false
+}
+
 interface OpenMenu {
   id: string
   x: number
@@ -292,7 +320,6 @@ const WidgetContextMenu = ({
 interface SortableBoardRowProps {
   item: Widget
   now: Date
-  activeId: string | null
   isMenuOpen: boolean
   hasActions: boolean
   animateEnter: boolean
@@ -333,7 +360,6 @@ const areRowsEqual = (
   // `now` is otherwise excluded: nothing else on these cards changes within a day.
   return (
     prev.item === next.item &&
-    prev.activeId === next.activeId &&
     prev.isMenuOpen === next.isMenuOpen &&
     prev.hasActions === next.hasActions &&
     prev.animateEnter === next.animateEnter &&
@@ -347,7 +373,6 @@ const areRowsEqual = (
 const SortableBoardRow = memo(({
   item,
   now,
-  activeId,
   isMenuOpen,
   hasActions,
   animateEnter,
@@ -359,7 +384,6 @@ const SortableBoardRow = memo(({
   const {
     listeners,
     isDragging,
-    isOver,
     setNodeRef,
     transform,
     transition
@@ -372,8 +396,7 @@ const SortableBoardRow = memo(({
     "board-row--draggable",
     animateEnter ? "board-row--enter" : "",
     isMenuOpen ? "board-row--menu-open" : "",
-    isDragging ? "board-row--dragging" : "",
-    activeId && activeId !== item.id && isOver ? "board-row--drop-target" : ""
+    isDragging ? "board-row--dragging" : ""
   ]
     .filter(Boolean)
     .join(" ")
@@ -383,8 +406,12 @@ const SortableBoardRow = memo(({
       return
     }
 
-    // Let a note's textarea (etc.) keep its native copy/paste menu.
-    if (isFromInteractiveControl(event)) {
+    // Let a note's textarea (etc.) keep its native copy/paste menu, and step
+    // aside entirely when there is text selected on this card to copy.
+    if (
+      isFromInteractiveControl(event) ||
+      hasSelectionWithin(event.currentTarget)
+    ) {
       return
     }
 
@@ -542,7 +569,6 @@ export const BoardList = ({
         <section className={sectionClassName} aria-label="Dayboard widgets">
           {items.map((item) => (
             <SortableBoardRow
-              activeId={activeId}
               animateEnter={!initialIds.has(item.id)}
               hasActions={hasActions}
               isMenuOpen={openMenu?.id === item.id}

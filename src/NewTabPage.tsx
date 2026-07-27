@@ -49,14 +49,17 @@ const MenuIcon = ({ name }: { name: keyof typeof MENU_ICON_PATHS }) => (
   </svg>
 )
 
-const ADD_MENU_KINDS: { kind: WidgetKind; label: string }[] = [
-  { kind: "clock", label: "Clock" },
-  { kind: "countdown", label: "Countdown" },
-  { kind: "note", label: "Note" },
-  { kind: "quote", label: "Quote" },
-  { kind: "stopwatch", label: "Stopwatch" },
-  { kind: "timer", label: "Timer" },
-  { kind: "habit", label: "Habit" }
+// A line apiece so the menu says what each kind is, rather than leaving "Add
+// quote" and "Add note" to be told apart by guesswork. Plain descriptions of
+// what the card shows — this is a menu, not a place to sell the widget.
+const ADD_MENU_KINDS: { kind: WidgetKind; label: string; hint: string }[] = [
+  { kind: "clock", label: "Clock", hint: "Current time in a time zone" },
+  { kind: "countdown", label: "Countdown", hint: "Time left until a date" },
+  { kind: "note", label: "Note", hint: "Editable text on the card" },
+  { kind: "quote", label: "Quote", hint: "A line from your list" },
+  { kind: "stopwatch", label: "Stopwatch", hint: "Time counted up from zero" },
+  { kind: "timer", label: "Timer", hint: "Time counted down to zero" },
+  { kind: "habit", label: "Habit", hint: "Daily marks over a week" }
 ]
 
 // The new tab page doubles as the extension's options page. When the browser
@@ -214,6 +217,7 @@ export function NewTabPage() {
               aria-label="Options"
               className="icon-button"
               onClick={openSettings}
+              title="Options"
               type="button">
               <svg
                 aria-hidden="true"
@@ -245,7 +249,8 @@ export function NewTabPage() {
               <summary
                 aria-label="Add widget"
                 className="icon-button"
-                role="button">
+                role="button"
+                title="Add widget">
                 <svg
                   aria-hidden="true"
                   fill="none"
@@ -261,9 +266,14 @@ export function NewTabPage() {
                 </svg>
               </summary>
               <div className="add-menu__panel">
-                {ADD_MENU_KINDS.map(({ kind, label }) => (
+                {ADD_MENU_KINDS.map(({ kind, label, hint }) => (
                   <button
-                    className="menu-button"
+                    // The subtitle would otherwise land in the accessible name
+                    // and bury the action, so name the button and offer the
+                    // line as its description.
+                    aria-describedby={`add-${kind}-hint`}
+                    aria-label={`Add ${label.toLowerCase()}`}
+                    className="menu-button menu-button--described"
                     key={kind}
                     onClick={() => addItem(kind)}
                     type="button">
@@ -272,7 +282,14 @@ export function NewTabPage() {
                       className={`menu-chip menu-chip--${kind}`}>
                       <WidgetIcon kind={kind} size={18} />
                     </span>
-                    Add {label.toLowerCase()}
+                    <span className="menu-button__text">
+                      <span className="menu-button__label">
+                        Add {label.toLowerCase()}
+                      </span>
+                      <span className="menu-button__hint" id={`add-${kind}-hint`}>
+                        {hint}
+                      </span>
+                    </span>
                   </button>
                 ))}
               </div>

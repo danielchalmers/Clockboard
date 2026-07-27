@@ -4,7 +4,11 @@
   color-scheme: light dark;
   accent-color: var(--accent);
 
-  /* Fonts */
+  /* Fonts. The weight scale across this file tops out at 650 and lives mostly
+     in the 500-600 range: headings that carry by size and letter-spacing
+     rather than by mass. It used to reach 800, which on the system fallback
+     matched the black cut of the family and made the big numbers on the cards
+     look stamped rather than set. */
   --font-sans: "Outfit", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* Warm paper neutrals (light fallbacks) — a touch of warmth instead of the
@@ -19,6 +23,11 @@
   --surface-strong: hsl(40, 20%, 94%);
   --accent: Highlight;
   --accent-text: HighlightText;
+  /* Pressed states stay in the accent's own family — shaded toward black
+     rather than blended with the page ink, which used to turn a colored
+     accent gray under the pointer. */
+  --accent-hover: color-mix(in srgb, var(--accent) 88%, #000);
+  --accent-active: color-mix(in srgb, var(--accent) 78%, #000);
   --danger: #e03131;
 
   /* Shadows */
@@ -154,6 +163,12 @@ a {
   text-decoration: none;
 }
 
+/* Highlighting text anywhere on the board picks up the browser's accent, the
+   same color the primary buttons and focus rings are drawn from. */
+::selection {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
 /* ── Page Layout ───────────────────────────────────────────────────────── */
 
 /* The board floats in the middle of the viewport: clear of the omnibox
@@ -188,7 +203,7 @@ a {
 .page-header__greeting {
   color: var(--text);
   font-size: clamp(2.1rem, 4vw, 2.8rem);
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1.1;
   margin: 0;
@@ -197,7 +212,7 @@ a {
 .page-header__date {
   color: var(--muted);
   font-size: clamp(1rem, 1.6vw, 1.15rem);
-  font-weight: 550;
+  font-weight: 500;
   letter-spacing: -0.01em;
   margin: 6px 0 0;
 }
@@ -219,7 +234,7 @@ a {
   cursor: pointer;
   display: inline-flex;
   font-size: 0.92rem;
-  font-weight: 600;
+  font-weight: 550;
   justify-content: center;
   min-block-size: 44px;
   padding: 0 20px;
@@ -236,11 +251,11 @@ a {
 }
 
 .primary-button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 90%, var(--text));
+  background: var(--accent-hover);
 }
 
 .primary-button:active:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 84%, var(--text));
+  background: var(--accent-active);
 }
 
 .secondary-button {
@@ -316,12 +331,14 @@ details > summary::-webkit-details-marker {
   z-index: 200;
 }
 
-/* Menu panels are the most "product" surface in the app: a translucent card
+/* Menu panels are the most "product" surface in the app: a nearly opaque card
    with a hairline border, layered shadow, and an inner highlight along the top
-   edge — the details that read as depth without any color noise. */
+   edge — the details that read as depth without any color noise. Only a trace
+   of translucency is left: enough to feel like glass, not enough to let a card
+   underneath show through and fight the labels for legibility. */
 .add-menu__panel,
 .card-menu__panel {
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  background: color-mix(in srgb, var(--surface) 98%, transparent);
   border: 1px solid var(--line-strong);
   border-radius: 16px;
   box-shadow:
@@ -362,6 +379,7 @@ details > summary::-webkit-details-marker {
 .add-menu__panel {
   inset-block-start: calc(100% + 8px);
   inset-inline-end: 0;
+  min-inline-size: 268px;
   /* Stay on screen and scroll if the list of widget kinds is taller than the
      viewport (e.g. a short window). */
   max-block-size: calc(100vh - 120px);
@@ -379,7 +397,7 @@ details > summary::-webkit-details-marker {
   color: var(--text);
   display: inline-flex;
   font-size: 0.92rem;
-  font-weight: 550;
+  font-weight: 500;
   gap: 12px;
   justify-content: start;
   min-block-size: 38px;
@@ -393,6 +411,29 @@ details > summary::-webkit-details-marker {
 .menu-button > svg {
   color: var(--muted);
   flex-shrink: 0;
+}
+
+/* A two-line row: the action, then a quiet line saying what the kind is for. */
+.menu-button--described {
+  min-block-size: 52px;
+  padding-block: 7px;
+}
+
+.menu-button__text {
+  display: grid;
+  gap: 1px;
+  min-inline-size: 0;
+}
+
+.menu-button__label {
+  line-height: 1.3;
+}
+
+.menu-button__hint {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.3;
 }
 
 .menu-button:hover:not(:disabled),
@@ -418,8 +459,8 @@ details > summary::-webkit-details-marker {
 }
 
 /* ── Kind chips ────────────────────────────────────────────────────────────
-   Each widget kind wears its own hue — a rounded chip in the add menu and the
-   edit dialog, so the kinds read at a glance. The hues echo the card presets. */
+   Each widget kind wears its own hue in the edit dialog, where the chip stands
+   for one particular card. The hues echo the card presets. */
 
 .menu-chip {
   --chip: hsl(220, 25%, 50%);
@@ -438,6 +479,13 @@ details > summary::-webkit-details-marker {
   block-size: 44px;
   inline-size: 44px;
   border-radius: 14px;
+}
+
+/* The add menu is a list of actions, not a set of existing cards, so its chips
+   drop the per-kind hues and take the browser's accent — one calm color for
+   the whole menu, with the glyph left to say which kind each row is. */
+.add-menu__panel .menu-chip {
+  --chip: var(--accent);
 }
 
 .menu-chip--clock { --chip: hsl(208, 95%, 46%); }
@@ -460,10 +508,14 @@ details > summary::-webkit-details-marker {
 
 /* ── Board Layout ──────────────────────────────────────────────────────── */
 
+/* `auto-fill`, not `auto-fit`: auto-fit collapses the tracks nothing landed in,
+   so a lone card — one archived widget, or a board pared down to a single
+   widget — stretched itself across every column it could reach. Keeping the
+   empty tracks holds every card at one column's width, whatever the count. */
 .board-list {
   display: grid;
   gap: 28px;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
 }
 
 /* ── Archive ───────────────────────────────────────────────────────────── */
@@ -472,7 +524,7 @@ details > summary::-webkit-details-marker {
    the viewport so it is always reachable however tall the board is. */
 .archive-dropzone {
   align-items: center;
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 2px dashed var(--line-strong);
@@ -481,7 +533,7 @@ details > summary::-webkit-details-marker {
   color: var(--muted);
   display: flex;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 550;
   gap: 10px;
   inline-size: min(420px, calc(100% - 48px));
   inset-block-end: 28px;
@@ -507,22 +559,25 @@ details > summary::-webkit-details-marker {
   margin-block-start: 40px;
 }
 
+/* The archive is a footnote to the board, not a second section of it: the
+   toggle sits back in the quiet ink at a small size and only steps forward to
+   the normal text color once you are actually pointing at it. */
 .archive-toggle {
   border: 1px solid transparent;
   border-radius: 999px;
-  color: var(--muted);
-  font-size: 0.9rem;
-  font-weight: 600;
+  color: var(--quiet);
+  font-size: 0.82rem;
+  font-weight: 450;
   justify-self: center;
-  min-block-size: 38px;
-  padding: 8px 20px;
+  min-block-size: 34px;
+  padding: 6px 16px;
   transition: background-color var(--t-fast), border-color var(--t-fast), color var(--t-fast);
 }
 
 .archive-toggle:hover {
   background: var(--surface-strong);
   border-color: var(--line);
-  color: var(--accent);
+  color: var(--text);
 }
 
 /* Archived cards sit quietly until you hover them. */
@@ -619,7 +674,7 @@ details > summary::-webkit-details-marker {
 
 .board-row__title {
   font-size: clamp(1.15rem, 2vw, 1.45rem);
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.25;
   margin: 0;
@@ -636,7 +691,7 @@ details > summary::-webkit-details-marker {
 .board-row__detail {
   color: var(--card-tint-resolved);
   font-size: 0.88rem;
-  font-weight: 550;
+  font-weight: 500;
   line-height: 1.4;
   margin: 6px 0 0;
 }
@@ -704,7 +759,7 @@ details > summary::-webkit-details-marker {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 4;
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 550;
   line-height: 1.4;
   letter-spacing: -0.01em;
   margin: 0;
@@ -719,7 +774,7 @@ details > summary::-webkit-details-marker {
   color: var(--card-accent-resolved);
   content: "\201C";
   font-size: 3.2rem;
-  font-weight: 800;
+  font-weight: 650;
   line-height: 0.6;
   opacity: 0.5;
   position: absolute;
@@ -730,7 +785,7 @@ details > summary::-webkit-details-marker {
 .quote-text--empty {
   color: var(--card-tint-resolved);
   font-size: 1rem;
-  font-weight: 550;
+  font-weight: 500;
 }
 
 .quote-text--empty::before {
@@ -740,7 +795,7 @@ details > summary::-webkit-details-marker {
 .board-row__value {
   font-size: clamp(2.6rem, 4.5vw, 3.8rem);
   font-variant-numeric: tabular-nums;
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 0.95;
   margin: 0;
@@ -752,7 +807,7 @@ details > summary::-webkit-details-marker {
 
 .board-row__value--countdown {
   font-size: clamp(1.6rem, 2.8vw, 2.15rem);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
@@ -801,7 +856,7 @@ details > summary::-webkit-details-marker {
   color: var(--text);
   display: inline-flex;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 550;
   justify-content: center;
   min-block-size: 36px;
   padding: 0 18px;
@@ -828,7 +883,7 @@ details > summary::-webkit-details-marker {
 
 .board-row__meta--alert {
   color: var(--card-accent-resolved);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* Habit week dots — the card's main content, so they read larger than when
@@ -877,7 +932,7 @@ details > summary::-webkit-details-marker {
 .duration-field__part span {
   color: var(--muted);
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 550;
 }
 
 .board-row__meta {
@@ -885,7 +940,7 @@ details > summary::-webkit-details-marker {
   display: flex;
   flex-wrap: wrap;
   font-size: 0.9rem;
-  font-weight: 550;
+  font-weight: 500;
   gap: 8px;
   line-height: 1.3;
   margin: 0;
@@ -895,7 +950,7 @@ details > summary::-webkit-details-marker {
    weight rather than fading toward transparent, which kept it fully opaque for
    contrast. */
 .board-row__meta span {
-  font-weight: 500;
+  font-weight: 450;
 }
 
 /* The frame overlay is the only draggable surface. It sits beneath the content
@@ -903,7 +958,9 @@ details > summary::-webkit-details-marker {
    padded outer ring as the drag handle. Grabbing the border starts a drag while
    the body text — and the empty space between rows — stay non-draggable. */
 .board-row__frame {
-  --frame-ring: 12px;
+  /* Wide enough to grab without aiming. The card's own padding is 24-30px, so
+     an 18px ring still stops short of the text and controls inside. */
+  --frame-ring: 18px;
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -947,10 +1004,15 @@ details > summary::-webkit-details-marker {
   box-shadow: var(--shadow-card-hover);
 }
 
-/* The in-list card while it is being dragged: a calm, dimmed placeholder that
-   holds the slot. The lifted card the cursor carries is the drag overlay. */
+/* The in-list card while it is being dragged. The overlay under the cursor is
+   already the card, so drawing a faded second copy in the slot just made it
+   look like the widget had been duplicated. Hide it and let the gap the other
+   cards open up be the only thing that marks where it will land. The slot
+   itself has to stay — it is the drop target the sort is measured against —
+   and it goes transparent rather than `visibility: hidden`, which would drop
+   the card out of the accessibility tree and blur it mid keyboard drag. */
 .board-row--dragging {
-  opacity: 0.4;
+  opacity: 0;
   animation: none !important;
   transition: none !important;
 }
@@ -969,13 +1031,9 @@ details > summary::-webkit-details-marker {
   will-change: transform;
 }
 
-.board-row--drop-target {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent);
-}
-
 /* While an archived card is in flight the whole active board reads as the
-   restore target; the card under the cursor still rings as the precise slot. */
+   restore target. The precise slot needs no ring of its own — the gap the
+   other cards open up already shows where the card is going. */
 .board-list--restore-target {
   border-radius: var(--radius-lg);
   outline: 2px dashed color-mix(in srgb, var(--accent) 45%, transparent);
@@ -1000,9 +1058,15 @@ label.form-label-group span,
 .form-label-group > span {
   color: var(--muted);
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+input,
+select,
+textarea {
+  caret-color: var(--accent);
 }
 
 input,
@@ -1063,7 +1127,7 @@ select:focus {
 
 .board-notice__text {
   font-size: 0.92rem;
-  font-weight: 550;
+  font-weight: 500;
 }
 
 .board-notice__dismiss {
@@ -1071,7 +1135,7 @@ select:focus {
   color: var(--muted);
   flex-shrink: 0;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 550;
   min-block-size: 32px;
   padding: 0 12px;
 }
@@ -1115,7 +1179,7 @@ select:focus {
 .color-preset-label {
   color: var(--muted);
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -1236,7 +1300,7 @@ select:focus {
 
 .modal-dialog__title {
   font-size: 1.6rem;
-  font-weight: 800;
+  font-weight: 650;
   letter-spacing: -0.03em;
   line-height: 1.2;
   margin: 0;
@@ -1285,7 +1349,7 @@ select:focus {
   color: var(--muted);
   display: inline-flex;
   font-size: 0.88rem;
-  font-weight: 550;
+  font-weight: 500;
   gap: 8px;
   padding: 6px 8px;
   transition: color var(--t-fast);
@@ -1362,7 +1426,7 @@ select:focus {
   color: var(--text);
   cursor: pointer;
   font-size: 1rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .option-row__hint {
@@ -1452,13 +1516,13 @@ select:focus {
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  font-weight: 800;
+  font-weight: 650;
   margin-block-end: 20px;
 }
 
 .status-view__message {
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: 550;
 }
 
 .empty-state {
@@ -1479,7 +1543,7 @@ select:focus {
 
 .empty-state h2 {
   font-size: 1.4rem;
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: -0.02em;
   margin: 0;
   color: var(--text);

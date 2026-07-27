@@ -254,7 +254,9 @@ export const ItemDialog = ({
 
             {draft.kind === "clock" ? (
               <label className="form-label-group">
-                <span>Time zone</span>
+                {/* It looks like a plain text box, but it is backed by the full
+                    IANA list — worth saying, or you would type a city and lose. */}
+                <span>Time zone (type to search)</span>
                 <input
                   list="dayboard-time-zones"
                   onChange={(event) => updateTimeZone(event.currentTarget.value)}
@@ -401,7 +403,9 @@ export const ItemDialog = ({
             {draft.kind === "quote" ? (
               <>
                 <label className="form-label-group">
-                  <span>Quotes</span>
+                  {/* The one-per-line rule is only in the placeholder, which is
+                      gone the moment there is a quote in the box. */}
+                  <span>Quotes (one per line)</span>
                   <textarea
                     className="quote-list-input"
                     onChange={(event) => updateQuotes(event.currentTarget.value)}
