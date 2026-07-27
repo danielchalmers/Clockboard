@@ -1,8 +1,6 @@
 import { useRef } from "react"
 
 import { useModalFocus } from "~/hooks/useModalFocus"
-import { usePresence } from "~/hooks/usePresence"
-import { DIALOG_EXIT_MS } from "~/lib/motion"
 import type { DayboardSettings } from "~/lib/types"
 
 interface SettingsDialogProps {
@@ -29,20 +27,16 @@ export const SettingsDialog = ({
 }: SettingsDialogProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dialogRef = useRef<HTMLElement>(null)
-  const { isPresent, isClosing } = usePresence(isOpen, DIALOG_EXIT_MS)
 
   useModalFocus(isOpen, dialogRef, onClose)
 
-  if (!isPresent) {
+  if (!isOpen) {
     return null
   }
 
   return (
     <div
-      className={`modal-backdrop${isClosing ? " modal-backdrop--closing" : ""}`}
-      // On its way out it is scenery: not clickable, not reachable, and not
-      // announced, even though it is still on screen for the animation.
-      inert={isClosing}
+      className="modal-backdrop"
       onPointerDown={(event) => {
         if (event.target === event.currentTarget) {
           onClose()

@@ -1,8 +1,6 @@
 import { useRef } from "react"
 
 import { useModalFocus } from "~/hooks/useModalFocus"
-import { usePresence } from "~/hooks/usePresence"
-import { DIALOG_EXIT_MS } from "~/lib/motion"
 import type { Widget } from "~/lib/types"
 import { widgetRegistry } from "~/lib/widgets"
 
@@ -20,11 +18,10 @@ export const DeleteDialog = ({
   onConfirm
 }: DeleteDialogProps) => {
   const dialogRef = useRef<HTMLElement>(null)
-  const { isPresent, isClosing } = usePresence(isOpen, DIALOG_EXIT_MS)
 
   useModalFocus(isOpen, dialogRef, onCancel)
 
-  if (!isPresent || !item) {
+  if (!isOpen || !item) {
     return null
   }
 
@@ -32,10 +29,7 @@ export const DeleteDialog = ({
 
   return (
     <div
-      className={`modal-backdrop${isClosing ? " modal-backdrop--closing" : ""}`}
-      // On its way out it is scenery: not clickable, not reachable, and not
-      // announced, even though it is still on screen for the animation.
-      inert={isClosing}
+      className="modal-backdrop"
       onPointerDown={(event) => {
         if (event.target === event.currentTarget) {
           onCancel()

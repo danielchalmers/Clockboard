@@ -1,8 +1,6 @@
 import { useMemo, useRef, useState } from "react"
 
 import { useModalFocus } from "~/hooks/useModalFocus"
-import { usePresence } from "~/hooks/usePresence"
-import { DIALOG_EXIT_MS } from "~/lib/motion"
 import {
   dateTimeInputValueToIsoInstant,
   getTimeZoneOptions,
@@ -45,7 +43,6 @@ export const ItemDialog = ({
   const [syncedItem, setSyncedItem] = useState(item)
   const dialogRef = useRef<HTMLElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
-  const { isPresent, isClosing } = usePresence(isOpen, DIALOG_EXIT_MS)
 
   // Adopt a newly opened item during render (not in an effect) so the dialog
   // body — and the focusable section that useModalFocus wires into — exist on
@@ -74,7 +71,7 @@ export const ItemDialog = ({
       : `Edit ${widgetDefinition.kind}`
   }, [draft, mode])
 
-  if (!isPresent || !draft) {
+  if (!isOpen || !draft) {
     return null
   }
 
@@ -203,10 +200,7 @@ export const ItemDialog = ({
 
   return (
     <div
-      className={`modal-backdrop${isClosing ? " modal-backdrop--closing" : ""}`}
-      // On its way out it is scenery: not clickable, not reachable, and not
-      // announced, even though it is still on screen for the animation.
-      inert={isClosing}
+      className="modal-backdrop"
       onPointerDown={(event) => {
         // Clicking the backdrop commits the edit — the same as pressing Save or
         // Enter — so dismissing the dialog feels fluid instead of throwing the
