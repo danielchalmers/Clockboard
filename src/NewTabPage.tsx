@@ -9,7 +9,9 @@ import { ErrorView } from "~/components/StatusViews"
 import { WidgetIcon } from "~/components/WidgetIcon"
 import { useDayboardState } from "~/hooks/useDayboardState"
 import { useNow } from "~/hooks/useNow"
+import { usePresence } from "~/hooks/usePresence"
 import { getGreeting, getHeaderDate } from "~/lib/greeting"
+import { ARCHIVE_EXIT_MS } from "~/lib/motion"
 import { parseDayboardState, serializeDayboardState } from "~/lib/storage"
 import {
   archiveWidget,
@@ -102,6 +104,7 @@ export function NewTabPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(wantsSettingsView)
   const [showArchived, setShowArchived] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
+  const archivePresence = usePresence(showArchived, ARCHIVE_EXIT_MS)
 
   useEffect(() => {
     const closeMenusAfterOutsidePointerDown = (event: PointerEvent) =>
@@ -398,50 +401,57 @@ export function NewTabPage() {
                         ? "Hide archived"
                         : `Show archived (${archivedWidgets.length})`}
                     </button>
-                    {showArchived ? (
-                      <BoardList
-                        items={archivedWidgets}
-                        now={now}
-                        onWidgetChange={updateWidget}
-                        renderItemActions={(item) => (
-                          <>
-                            <button
-                              aria-label={`Restore ${item.title}`}
-                              className="menu-button"
-                              onClick={() => restoreItem(item)}
-                              role="menuitem"
-                              type="button">
-                              <MenuIcon name="restore" />
-                              Restore
-                            </button>
-                            <button
-                              aria-label={`Edit ${item.title}`}
-                              className="menu-button"
-                              onClick={() => {
-                                closeOpenMenus()
-                                setEditorState({ mode: "edit", item })
-                              }}
-                              role="menuitem"
-                              type="button">
-                              <MenuIcon name="edit" />
-                              Edit
-                            </button>
-                            <div aria-hidden="true" className="menu-separator" />
-                            <button
-                              aria-label={`Delete ${item.title}`}
-                              className="menu-button menu-button--danger"
-                              onClick={() => {
-                                closeOpenMenus()
-                                setItemPendingDelete(item)
-                              }}
-                              role="menuitem"
-                              type="button">
-                              <MenuIcon name="del" />
-                              Delete
-                            </button>
-                          </>
-                        )}
-                      />
+                    {archivePresence.isPresent ? (
+                      <div
+                        className={`archive-reveal${
+                          archivePresence.isClosing
+                            ? " archive-reveal--closing"
+                            : ""
+                        }`}>
+                        <BoardList
+                          items={archivedWidgets}
+                          now={now}
+                          onWidgetChange={updateWidget}
+                          renderItemActions={(item) => (
+                            <>
+                              <button
+                                aria-label={`Restore ${item.title}`}
+                                className="menu-button"
+                                onClick={() => restoreItem(item)}
+                                role="menuitem"
+                                type="button">
+                                <MenuIcon name="restore" />
+                                Restore
+                              </button>
+                              <button
+                                aria-label={`Edit ${item.title}`}
+                                className="menu-button"
+                                onClick={() => {
+                                  closeOpenMenus()
+                                  setEditorState({ mode: "edit", item })
+                                }}
+                                role="menuitem"
+                                type="button">
+                                <MenuIcon name="edit" />
+                                Edit
+                              </button>
+                              <div aria-hidden="true" className="menu-separator" />
+                              <button
+                                aria-label={`Delete ${item.title}`}
+                                className="menu-button menu-button--danger"
+                                onClick={() => {
+                                  closeOpenMenus()
+                                  setItemPendingDelete(item)
+                                }}
+                                role="menuitem"
+                                type="button">
+                                <MenuIcon name="del" />
+                                Delete
+                              </button>
+                            </>
+                          )}
+                        />
+                      </div>
                     ) : null}
                   </section>
                 ) : null}

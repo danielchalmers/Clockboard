@@ -20,6 +20,7 @@ import {
 
 import { BOARD_DROP_ID } from "~/components/BoardDnd"
 import { BoardRow } from "~/components/BoardRow"
+import { MENU_EXIT_MS } from "~/lib/motion"
 import { isSameLocalDay } from "~/lib/time"
 import type { Widget } from "~/lib/types"
 
@@ -184,15 +185,24 @@ const WidgetContextMenu = ({
     // trips the close-on-scroll handler below, dismissing the menu instantly.
     getMenuItems(panel)[0]?.focus({ preventScroll: true })
 
+    // Let the panel play its exit before React takes the menu out of the tree.
+    // The popover is already hidden by the time this fires, so the animation
+    // runs on a `:not(:popover-open)` state and the delayed unmount is only
+    // there to keep the element around while it does.
+    let unmount: number | undefined
+
     const handleToggle = (event: Event) => {
       if ((event as ToggleEvent).newState === "closed") {
-        onCloseRef.current()
+        unmount = window.setTimeout(() => onCloseRef.current(), MENU_EXIT_MS)
       }
     }
 
     menu.addEventListener("toggle", handleToggle)
 
-    return () => menu.removeEventListener("toggle", handleToggle)
+    return () => {
+      window.clearTimeout(unmount)
+      menu.removeEventListener("toggle", handleToggle)
+    }
   }, [])
 
   // Keep the menu on screen, measuring the settled layout box (offsetWidth/Height

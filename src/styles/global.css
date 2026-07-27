@@ -372,6 +372,46 @@ details > summary::-webkit-details-marker {
   }
 }
 
+/* Dismissing should read as the reverse of opening rather than a cut. The card
+   menu is a popover, so it is already hidden when this runs; React holds the
+   element for MENU_EXIT_MS (src/lib/motion.ts) while it plays. */
+@keyframes scale-down-menu {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+.card-menu:not(:popover-open) {
+  display: block;
+  pointer-events: none;
+}
+
+.card-menu:not(:popover-open) .card-menu__panel {
+  animation: scale-down-menu 120ms ease-in both;
+}
+
+/* The add menu is a native <details>, which drops its content the instant it
+   closes. `::details-content` holds it through a transition so the panel can
+   leave the way it arrived. */
+.add-menu::details-content {
+  opacity: 0;
+  transition:
+    opacity 120ms ease-in,
+    content-visibility 120ms allow-discrete;
+}
+
+.add-menu[open]::details-content {
+  opacity: 1;
+  transition:
+    opacity 160ms var(--ease-out),
+    content-visibility 160ms allow-discrete;
+}
+
 .add-menu__panel {
   inset-block-start: calc(100% + 8px);
   inset-inline-end: 0;
@@ -570,6 +610,38 @@ details > summary::-webkit-details-marker {
   background: var(--surface-strong);
   border-color: var(--line);
   color: var(--text);
+}
+
+/* Revealing the archive slides the cards down from under the toggle; hiding
+   them runs the same move in reverse rather than cutting the section away. */
+.archive-reveal {
+  animation: archive-reveal 220ms var(--ease-out) both;
+}
+
+.archive-reveal--closing {
+  animation: archive-conceal 180ms ease-in both;
+}
+
+@keyframes archive-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes archive-conceal {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 }
 
 /* Archived cards sit quietly until you hover them. */
@@ -1249,6 +1321,34 @@ select:focus {
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* A dismissed dialog settles back the way it came in — the backdrop's blur
+   fades and the panel sinks a few pixels — instead of blinking out. React holds
+   both for DIALOG_EXIT_MS (src/lib/motion.ts) while this runs. */
+.modal-backdrop--closing {
+  animation: fade-out 180ms ease-in both;
+  pointer-events: none;
+}
+
+.modal-backdrop--closing .modal-dialog {
+  animation: modal-exit 180ms ease-in both;
+}
+
+@keyframes modal-exit {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97) translateY(8px);
+  }
 }
 
 .modal-dialog {
