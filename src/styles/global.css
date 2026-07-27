@@ -1099,13 +1099,9 @@ details > summary::-webkit-details-marker {
   will-change: transform;
 }
 
-.board-row--drop-target {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent);
-}
-
 /* While an archived card is in flight the whole active board reads as the
-   restore target; the card under the cursor still rings as the precise slot. */
+   restore target. The precise slot needs no ring of its own — the gap the
+   other cards open up already shows where the card is going. */
 .board-list--restore-target {
   border-radius: var(--radius-lg);
   outline: 2px dashed color-mix(in srgb, var(--accent) 45%, transparent);

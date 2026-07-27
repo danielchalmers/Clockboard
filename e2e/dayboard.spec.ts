@@ -1477,8 +1477,7 @@ test("dragging an archived widget onto a board card restores it into that slot",
   // The board announces itself as the restore target while the card is up.
   await expect(page.locator(".board-list--restore-target")).toBeVisible()
 
-  // Carry the card up over the first board card; the hovered card rings as the
-  // slot the drop will take.
+  // Carry the card up over the first board card, whose slot the drop will take.
   await page.mouse.move(
     targetBox.x + targetBox.width / 2,
     targetBox.y + targetBox.height / 2,
@@ -1497,7 +1496,6 @@ test("dragging an archived widget onto a board card restores it into that slot",
       .filter({ hasText: "🌅 Tomorrow morning" })
   ).toHaveCount(1)
 
-  await expect(page.locator(".board-row--drop-target")).toBeVisible()
   await page.mouse.up()
 
   // It is back on the board in the exact slot it was dropped on — ahead of

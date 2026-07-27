@@ -324,7 +324,6 @@ const WidgetContextMenu = ({
 interface SortableBoardRowProps {
   item: Widget
   now: Date
-  activeId: string | null
   isMenuOpen: boolean
   hasActions: boolean
   animateEnter: boolean
@@ -365,7 +364,6 @@ const areRowsEqual = (
   // `now` is otherwise excluded: nothing else on these cards changes within a day.
   return (
     prev.item === next.item &&
-    prev.activeId === next.activeId &&
     prev.isMenuOpen === next.isMenuOpen &&
     prev.hasActions === next.hasActions &&
     prev.animateEnter === next.animateEnter &&
@@ -379,7 +377,6 @@ const areRowsEqual = (
 const SortableBoardRow = memo(({
   item,
   now,
-  activeId,
   isMenuOpen,
   hasActions,
   animateEnter,
@@ -391,7 +388,6 @@ const SortableBoardRow = memo(({
   const {
     listeners,
     isDragging,
-    isOver,
     setNodeRef,
     transform,
     transition
@@ -404,8 +400,7 @@ const SortableBoardRow = memo(({
     "board-row--draggable",
     animateEnter ? "board-row--enter" : "",
     isMenuOpen ? "board-row--menu-open" : "",
-    isDragging ? "board-row--dragging" : "",
-    activeId && activeId !== item.id && isOver ? "board-row--drop-target" : ""
+    isDragging ? "board-row--dragging" : ""
   ]
     .filter(Boolean)
     .join(" ")
@@ -578,7 +573,6 @@ export const BoardList = ({
         <section className={sectionClassName} aria-label="Dayboard widgets">
           {items.map((item) => (
             <SortableBoardRow
-              activeId={activeId}
               animateEnter={!initialIds.has(item.id)}
               hasActions={hasActions}
               isMenuOpen={openMenu?.id === item.id}
