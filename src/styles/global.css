@@ -316,12 +316,14 @@ details > summary::-webkit-details-marker {
   z-index: 200;
 }
 
-/* Menu panels are the most "product" surface in the app: a translucent card
+/* Menu panels are the most "product" surface in the app: a nearly opaque card
    with a hairline border, layered shadow, and an inner highlight along the top
-   edge — the details that read as depth without any color noise. */
+   edge — the details that read as depth without any color noise. Only a trace
+   of translucency is left: enough to feel like glass, not enough to let a card
+   underneath show through and fight the labels for legibility. */
 .add-menu__panel,
 .card-menu__panel {
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  background: color-mix(in srgb, var(--surface) 98%, transparent);
   border: 1px solid var(--line-strong);
   border-radius: 16px;
   box-shadow:
@@ -472,7 +474,7 @@ details > summary::-webkit-details-marker {
    the viewport so it is always reachable however tall the board is. */
 .archive-dropzone {
   align-items: center;
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 2px dashed var(--line-strong);
