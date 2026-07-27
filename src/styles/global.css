@@ -509,22 +509,25 @@ details > summary::-webkit-details-marker {
   margin-block-start: 40px;
 }
 
+/* The archive is a footnote to the board, not a second section of it: the
+   toggle sits back in the quiet ink at a small size and only steps forward to
+   the normal text color once you are actually pointing at it. */
 .archive-toggle {
   border: 1px solid transparent;
   border-radius: 999px;
-  color: var(--muted);
-  font-size: 0.9rem;
-  font-weight: 600;
+  color: var(--quiet);
+  font-size: 0.82rem;
+  font-weight: 500;
   justify-self: center;
-  min-block-size: 38px;
-  padding: 8px 20px;
+  min-block-size: 34px;
+  padding: 6px 16px;
   transition: background-color var(--t-fast), border-color var(--t-fast), color var(--t-fast);
 }
 
 .archive-toggle:hover {
   background: var(--surface-strong);
   border-color: var(--line);
-  color: var(--accent);
+  color: var(--text);
 }
 
 /* Archived cards sit quietly until you hover them. */
