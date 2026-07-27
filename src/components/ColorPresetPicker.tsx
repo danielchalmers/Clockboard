@@ -30,8 +30,8 @@ export const ColorPresetPicker = ({ value, onChange }: ColorPresetPickerProps) =
 
   return (
     <div className="color-preset-field">
-      <span className="color-preset-label">Theme color</span>
-      <div className="color-preset-picker" role="radiogroup" aria-label="Widget theme color">
+      <span className="color-preset-label">Color</span>
+      <div className="color-preset-picker" role="radiogroup" aria-label="Widget color">
         {COLOR_PRESETS.map((preset, index) => {
           const isSelected = value === preset.id
           return (
