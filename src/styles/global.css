@@ -431,8 +431,8 @@ details > summary::-webkit-details-marker {
 }
 
 /* ── Kind chips ────────────────────────────────────────────────────────────
-   Each widget kind wears its own hue — a rounded chip in the add menu and the
-   edit dialog, so the kinds read at a glance. The hues echo the card presets. */
+   Each widget kind wears its own hue in the edit dialog, where the chip stands
+   for one particular card. The hues echo the card presets. */
 
 .menu-chip {
   --chip: hsl(220, 25%, 50%);
@@ -451,6 +451,13 @@ details > summary::-webkit-details-marker {
   block-size: 44px;
   inline-size: 44px;
   border-radius: 14px;
+}
+
+/* The add menu is a list of actions, not a set of existing cards, so its chips
+   drop the per-kind hues and take the browser's accent — one calm color for
+   the whole menu, with the glyph left to say which kind each row is. */
+.add-menu__panel .menu-chip {
+  --chip: var(--accent);
 }
 
 .menu-chip--clock { --chip: hsl(208, 95%, 46%); }
