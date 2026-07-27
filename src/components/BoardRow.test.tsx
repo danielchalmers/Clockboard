@@ -163,8 +163,7 @@ describe("BoardRow", () => {
 
     const { container } = render(<BoardRow item={item} now={now} />)
 
-    // Two weeks of dots, keyed to the same weekday columns.
-    expect(container.querySelectorAll(".habit-day")).toHaveLength(14)
+    expect(container.querySelectorAll(".habit-day")).toHaveLength(7)
     expect(container.querySelectorAll(".habit-day--done")).toHaveLength(1)
     expect(container.querySelector(".habit-day--done")).toHaveClass(
       "habit-day--today"
@@ -226,7 +225,7 @@ describe("BoardRow", () => {
     expect(container.querySelectorAll(".habit-day--future")).toHaveLength(3)
   })
 
-  it("labels the habit weeks and dims the one before", () => {
+  it("names the week the habit dots cover", () => {
     const now = new Date(2026, 2, 4, 9, 0, 0)
     const item: Widget = {
       id: "habit",
@@ -236,11 +235,14 @@ describe("BoardRow", () => {
       settings: { history: [] }
     }
 
-    const { container } = render(<BoardRow item={item} now={now} />)
+    render(<BoardRow item={item} now={now} />)
 
     expect(screen.getByRole("group", { name: "This week" })).toBeInTheDocument()
-    expect(container.querySelectorAll(".habit-week--past")).toHaveLength(1)
     expect(screen.getByText(/Mar 1\s*–\s*7/)).toBeInTheDocument()
+    // Each dot names its own day for a pointer as well as a screen reader.
+    expect(
+      screen.getByRole("button", { name: formatDayLabel(now) })
+    ).toHaveAttribute("title", formatDayLabel(now))
   })
 
   it("renders a note card with an editable text area", () => {

@@ -74,19 +74,9 @@ const storyState: DayboardState = {
       kind: "habit",
       title: "Morning walk",
       colorPreset: "slate",
-      // A partly filled fortnight around the story's Friday, so the shot shows
-      // this week's dots over the dimmed week before them.
-      settings: {
-        history: [
-          "2025-04-28",
-          "2025-04-30",
-          "2025-05-01",
-          "2025-05-03",
-          "2025-05-05",
-          "2025-05-06",
-          "2025-05-08"
-        ]
-      }
+      // A partly filled week around the story's Friday: some days done, today
+      // still open, the weekend ahead.
+      settings: { history: ["2025-05-05", "2025-05-06", "2025-05-08"] }
     }
   ],
   settings: { name: "" }

@@ -116,7 +116,7 @@ describe("readDayboardState", () => {
     expect(state.widgets).toEqual(sampleState.widgets)
   })
 
-  it("prunes a legacy unbounded habit history down to the visible weeks", async () => {
+  it("prunes a legacy unbounded habit history down to the visible week", async () => {
     // Ten months of daily completions, the shape old versions accumulated.
     const base = new Date(2026, 6, 9)
     const days = Array.from({ length: 300 }, (_, offset) => {
@@ -143,8 +143,8 @@ describe("readDayboardState", () => {
     const habit = state.widgets[0] as HabitWidget
     expect(habit.settings.history).toHaveLength(STORED_DAYS)
     expect(habit.settings.history).toContain("2026-07-09")
-    expect(habit.settings.history).toContain("2026-06-26")
-    expect(habit.settings.history).not.toContain("2026-06-25")
+    expect(habit.settings.history).toContain("2026-07-03")
+    expect(habit.settings.history).not.toContain("2026-07-02")
   })
 
   it("retires a legacy countdown display setting", async () => {

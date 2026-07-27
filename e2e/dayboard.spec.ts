@@ -1025,9 +1025,8 @@ test("add habit flow marks today and persists", async ({
     .locator(".board-row")
     .filter({ has: page.getByRole("heading", { name: "Read" }) })
 
-  // Two weeks of dots: the current week and the dimmed one above it.
   await expect(card.getByRole("group", { name: "This week" })).toBeVisible()
-  await expect(card.locator(".habit-day")).toHaveCount(14)
+  await expect(card.locator(".habit-day")).toHaveCount(7)
 
   const today = card.locator(".habit-day--today")
   await expect(today).toHaveAttribute("aria-pressed", "false")

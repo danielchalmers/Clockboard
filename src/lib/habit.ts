@@ -1,10 +1,10 @@
 // Helpers for the habit widget. The card shows the current week as a row of
-// dots above a dimmed row for the week before, and nothing else — deliberately
-// no streak counter, because a number that can reset to zero (or be lost to a
-// bug) turns a gentle nudge into a source of anxiety. History therefore keeps
-// only the days those two rows can show, which also keeps it far under the
-// chrome.storage.sync per-item quota that the whole board shares; the original
-// unbounded list eventually blew it and made every save fail.
+// dots and nothing else — deliberately no streak counter, because a number
+// that can reset to zero (or be lost to a bug) turns a gentle nudge into a
+// source of anxiety. History therefore keeps only the days that row can show,
+// which also keeps it far under the chrome.storage.sync per-item quota that
+// the whole board shares; the original unbounded list eventually blew it and
+// made every save fail.
 
 const pad = (value: number) => String(value).padStart(2, "0")
 
@@ -21,12 +21,9 @@ const DAY_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
 export const DAYS_PER_WEEK = 7
 
-// The current week plus the dimmed one above it.
-export const VISIBLE_WEEKS = 2
-
-// The widest span the card can ever draw: the previous week's first day through
+// The widest span the card can ever draw: the current week's first day through
 // today. Days older than that can never render again and don't need to be kept.
-export const STORED_DAYS = DAYS_PER_WEEK * VISIBLE_WEEKS
+export const STORED_DAYS = DAYS_PER_WEEK
 
 const prune = (dayKeys: string[]): string[] =>
   // YYYY-MM-DD keys sort chronologically as strings.
@@ -96,21 +93,12 @@ export const startOfWeek = (date: Date, firstDay = weekStartDay()): Date => {
   return addDays(start, -((start.getDay() - firstDay + DAYS_PER_WEEK) % DAYS_PER_WEEK))
 }
 
-// The weeks the card draws, oldest first, each one running from the week's
-// first day to its last. The current week is always the final row, so it holds
-// its shape as the days fill in rather than sliding a day left every midnight.
-export const weekGrid = (
-  now: Date,
-  weeks = VISIBLE_WEEKS,
-  firstDay = weekStartDay()
-): Date[][] => {
-  const thisWeek = startOfWeek(now, firstDay)
+// The week the card draws, from its first day to its last. It holds its shape
+// as the days fill in rather than sliding a day left every midnight.
+export const weekDays = (now: Date, firstDay = weekStartDay()): Date[] => {
+  const start = startOfWeek(now, firstDay)
 
-  return Array.from({ length: weeks }, (_, week) => {
-    const start = addDays(thisWeek, (week - weeks + 1) * DAYS_PER_WEEK)
-
-    return Array.from({ length: DAYS_PER_WEEK }, (_, day) => addDays(start, day))
-  })
+  return Array.from({ length: DAYS_PER_WEEK }, (_, day) => addDays(start, day))
 }
 
 // A habit card redraws with every tick of the board's clock, and each one
@@ -129,7 +117,7 @@ const dayLabelFormat = new Intl.DateTimeFormat(undefined, {
 
 const initialFormat = new Intl.DateTimeFormat(undefined, { weekday: "narrow" })
 
-// A quiet label for the week beside the button, such as `Jul 26 – Aug 1`.
+// A quiet label under the dots, such as `Jul 26 – Aug 1`.
 export const formatWeekRange = (days: Date[]): string => {
   const first = days[0]
   const last = days[days.length - 1]

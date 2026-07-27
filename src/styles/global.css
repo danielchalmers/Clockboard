@@ -848,15 +848,6 @@ details > summary::-webkit-details-marker {
   margin-block-start: 14px;
 }
 
-/* Habits spend their height on two weeks of dots, so the action shares a line
-   with the week's dates instead of standing on its own. */
-.habit-footer {
-  align-items: center;
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-  margin-block-start: 10px;
-}
 
 .timer-button {
   align-items: center;
@@ -896,47 +887,49 @@ details > summary::-webkit-details-marker {
   font-weight: 600;
 }
 
-/* Habit weeks — the card's main content: a row of dots for the current week
-   under one dimmed row for the week before, both keyed to the same weekday
-   columns so a glance reads down as well as across. */
-.habit-weeks {
+/* Habit week — the card's main content: the current week as a row of dots
+   under its weekday letters, so the row reads as the week it is rather than
+   as seven unlabeled days. */
+.habit-week {
   display: grid;
-  gap: 3px;
-  margin-block: 4px 0;
+  gap: 8px;
+  margin-block: 6px 0;
+}
+
+/* The action and the week's dates share the last line, so a habit with a
+   two-line title still has room for its button. */
+.habit-footer {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-block-start: 14px;
 }
 
 .habit-weekdays,
-.habit-week {
+.habit-days {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 .habit-weekdays {
   color: var(--card-tint-resolved);
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   line-height: 1;
   text-align: center;
 }
 
-/* The week before is context, not the thing being tended today. */
-.habit-week--past {
-  opacity: 0.5;
-}
-
-.habit-week--past:hover,
-.habit-week--past:focus-within {
-  opacity: 0.8;
-}
-
 /* The button spans its whole column so the target is comfortable, while the
-   dot inside stays the same small mark it always was. */
+   dot inside stays the small mark it always was. */
 .habit-day {
   align-items: center;
   background: none;
   border: 0;
-  block-size: 24px;
+  /* Rounded so the app's shared focus ring traces the target, not a box. */
+  border-radius: 999px;
+  block-size: 26px;
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -945,9 +938,9 @@ details > summary::-webkit-details-marker {
 
 .habit-day__dot {
   background: color-mix(in srgb, var(--card-accent-resolved) 16%, transparent);
-  block-size: 16px;
+  block-size: 18px;
   border-radius: 50%;
-  inline-size: 16px;
+  inline-size: 18px;
   transition:
     background-color var(--t-fast),
     box-shadow var(--t-fast);
@@ -980,12 +973,6 @@ details > summary::-webkit-details-marker {
   background: none;
   box-shadow: inset 0 0 0 1.5px
     color-mix(in srgb, var(--card-accent-resolved) 18%, transparent);
-}
-
-.habit-day:focus-visible {
-  border-radius: 8px;
-  outline: 2px solid var(--card-accent-resolved);
-  outline-offset: -2px;
 }
 
 /* Timer length editor */

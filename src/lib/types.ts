@@ -113,8 +113,8 @@ export interface HabitWidget extends WidgetBase {
   settings: {
     /**
      * Local day keys (YYYY-MM-DD) on which the habit was marked done, pruned
-     * to the two weeks the dot rows can show — an unbounded list eventually
-     * grew into the chrome.storage.sync per-item quota the whole board shares.
+     * to the week the dot row can show — an unbounded list eventually grew
+     * into the chrome.storage.sync per-item quota the whole board shares.
      */
     history: string[]
   }

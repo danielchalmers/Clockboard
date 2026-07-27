@@ -36,7 +36,7 @@ import {
   toDayKey,
   toggleDay,
   weekdayInitials,
-  weekGrid
+  weekDays
 } from "~/lib/habit"
 import { cleanQuotes, dailyQuoteIndex } from "~/lib/quotes"
 import {
@@ -299,8 +299,7 @@ const HabitBody = ({
 }) => {
   const { history } = item.settings
   const done = isDoneToday(history, now)
-  const weeks = weekGrid(now)
-  const currentWeek = weeks[weeks.length - 1] ?? []
+  const week = weekDays(now)
   const todayKey = toDayKey(now)
 
   const toggle = (day: Date) =>
@@ -311,7 +310,7 @@ const HabitBody = ({
 
   return (
     <>
-      <div className="habit-weeks">
+      <div className="habit-week" role="group" aria-label="This week">
         {/* One narrow letter per column. The dots carry their own full date,
             so the headers are decoration for screen readers. */}
         <div className="habit-weekdays" aria-hidden="true">
@@ -319,47 +318,40 @@ const HabitBody = ({
             <span key={index}>{letter}</span>
           ))}
         </div>
-        {weeks.map((week, index) => {
-          const current = index === weeks.length - 1
+        <div className="habit-days">
+          {week.map((day) => {
+            const key = toDayKey(day)
+            const label = formatDayLabel(day)
+            // Day keys sort chronologically as strings, so a plain compare
+            // tells a day that hasn't arrived from one that has.
+            const className = [
+              "habit-day",
+              isDoneOn(history, day) ? "habit-day--done" : "",
+              key === todayKey ? "habit-day--today" : "",
+              key > todayKey ? "habit-day--future" : ""
+            ]
+              .filter(Boolean)
+              .join(" ")
 
-          return (
-            <div
-              aria-label={current ? "This week" : formatWeekRange(week)}
-              className={`habit-week${current ? "" : " habit-week--past"}`}
-              key={index}
-              role="group">
-              {week.map((day) => {
-                const key = toDayKey(day)
-                // Day keys sort chronologically as strings, so a plain compare
-                // tells a day that hasn't arrived from one that has.
-                const className = [
-                  "habit-day",
-                  isDoneOn(history, day) ? "habit-day--done" : "",
-                  key === todayKey ? "habit-day--today" : "",
-                  key > todayKey ? "habit-day--future" : ""
-                ]
-                  .filter(Boolean)
-                  .join(" ")
-
-                return (
-                  <button
-                    aria-label={formatDayLabel(day)}
-                    aria-pressed={isDoneOn(history, day)}
-                    className={className}
-                    disabled={key > todayKey}
-                    key={key}
-                    onClick={() => toggle(day)}
-                    type="button">
-                    <span className="habit-day__dot" />
-                  </button>
-                )
-              })}
-            </div>
-          )
-        })}
+            return (
+              <button
+                aria-label={label}
+                aria-pressed={isDoneOn(history, day)}
+                className={className}
+                disabled={key > todayKey}
+                key={key}
+                onClick={() => toggle(day)}
+                title={label}
+                type="button">
+                <span className="habit-day__dot" />
+              </button>
+            )
+          })}
+        </div>
       </div>
-      {/* The week's dates sit beside the button rather than on their own line:
-          two rows of dots leave the card no height to spare. */}
+      {/* The week's dates share the button's line rather than taking one of
+          their own: with the weekday letters above the dots, a card that can't
+          grow has no height left for a third row. */}
       <div className="habit-footer">
         <button
           aria-pressed={done}
@@ -368,7 +360,7 @@ const HabitBody = ({
           type="button">
           {done ? "Done today ✓" : "Mark today"}
         </button>
-        <p className="board-row__meta">{formatWeekRange(currentWeek)}</p>
+        <p className="board-row__meta">{formatWeekRange(week)}</p>
       </div>
     </>
   )
