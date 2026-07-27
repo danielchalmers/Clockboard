@@ -4,7 +4,11 @@
   color-scheme: light dark;
   accent-color: var(--accent);
 
-  /* Fonts */
+  /* Fonts. The weight scale across this file tops out at 650 and lives mostly
+     in the 500-600 range: headings that carry by size and letter-spacing
+     rather than by mass. It used to reach 800, which on the system fallback
+     matched the black cut of the family and made the big numbers on the cards
+     look stamped rather than set. */
   --font-sans: "Outfit", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* Warm paper neutrals (light fallbacks) — a touch of warmth instead of the
@@ -199,7 +203,7 @@ a {
 .page-header__greeting {
   color: var(--text);
   font-size: clamp(2.1rem, 4vw, 2.8rem);
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1.1;
   margin: 0;
@@ -208,7 +212,7 @@ a {
 .page-header__date {
   color: var(--muted);
   font-size: clamp(1rem, 1.6vw, 1.15rem);
-  font-weight: 550;
+  font-weight: 500;
   letter-spacing: -0.01em;
   margin: 6px 0 0;
 }
@@ -230,7 +234,7 @@ a {
   cursor: pointer;
   display: inline-flex;
   font-size: 0.92rem;
-  font-weight: 600;
+  font-weight: 550;
   justify-content: center;
   min-block-size: 44px;
   padding: 0 20px;
@@ -433,7 +437,7 @@ details > summary::-webkit-details-marker {
   color: var(--text);
   display: inline-flex;
   font-size: 0.92rem;
-  font-weight: 550;
+  font-weight: 500;
   gap: 12px;
   justify-content: start;
   min-block-size: 38px;
@@ -468,7 +472,7 @@ details > summary::-webkit-details-marker {
 .menu-button__hint {
   color: var(--muted);
   font-size: 0.78rem;
-  font-weight: 450;
+  font-weight: 400;
   line-height: 1.3;
 }
 
@@ -569,7 +573,7 @@ details > summary::-webkit-details-marker {
   color: var(--muted);
   display: flex;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 550;
   gap: 10px;
   inline-size: min(420px, calc(100% - 48px));
   inset-block-end: 28px;
@@ -603,7 +607,7 @@ details > summary::-webkit-details-marker {
   border-radius: 999px;
   color: var(--quiet);
   font-size: 0.82rem;
-  font-weight: 500;
+  font-weight: 450;
   justify-self: center;
   min-block-size: 34px;
   padding: 6px 16px;
@@ -742,7 +746,7 @@ details > summary::-webkit-details-marker {
 
 .board-row__title {
   font-size: clamp(1.15rem, 2vw, 1.45rem);
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.25;
   margin: 0;
@@ -759,7 +763,7 @@ details > summary::-webkit-details-marker {
 .board-row__detail {
   color: var(--card-tint-resolved);
   font-size: 0.88rem;
-  font-weight: 550;
+  font-weight: 500;
   line-height: 1.4;
   margin: 6px 0 0;
 }
@@ -827,7 +831,7 @@ details > summary::-webkit-details-marker {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 4;
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 550;
   line-height: 1.4;
   letter-spacing: -0.01em;
   margin: 0;
@@ -842,7 +846,7 @@ details > summary::-webkit-details-marker {
   color: var(--card-accent-resolved);
   content: "\201C";
   font-size: 3.2rem;
-  font-weight: 800;
+  font-weight: 650;
   line-height: 0.6;
   opacity: 0.5;
   position: absolute;
@@ -853,7 +857,7 @@ details > summary::-webkit-details-marker {
 .quote-text--empty {
   color: var(--card-tint-resolved);
   font-size: 1rem;
-  font-weight: 550;
+  font-weight: 500;
 }
 
 .quote-text--empty::before {
@@ -863,7 +867,7 @@ details > summary::-webkit-details-marker {
 .board-row__value {
   font-size: clamp(2.6rem, 4.5vw, 3.8rem);
   font-variant-numeric: tabular-nums;
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 0.95;
   margin: 0;
@@ -875,7 +879,7 @@ details > summary::-webkit-details-marker {
 
 .board-row__value--countdown {
   font-size: clamp(1.6rem, 2.8vw, 2.15rem);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
@@ -924,7 +928,7 @@ details > summary::-webkit-details-marker {
   color: var(--text);
   display: inline-flex;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 550;
   justify-content: center;
   min-block-size: 36px;
   padding: 0 18px;
@@ -951,7 +955,7 @@ details > summary::-webkit-details-marker {
 
 .board-row__meta--alert {
   color: var(--card-accent-resolved);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* Habit week dots — the card's main content, so they read larger than when
@@ -1000,7 +1004,7 @@ details > summary::-webkit-details-marker {
 .duration-field__part span {
   color: var(--muted);
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 550;
 }
 
 .board-row__meta {
@@ -1008,7 +1012,7 @@ details > summary::-webkit-details-marker {
   display: flex;
   flex-wrap: wrap;
   font-size: 0.9rem;
-  font-weight: 550;
+  font-weight: 500;
   gap: 8px;
   line-height: 1.3;
   margin: 0;
@@ -1018,7 +1022,7 @@ details > summary::-webkit-details-marker {
    weight rather than fading toward transparent, which kept it fully opaque for
    contrast. */
 .board-row__meta span {
-  font-weight: 500;
+  font-weight: 450;
 }
 
 /* The frame overlay is the only draggable surface. It sits beneath the content
@@ -1126,7 +1130,7 @@ label.form-label-group span,
 .form-label-group > span {
   color: var(--muted);
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -1195,7 +1199,7 @@ select:focus {
 
 .board-notice__text {
   font-size: 0.92rem;
-  font-weight: 550;
+  font-weight: 500;
 }
 
 .board-notice__dismiss {
@@ -1203,7 +1207,7 @@ select:focus {
   color: var(--muted);
   flex-shrink: 0;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 550;
   min-block-size: 32px;
   padding: 0 12px;
 }
@@ -1247,7 +1251,7 @@ select:focus {
 .color-preset-label {
   color: var(--muted);
   font-size: 0.85rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -1396,7 +1400,7 @@ select:focus {
 
 .modal-dialog__title {
   font-size: 1.6rem;
-  font-weight: 800;
+  font-weight: 650;
   letter-spacing: -0.03em;
   line-height: 1.2;
   margin: 0;
@@ -1445,7 +1449,7 @@ select:focus {
   color: var(--muted);
   display: inline-flex;
   font-size: 0.88rem;
-  font-weight: 550;
+  font-weight: 500;
   gap: 8px;
   padding: 6px 8px;
   transition: color var(--t-fast);
@@ -1522,7 +1526,7 @@ select:focus {
   color: var(--text);
   cursor: pointer;
   font-size: 1rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .option-row__hint {
@@ -1612,13 +1616,13 @@ select:focus {
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  font-weight: 800;
+  font-weight: 650;
   margin-block-end: 20px;
 }
 
 .status-view__message {
   font-size: 1.05rem;
-  font-weight: 600;
+  font-weight: 550;
 }
 
 .empty-state {
@@ -1639,7 +1643,7 @@ select:focus {
 
 .empty-state h2 {
   font-size: 1.4rem;
-  font-weight: 750;
+  font-weight: 600;
   letter-spacing: -0.02em;
   margin: 0;
   color: var(--text);
