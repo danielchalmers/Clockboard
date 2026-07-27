@@ -214,6 +214,7 @@ export function NewTabPage() {
               aria-label="Options"
               className="icon-button"
               onClick={openSettings}
+              title="Options"
               type="button">
               <svg
                 aria-hidden="true"
@@ -245,7 +246,8 @@ export function NewTabPage() {
               <summary
                 aria-label="Add widget"
                 className="icon-button"
-                role="button">
+                role="button"
+                title="Add widget">
                 <svg
                   aria-hidden="true"
                   fill="none"
