@@ -906,6 +906,12 @@ details > summary::-webkit-details-marker {
   margin-block-start: 14px;
 }
 
+/* The dates only say which week the dots belong to — a hint to reach for, not
+   something to read every time the card is glanced at. */
+.habit-footer .board-row__meta {
+  opacity: 0.6;
+}
+
 .habit-weekdays,
 .habit-days {
   display: grid;
