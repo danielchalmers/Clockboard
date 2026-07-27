@@ -1364,6 +1364,35 @@ test("archiving from the menu hides a widget and it can be restored", async ({
   ).toHaveCount(0)
 })
 
+test("a keyboard drag is released by reaching for the mouse", async ({
+  page,
+  extensionId
+}) => {
+  await page.setViewportSize({ width: 1280, height: 1000 })
+  await openNewTab(page, extensionId)
+
+  const card = page
+    .locator(".board-row")
+    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
+
+  await card.focus()
+  await page.keyboard.press("Space")
+  await expect(page.locator(".board-row--overlay")).toBeVisible()
+
+  // Space and Escape are not the only ways out. Pressing anywhere with the
+  // pointer puts the card down, instead of leaving it stranded over the board
+  // with a sensor holding every later drag hostage.
+  await page.mouse.click(6, 6)
+  await expect(page.locator(".board-row--overlay")).toHaveCount(0)
+
+  // And dragging works straight afterwards, which it would not if the keyboard
+  // drag were still the active one.
+  await dragWidget(page, "🌅 Tomorrow morning", "🕒 Local time")
+  await expect(page.locator(".board-row h2").first()).toHaveText(
+    "🌅 Tomorrow morning"
+  )
+})
+
 test("dragging a widget onto the archive zone archives it", async ({
   page,
   extensionId
