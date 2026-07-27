@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { BoardRow } from "./BoardRow"
-import { toDayKey } from "~/lib/habit"
+import { formatDayLabel, toDayKey } from "~/lib/habit"
 import { dailyQuoteIndex } from "~/lib/quotes"
 import type { Widget } from "~/lib/types"
 
@@ -140,9 +140,6 @@ describe("BoardRow", () => {
 
     render(<BoardRow item={item} now={now} onWidgetChange={onWidgetChange} />)
 
-    expect(
-      screen.getByLabelText("Done 0 of the past 7 days")
-    ).toBeInTheDocument()
     const button = screen.getByRole("button", { name: "Mark today" })
     expect(button).toHaveAttribute("aria-pressed", "false")
 
@@ -154,7 +151,7 @@ describe("BoardRow", () => {
     })
   })
 
-  it("shows a completed habit as done in its week of dots", () => {
+  it("shows a completed habit as done in this week's dots", () => {
     const now = new Date("2026-03-04T09:00:00.000Z")
     const item: Widget = {
       id: "habit",
@@ -166,13 +163,84 @@ describe("BoardRow", () => {
 
     const { container } = render(<BoardRow item={item} now={now} />)
 
-    expect(
-      screen.getByLabelText("Done 1 of the past 7 days")
-    ).toBeInTheDocument()
+    // Two weeks of dots, keyed to the same weekday columns.
+    expect(container.querySelectorAll(".habit-day")).toHaveLength(14)
     expect(container.querySelectorAll(".habit-day--done")).toHaveLength(1)
+    expect(container.querySelector(".habit-day--done")).toHaveClass(
+      "habit-day--today"
+    )
     expect(
       screen.getByRole("button", { name: "Done today ✓" })
     ).toHaveAttribute("aria-pressed", "true")
+  })
+
+  it("toggles an earlier day from its own dot", () => {
+    const now = new Date(2026, 2, 4, 9, 0, 0)
+    const monday = new Date(2026, 2, 2, 9, 0, 0)
+    const item: Widget = {
+      id: "habit",
+      kind: "habit",
+      title: "Read",
+      colorPreset: "emerald",
+      settings: { history: [toDayKey(now)] }
+    }
+    const onWidgetChange = vi.fn()
+
+    render(<BoardRow item={item} now={now} onWidgetChange={onWidgetChange} />)
+
+    const dot = screen.getByRole("button", { name: formatDayLabel(monday) })
+    expect(dot).toHaveAttribute("aria-pressed", "false")
+
+    fireEvent.click(dot)
+
+    expect(onWidgetChange).toHaveBeenCalledWith({
+      ...item,
+      settings: { history: [toDayKey(monday), toDayKey(now)] }
+    })
+  })
+
+  it("leaves the days that have not arrived yet alone", () => {
+    const now = new Date(2026, 2, 4, 9, 0, 0)
+    const item: Widget = {
+      id: "habit",
+      kind: "habit",
+      title: "Read",
+      colorPreset: "emerald",
+      settings: { history: [] }
+    }
+    const onWidgetChange = vi.fn()
+
+    const { container } = render(
+      <BoardRow item={item} now={now} onWidgetChange={onWidgetChange} />
+    )
+
+    const tomorrow = screen.getByRole("button", {
+      name: formatDayLabel(new Date(2026, 2, 5, 9, 0, 0))
+    })
+    expect(tomorrow).toBeDisabled()
+
+    fireEvent.click(tomorrow)
+
+    expect(onWidgetChange).not.toHaveBeenCalled()
+    // Wednesday of a Sunday-first week leaves Thursday through Saturday ahead.
+    expect(container.querySelectorAll(".habit-day--future")).toHaveLength(3)
+  })
+
+  it("labels the habit weeks and dims the one before", () => {
+    const now = new Date(2026, 2, 4, 9, 0, 0)
+    const item: Widget = {
+      id: "habit",
+      kind: "habit",
+      title: "Read",
+      colorPreset: "emerald",
+      settings: { history: [] }
+    }
+
+    const { container } = render(<BoardRow item={item} now={now} />)
+
+    expect(screen.getByRole("group", { name: "This week" })).toBeInTheDocument()
+    expect(container.querySelectorAll(".habit-week--past")).toHaveLength(1)
+    expect(screen.getByText(/Mar 1\s*–\s*7/)).toBeInTheDocument()
   })
 
   it("renders a note card with an editable text area", () => {

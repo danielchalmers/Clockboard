@@ -1025,9 +1025,14 @@ test("add habit flow marks today and persists", async ({
     .locator(".board-row")
     .filter({ has: page.getByRole("heading", { name: "Read" }) })
 
-  await expect(card.getByLabel("Done 0 of the past 7 days")).toBeVisible()
+  // Two weeks of dots: the current week and the dimmed one above it.
+  await expect(card.getByRole("group", { name: "This week" })).toBeVisible()
+  await expect(card.locator(".habit-day")).toHaveCount(14)
+
+  const today = card.locator(".habit-day--today")
+  await expect(today).toHaveAttribute("aria-pressed", "false")
   await card.getByRole("button", { name: "Mark today" }).click()
-  await expect(card.getByLabel("Done 1 of the past 7 days")).toBeVisible()
+  await expect(today).toHaveAttribute("aria-pressed", "true")
   await expect(card.getByRole("button", { name: "Done today ✓" })).toBeVisible()
 
   // The marked day persists across a reload.
@@ -1035,7 +1040,50 @@ test("add habit flow marks today and persists", async ({
   const reloaded = page
     .locator(".board-row")
     .filter({ has: page.getByRole("heading", { name: "Read" }) })
-  await expect(reloaded.getByLabel("Done 1 of the past 7 days")).toBeVisible()
+  await expect(reloaded.locator(".habit-day--today")).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  )
+})
+
+test("a habit dot fills in a day that was missed", async ({
+  page,
+  extensionId
+}) => {
+  // Wednesday, so the week has days behind today to go back and fill in.
+  await page.clock.install({ time: new Date(2026, 2, 4, 10, 0, 0) })
+  await openNewTab(page, extensionId)
+
+  await page.getByRole("button", { name: "Add widget" }).click()
+  await page.getByRole("button", { name: "Add habit" }).click()
+  await page.getByLabel("Name").fill("Read")
+  await page.getByRole("button", { name: "Save habit" }).click()
+
+  const card = page
+    .locator(".board-row")
+    .filter({ has: page.getByRole("heading", { name: "Read" }) })
+
+  await card.getByRole("button", { name: "Monday, March 2" }).click()
+  await expect(
+    card.getByRole("button", { name: "Monday, March 2" })
+  ).toHaveAttribute("aria-pressed", "true")
+
+  // Today stays untouched, and a day that hasn't arrived can't be marked.
+  await expect(card.getByRole("button", { name: "Mark today" })).toBeVisible()
+  await expect(
+    card.getByRole("button", { name: "Thursday, March 5" })
+  ).toBeDisabled()
+
+  const settings = await page.evaluate(async () => {
+    const stored = await chrome.storage.sync.get("dayboard-state")
+    const { widgets } = stored["dayboard-state"] as {
+      widgets: { title: string; settings: unknown }[]
+    }
+
+    return widgets.find((widget) => widget.title === "Read")?.settings
+  })
+
+  expect(settings).toEqual({ history: ["2026-03-02"] })
 })
 
 test("a habit marked after midnight credits the new day", async ({

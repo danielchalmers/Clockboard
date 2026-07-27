@@ -29,12 +29,14 @@ import { getPresetCssVars } from "~/lib/colors"
 import { WidgetIcon } from "~/components/WidgetIcon"
 import { playChime, primeChime } from "~/lib/chime"
 import {
+  formatDayLabel,
+  formatWeekRange,
   isDoneOn,
   isDoneToday,
-  recentDays,
   toDayKey,
-  toggleToday,
-  VISIBLE_DAYS
+  toggleDay,
+  weekdayInitials,
+  weekGrid
 } from "~/lib/habit"
 import { cleanQuotes, dailyQuoteIndex } from "~/lib/quotes"
 import {
@@ -297,44 +299,76 @@ const HabitBody = ({
 }) => {
   const { history } = item.settings
   const done = isDoneToday(history, now)
-  const days = recentDays(now, VISIBLE_DAYS)
+  const weeks = weekGrid(now)
+  const currentWeek = weeks[weeks.length - 1] ?? []
   const todayKey = toDayKey(now)
-  const doneCount = days.filter((day) => isDoneOn(history, day)).length
 
-  const toggle = () =>
+  const toggle = (day: Date) =>
     onWidgetChange?.({
       ...item,
-      settings: { history: toggleToday(history, now) }
+      settings: { history: toggleDay(history, day) }
     })
 
   return (
     <>
-      <div
-        className="habit-days"
-        role="img"
-        aria-label={`Done ${doneCount} of the past ${VISIBLE_DAYS} days`}>
-        {days.map((day) => {
-          const key = toDayKey(day)
-          const className = [
-            "habit-day",
-            isDoneOn(history, day) ? "habit-day--done" : "",
-            key === todayKey ? "habit-day--today" : ""
-          ]
-            .filter(Boolean)
-            .join(" ")
+      <div className="habit-weeks">
+        {/* One narrow letter per column. The dots carry their own full date,
+            so the headers are decoration for screen readers. */}
+        <div className="habit-weekdays" aria-hidden="true">
+          {weekdayInitials().map((letter, index) => (
+            <span key={index}>{letter}</span>
+          ))}
+        </div>
+        {weeks.map((week, index) => {
+          const current = index === weeks.length - 1
 
-          return <span className={className} key={key} />
+          return (
+            <div
+              aria-label={current ? "This week" : formatWeekRange(week)}
+              className={`habit-week${current ? "" : " habit-week--past"}`}
+              key={index}
+              role="group">
+              {week.map((day) => {
+                const key = toDayKey(day)
+                // Day keys sort chronologically as strings, so a plain compare
+                // tells a day that hasn't arrived from one that has.
+                const className = [
+                  "habit-day",
+                  isDoneOn(history, day) ? "habit-day--done" : "",
+                  key === todayKey ? "habit-day--today" : "",
+                  key > todayKey ? "habit-day--future" : ""
+                ]
+                  .filter(Boolean)
+                  .join(" ")
+
+                return (
+                  <button
+                    aria-label={formatDayLabel(day)}
+                    aria-pressed={isDoneOn(history, day)}
+                    className={className}
+                    disabled={key > todayKey}
+                    key={key}
+                    onClick={() => toggle(day)}
+                    type="button">
+                    <span className="habit-day__dot" />
+                  </button>
+                )
+              })}
+            </div>
+          )
         })}
       </div>
-      <p className="board-row__meta">past {VISIBLE_DAYS} days</p>
-      <div className="timer-controls">
+      {/* The week's dates sit beside the button rather than on their own line:
+          two rows of dots leave the card no height to spare. */}
+      <div className="habit-footer">
         <button
           aria-pressed={done}
           className={`timer-button${done ? "" : " timer-button--primary"}`}
-          onClick={toggle}
+          onClick={() => toggle(now)}
           type="button">
           {done ? "Done today ✓" : "Mark today"}
         </button>
+        <p className="board-row__meta">{formatWeekRange(currentWeek)}</p>
       </div>
     </>
   )

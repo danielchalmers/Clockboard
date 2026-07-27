@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { toDayKey } from "./habit"
+import { STORED_DAYS, toDayKey } from "./habit"
 import type { CountdownWidget, DayboardState, HabitWidget } from "./types"
 
 const STORAGE_KEY = "dayboard-state"
@@ -116,7 +116,7 @@ describe("readDayboardState", () => {
     expect(state.widgets).toEqual(sampleState.widgets)
   })
 
-  it("prunes a legacy unbounded habit history down to the visible week", async () => {
+  it("prunes a legacy unbounded habit history down to the visible weeks", async () => {
     // Ten months of daily completions, the shape old versions accumulated.
     const base = new Date(2026, 6, 9)
     const days = Array.from({ length: 300 }, (_, offset) => {
@@ -141,9 +141,10 @@ describe("readDayboardState", () => {
     const state = await readDayboardState()
 
     const habit = state.widgets[0] as HabitWidget
-    expect(habit.settings.history).toHaveLength(7)
+    expect(habit.settings.history).toHaveLength(STORED_DAYS)
     expect(habit.settings.history).toContain("2026-07-09")
-    expect(habit.settings.history).not.toContain("2026-07-02")
+    expect(habit.settings.history).toContain("2026-06-26")
+    expect(habit.settings.history).not.toContain("2026-06-25")
   })
 
   it("retires a legacy countdown display setting", async () => {
@@ -250,7 +251,7 @@ describe("writeDayboardState", () => {
   // under it or every save starts failing.
   it("keeps a board of full habit histories under the sync per-item quota", async () => {
     const QUOTA_BYTES_PER_ITEM = 8192
-    const fullWeek = Array.from({ length: 7 }, (_, offset) => {
+    const fullHistory = Array.from({ length: STORED_DAYS }, (_, offset) => {
       const d = new Date(2026, 6, 9)
       d.setDate(d.getDate() - offset)
       return toDayKey(d)
@@ -260,7 +261,7 @@ describe("writeDayboardState", () => {
       kind: "habit",
       title: `A habit with a fairly long title ${index}`,
       colorPreset: "amber",
-      settings: { history: fullWeek }
+      settings: { history: fullHistory }
     }))
     const state: DayboardState = {
       widgets: habits,
