@@ -59,7 +59,8 @@ const ADD_MENU_KINDS: { kind: WidgetKind; label: string; hint: string }[] = [
   { kind: "quote", label: "Quote", hint: "A line from your list" },
   { kind: "stopwatch", label: "Stopwatch", hint: "Time counted up from zero" },
   { kind: "timer", label: "Timer", hint: "Time counted down to zero" },
-  { kind: "habit", label: "Habit", hint: "Daily marks over a week" }
+  { kind: "habit", label: "Habit", hint: "Daily marks over a week" },
+  { kind: "todo", label: "Todo", hint: "Four tasks you check off" }
 ]
 
 // The new tab page doubles as the extension's options page. When the browser

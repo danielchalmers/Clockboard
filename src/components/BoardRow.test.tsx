@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { BoardRow } from "./BoardRow"
 import { formatDayLabel, toDayKey } from "~/lib/habit"
 import { dailyQuoteIndex } from "~/lib/quotes"
+import { MAX_TASKS, type TodoTask } from "~/lib/todo"
 import type { Widget } from "~/lib/types"
 
 describe("BoardRow", () => {
@@ -285,6 +286,79 @@ describe("BoardRow", () => {
     expect(dot(4)).toHaveFocus()
     fireEvent.keyDown(dot(4), { key: "ArrowRight" })
     expect(dot(4)).toHaveFocus()
+  })
+
+  const todoAt = new Date("2026-01-01T12:30:00.000Z")
+  const todo = (tasks: TodoTask[]): Widget => ({
+    id: "list",
+    kind: "todo",
+    title: "Today",
+    colorPreset: "mint",
+    settings: { tasks }
+  })
+
+  it("checks a todo task off on the card", () => {
+    const item = todo([
+      { id: "a", text: "Buy milk", done: false },
+      { id: "b", text: "Call the vet", done: true }
+    ])
+    const onWidgetChange = vi.fn()
+
+    render(<BoardRow item={item} now={todoAt} onWidgetChange={onWidgetChange} />)
+
+    const checkbox = screen.getByRole("checkbox", { name: "Buy milk" })
+    expect(checkbox).not.toBeChecked()
+    expect(screen.getByRole("checkbox", { name: "Call the vet" })).toBeChecked()
+
+    fireEvent.click(checkbox)
+
+    expect(onWidgetChange).toHaveBeenCalledWith(
+      todo([
+        { id: "a", text: "Buy milk", done: true },
+        { id: "b", text: "Call the vet", done: true }
+      ])
+    )
+  })
+
+  it("adds a todo task from the card and clears the field", () => {
+    const onWidgetChange = vi.fn()
+
+    render(
+      <BoardRow item={todo([])} now={todoAt} onWidgetChange={onWidgetChange} />
+    )
+
+    const field = screen.getByLabelText("Add a task to Today")
+
+    // Nothing typed is nothing added, so Enter on an empty field is a no-op.
+    fireEvent.submit(field)
+    expect(onWidgetChange).not.toHaveBeenCalled()
+
+    fireEvent.change(field, { target: { value: "Water the plants" } })
+    fireEvent.submit(field)
+
+    expect(onWidgetChange.mock.calls[0]![0].settings.tasks).toMatchObject([
+      { text: "Water the plants", done: false }
+    ])
+    expect(field).toHaveValue("")
+  })
+
+  it("takes the add field away once the todo list is full, and brings it back", () => {
+    const tasks = Array.from({ length: MAX_TASKS }, (_, index) => ({
+      id: String(index),
+      text: `Task ${index}`,
+      done: false
+    }))
+
+    const { rerender } = render(<BoardRow item={todo(tasks)} now={todoAt} />)
+
+    // Nowhere left to type is what says the list is full — there is no
+    // disabled box and no line of copy explaining the rule.
+    expect(screen.queryByLabelText("Add a task to Today")).not.toBeInTheDocument()
+    expect(screen.getAllByRole("checkbox")).toHaveLength(MAX_TASKS)
+
+    rerender(<BoardRow item={todo(tasks.slice(1))} now={todoAt} />)
+
+    expect(screen.getByLabelText("Add a task to Today")).toBeInTheDocument()
   })
 
   it("renders a note card with an editable text area", () => {

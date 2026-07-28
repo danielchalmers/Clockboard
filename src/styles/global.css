@@ -495,6 +495,7 @@ details > summary::-webkit-details-marker {
 .menu-chip--stopwatch { --chip: hsl(186, 95%, 31%); }
 .menu-chip--timer { --chip: hsl(14, 85%, 50%); }
 .menu-chip--habit { --chip: hsl(33, 95%, 42%); }
+.menu-chip--todo { --chip: hsl(134, 70%, 36%); }
 
 @media (prefers-color-scheme: dark) {
   .menu-chip--clock { --chip: hsl(204, 95%, 62%); }
@@ -504,6 +505,7 @@ details > summary::-webkit-details-marker {
   .menu-chip--stopwatch { --chip: hsl(183, 85%, 52%); }
   .menu-chip--timer { --chip: hsl(14, 90%, 66%); }
   .menu-chip--habit { --chip: hsl(40, 95%, 60%); }
+  .menu-chip--todo { --chip: hsl(134, 75%, 58%); }
 }
 
 /* ── Board Layout ──────────────────────────────────────────────────────── */
@@ -979,6 +981,130 @@ details > summary::-webkit-details-marker {
   background: none;
   box-shadow: inset 0 0 0 1.5px
     color-mix(in srgb, var(--card-accent-resolved) 18%, transparent);
+}
+
+/* Todo list — four tasks always fit, so nothing here scrolls. The tasks and
+   the field they are typed into sit together under the title, anchored to the
+   top so the tasks stay put when the fourth one takes the field away. */
+.board-row__body--todo {
+  align-content: start;
+  align-self: start;
+  gap: 8px;
+}
+
+/* A checklist is a dense surface rather than one hero value, so it takes the
+   room the other cards spend on breathing space under the title. */
+.board-row:has(> .board-row__body--todo) {
+  gap: 16px;
+}
+
+.todo-list {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.todo-task {
+  align-items: center;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.todo-task__check {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  min-inline-size: 0;
+  padding-block: 2px;
+}
+
+/* Undo the page's text-input sizing and let the card's own accent color the
+   box, the same accent the primary buttons and habit dots use. */
+.todo-task__box {
+  accent-color: var(--card-accent-resolved);
+  background: none;
+  block-size: 17px;
+  border: 0;
+  flex: none;
+  inline-size: 17px;
+  margin: 0;
+  min-block-size: 0;
+  padding: 0;
+}
+
+.todo-task__text {
+  color: var(--text);
+  font-size: 0.98rem;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.todo-task__text--done {
+  color: var(--card-tint-resolved);
+  text-decoration: line-through;
+}
+
+/* Present but quiet, so four rows don't read as four buttons. */
+.todo-task__remove {
+  align-items: center;
+  block-size: 24px;
+  border-radius: 8px;
+  color: color-mix(in srgb, var(--card-tint-resolved) 45%, transparent);
+  display: inline-flex;
+  inline-size: 24px;
+  justify-content: center;
+  transition: background-color var(--t-fast), color var(--t-fast);
+}
+
+.todo-task__remove:hover {
+  background: color-mix(in srgb, var(--card-accent-resolved) 12%, transparent);
+  color: var(--text);
+}
+
+.todo-add {
+  border-block-start: 1.5px solid var(--card-border-resolved);
+  padding-block-start: 8px;
+  transition: border-color var(--t-fast);
+}
+
+/* The rule divides written tasks from the one being typed, so on an empty
+   card there is nothing for it to divide. */
+.todo-list:empty + .todo-add {
+  border-block-start: 0;
+  padding-block-start: 0;
+}
+
+.todo-add:focus-within {
+  border-color: color-mix(in srgb, var(--card-accent-resolved) 55%, var(--card-border-resolved));
+}
+
+/* Part of the card rather than a form control sitting on it, with its text
+   lined up under the task text rather than under the checkboxes. */
+.todo-add__field {
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.98rem;
+  inline-size: 100%;
+  min-block-size: 0;
+  padding: 4px 0 4px 27px;
+}
+
+.todo-add__field:hover,
+.todo-add__field:focus {
+  border: 0;
+  outline: 0;
+}
+
+.todo-add__field::placeholder {
+  color: var(--quiet);
 }
 
 /* Timer length editor */

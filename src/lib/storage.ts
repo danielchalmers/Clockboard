@@ -7,6 +7,7 @@ import {
   type Widget
 } from "./types"
 import { normalizeHistory } from "./habit"
+import { normalizeTasks } from "./todo"
 import { widgetRegistry } from "./widgets"
 
 export const STORAGE_KEY = "dayboard-state"
@@ -58,12 +59,21 @@ const normalizeCountdown = (widget: CountdownWidget): CountdownWidget => {
 // Habit history used to be stored unbounded — every completed day key — which
 // after a year or two of use is large enough that two habits blow the sync
 // per-item quota and every save of the board fails. Prune to the visible week
-// on read so existing boards shrink the first time they load.
+// on read so existing boards shrink the first time they load. Todo lists are
+// held to the same limits the card enforces, so an imported file cannot arrive
+// carrying more than a board can save.
 const normalizeWidget = (widget: Widget): Widget => {
   if (widget.kind === "habit") {
     return {
       ...widget,
       settings: { history: normalizeHistory(widget.settings.history) }
+    }
+  }
+
+  if (widget.kind === "todo") {
+    return {
+      ...widget,
+      settings: { tasks: normalizeTasks(widget.settings.tasks) }
     }
   }
 

@@ -340,6 +340,13 @@ export const ItemDialog = ({
               </p>
             ) : null}
 
+            {draft.kind === "todo" ? (
+              <p className="form-note">
+                Add and check off tasks right on the card. It holds four at a
+                time &mdash; the few things you&rsquo;re actually doing today.
+              </p>
+            ) : null}
+
             {draft.kind === "timer" ? (
               <>
                 <div className="form-label-group">

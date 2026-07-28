@@ -24,6 +24,7 @@ import type {
   QuoteWidget,
   StopwatchWidget,
   TimerWidget,
+  TodoWidget,
   Widget
 } from "~/lib/types"
 import { getPresetCssVars } from "~/lib/colors"
@@ -40,6 +41,14 @@ import {
   weekDays
 } from "~/lib/habit"
 import { cleanQuotes, dailyQuoteIndex } from "~/lib/quotes"
+import {
+  addTask,
+  MAX_TASK_LENGTH,
+  MAX_TASKS,
+  removeTask,
+  toggleTask,
+  type TodoTask
+} from "~/lib/todo"
 import {
   finishTimer,
   formatDuration,
@@ -406,6 +415,97 @@ const HabitBody = ({
   )
 }
 
+const TodoBody = ({
+  item,
+  onWidgetChange
+}: {
+  item: TodoWidget
+  onWidgetChange?: (widget: Widget) => void
+}) => {
+  const [draft, setDraft] = useState("")
+  const { tasks } = item.settings
+  const isFull = tasks.length >= MAX_TASKS
+
+  const apply = (nextTasks: TodoTask[]) =>
+    onWidgetChange?.({ ...item, settings: { tasks: nextTasks } })
+
+  // The field only clears when a task actually landed, so nothing typed is
+  // thrown away by a blank or full add.
+  const add = () => {
+    const nextTasks = addTask(tasks, draft)
+
+    if (nextTasks !== tasks) {
+      apply(nextTasks)
+      setDraft("")
+    }
+  }
+
+  return (
+    <>
+      <ul className="todo-list">
+        {tasks.map((task) => (
+          <li className="todo-task" key={task.id}>
+            <label className="todo-task__check">
+              <input
+                checked={task.done}
+                className="todo-task__box"
+                onChange={() => apply(toggleTask(tasks, task.id))}
+                type="checkbox"
+              />
+              <span
+                className={`todo-task__text${
+                  task.done ? " todo-task__text--done" : ""
+                }`}>
+                {task.text}
+              </span>
+            </label>
+            <button
+              aria-label={`Remove ${task.text}`}
+              className="todo-task__remove"
+              onClick={() => apply(removeTask(tasks, task.id))}
+              type="button">
+              <svg
+                aria-hidden="true"
+                fill="none"
+                height="15"
+                viewBox="0 0 24 24"
+                width="15">
+                <path
+                  d="M6 6l12 12M18 6 6 18"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeWidth="2"
+                />
+              </svg>
+            </button>
+          </li>
+        ))}
+      </ul>
+      {/* A full list has nowhere left to type, which says so without a disabled
+          box or a line of copy. The form is what lets Enter commit the task,
+          including from a phone keyboard's Go key. */}
+      {isFull ? null : (
+        <form
+          className="todo-add"
+          onSubmit={(event) => {
+            event.preventDefault()
+            add()
+          }}>
+          <input
+            aria-label={`Add a task to ${item.title}`}
+            className="todo-add__field"
+            maxLength={MAX_TASK_LENGTH}
+            onChange={(event) => setDraft(event.currentTarget.value)}
+            placeholder="Add a task..."
+            type="text"
+            value={draft}
+          />
+        </form>
+      )}
+    </>
+  )
+}
+
 interface CardShellProps {
   item: Widget
   articleProps?: ComponentPropsWithoutRef<"article">
@@ -542,6 +642,17 @@ export const BoardRow = forwardRef<HTMLElement, BoardRowProps>(function BoardRow
     return (
       <CardShell {...shell} ref={ref}>
         <HabitBody item={item} now={now} onWidgetChange={onWidgetChange} />
+      </CardShell>
+    )
+  }
+
+  if (item.kind === "todo") {
+    // No detail line and no tally: the whole list is on screen, so counting
+    // what's done only repeats what the checkboxes already say — and the room
+    // that line would take is the room the fourth task needs.
+    return (
+      <CardShell {...shell} bodyClassName="board-row__body--todo" ref={ref}>
+        <TodoBody item={item} onWidgetChange={onWidgetChange} />
       </CardShell>
     )
   }

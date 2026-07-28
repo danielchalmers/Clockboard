@@ -1,3 +1,5 @@
+import type { TodoTask } from "./todo"
+
 export type WidgetKind =
   | "clock"
   | "countdown"
@@ -6,6 +8,7 @@ export type WidgetKind =
   | "stopwatch"
   | "timer"
   | "habit"
+  | "todo"
 
 export type QuoteRotation = "daily" | "open"
 
@@ -120,6 +123,14 @@ export interface HabitWidget extends WidgetBase {
   }
 }
 
+export interface TodoWidget extends WidgetBase {
+  kind: "todo"
+  settings: {
+    /** The list in the order it was written; checking a task leaves it in place. */
+    tasks: TodoTask[]
+  }
+}
+
 export type Widget =
   | ClockWidget
   | CountdownWidget
@@ -128,6 +139,7 @@ export type Widget =
   | StopwatchWidget
   | TimerWidget
   | HabitWidget
+  | TodoWidget
 
 // Dayboard's philosophy is that the board just works: the layout is
 // responsive, dragging is always available, and the board centers itself in

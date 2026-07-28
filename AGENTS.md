@@ -2,7 +2,7 @@
 
 ## Project
 
-Dayboard is a WXT, TypeScript, and React Manifest V3 extension for Chrome and Microsoft Edge. It replaces the new tab page with a calm, responsive board of widgets — live clocks, natural-language countdowns (with optional progress bars and recurrence), sticky notes, rotating quotes, a stopwatch and timer, and daily habits — with editing kept on the new tab page itself.
+Dayboard is a WXT, TypeScript, and React Manifest V3 extension for Chrome and Microsoft Edge. It replaces the new tab page with a calm, responsive board of widgets — live clocks, natural-language countdowns (with optional progress bars and recurrence), sticky notes, rotating quotes, a stopwatch and timer, daily habits, and todo lists — with editing kept on the new tab page itself.
 
 The product should feel premium, polished, quiet, and useful at a glance. The whole app "just works" with as few knobs as possible: favor automatic behavior over configuration, and remove an option whenever a good default can replace it.
 
@@ -19,6 +19,7 @@ The product should feel premium, polished, quiet, and useful at a glance. The wh
 - Per-item color is limited to the curated preset picker (`ColorPresetPicker`); the first-run default board uses these presets to feel customized at a glance, and a newly created widget preselects a random colorful preset (never neutral slate). Do not add per-item seconds or 12-hour/24-hour controls.
 - Clocks use the user's system time format through `Intl.DateTimeFormat`.
 - Countdowns use natural language such as `5 days, 3 hours from now`. A countdown's `startAt` is the only switch between the two presentations: with a start it fills a progress bar, without one it reads as time remaining. New countdowns start from the moment they are added, so a bar is the default with nothing to configure. Do not reintroduce an explicit display setting.
+- A todo card holds four tasks, typed and checked on the card itself the way a note is edited there. The cap is the widget rather than a limitation of it — every task is on screen and nothing scrolls — so do not raise it, add paging, or let the card grow. A full card drops its add field instead of disabling it, which says the list is full without a control or a line of copy.
 - User-facing copy should be concise, warm, and not overly explanatory.
 - Dialog titles should name the action and kind, such as `Edit countdown`, not the item name.
 - Widgets can be archived — tucked behind a quiet "Show archived" toggle (by drag onto a drop zone, or via the context menu) and restored the same ways. Keep the active board the clear focus.
@@ -30,7 +31,7 @@ The product should feel premium, polished, quiet, and useful at a glance. The wh
 
 - WXT entrypoints live in `src/entrypoints` (`newtab` for the new tab page; a minimal `background` service worker that exists so MV3 registers one).
 - The root `NewTabPage` component lives in `src/NewTabPage.tsx`; `src/entrypoints/newtab/main.tsx` mounts it.
-- Shared logic lives in `src/lib`: time and countdowns (`time`), stopwatch/timer (`timers`), quotes (`quotes`), habits (`habit`), the greeting (`greeting`), the optional Web Audio chime (`chime`), colors (`colors`), the widget registry (`widgets`), `types`, and `chrome.storage.sync` access (`storage`).
+- Shared logic lives in `src/lib`: time and countdowns (`time`), stopwatch/timer (`timers`), quotes (`quotes`), habits (`habit`), todo lists (`todo`), the greeting (`greeting`), the optional Web Audio chime (`chime`), colors (`colors`), the widget registry (`widgets`), `types`, and `chrome.storage.sync` access (`storage`).
 - Reusable React components live in `src/components`.
 - Plain CSS lives in `src/styles/global.css`.
 - Do not add Tailwind or a UI component library.
