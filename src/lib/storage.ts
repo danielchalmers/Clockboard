@@ -12,6 +12,7 @@ import { widgetRegistry } from "./widgets"
 
 export const STORAGE_KEY = "dayboard-state"
 export const CACHE_KEY = "dayboard-state-cache"
+export const ATTENTION_KEY = "dayboard-attention-seen"
 
 const hasWidgets = (value: unknown): value is { widgets: unknown[] } =>
   typeof value === "object" &&
@@ -100,6 +101,31 @@ export const readCachedDayboardState = (): DayboardState | null => {
     return cached === null ? null : normalizeState(JSON.parse(cached))
   } catch {
     return null
+  }
+}
+
+// What each card looked like the last time this browser saw it, so a card can say "something moved here" on the next new tab.
+// Device-local on purpose: "have I seen this" is a per-machine question (the system time zone signal literally is), and it changes far too often to spend the sync write budget the board itself needs.
+// Losing it costs one extra flagged card, so both directions are best effort.
+export const readSeenAttention = (): Record<string, string> => {
+  try {
+    const stored: unknown = JSON.parse(localStorage.getItem(ATTENTION_KEY) || "")
+
+    return typeof stored === "object" && stored !== null
+      ? (Object.fromEntries(
+          Object.entries(stored).filter(([, token]) => typeof token === "string")
+        ) as Record<string, string>)
+      : {}
+  } catch {
+    return {}
+  }
+}
+
+export const writeSeenAttention = (seen: Record<string, string>) => {
+  try {
+    localStorage.setItem(ATTENTION_KEY, JSON.stringify(seen))
+  } catch {
+    // Best effort: a full or unavailable localStorage only costs a re-flag.
   }
 }
 

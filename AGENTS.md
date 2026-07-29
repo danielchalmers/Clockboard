@@ -31,12 +31,13 @@ The product should feel premium, polished, quiet, and useful at a glance. The wh
 
 - WXT entrypoints live in `src/entrypoints` (`newtab` for the new tab page; a minimal `background` service worker that exists so MV3 registers one).
 - The root `NewTabPage` component lives in `src/NewTabPage.tsx`; `src/entrypoints/newtab/main.tsx` mounts it.
-- Shared logic lives in `src/lib`: time and countdowns (`time`), stopwatch/timer (`timers`), quotes (`quotes`), habits (`habit`), todo lists (`todo`), the greeting (`greeting`), the optional Web Audio chime (`chime`), colors (`colors`), the widget registry (`widgets`), `types`, and `chrome.storage.sync` access (`storage`).
+- Shared logic lives in `src/lib`: time and countdowns (`time`), stopwatch/timer (`timers`), quotes (`quotes`), habits (`habit`), todo lists (`todo`), the greeting (`greeting`), the optional Web Audio chime (`chime`), colors (`colors`), which cards moved on their own (`attention`), the widget registry (`widgets`), `types`, and `chrome.storage.sync` access (`storage`).
 - Reusable React components live in `src/components`.
 - Plain CSS lives in `src/styles/global.css`.
 - Do not add Tailwind or a UI component library.
 - The manifest is defined in `wxt.config.ts`, not a root `manifest.json` or `package.json`.
 - Static icons live in `public/` and are copied to the build output as-is.
+- A card marks itself when its content moved while nobody was watching — a repeating countdown rolled over, a clock's offset shifted, the day turned over on an unmarked habit — and settles when the user clicks or focuses it. The card wears a small dot beside its kind badge and the page header carries the count ("2 cards need a look"), which is what sends the eye looking; do not put a ring, glow, or pulse on the card. What this browser last saw lives in `localStorage`, not sync: it is a per-machine question and changes too often to spend the shared sync write budget on.
 - Storage uses `chrome.storage.sync` with a `chrome.storage.onChanged` watch so open tabs and signed-in browsers stay in sync. Global `settings` are normalized to defaults on read (missing or malformed fields fall back) and widgets keep new fields optional for backward compatibility; there is otherwise no heavy versioning or migration layer. Writes are optimistic and roll back with a notice if the `set` fails (e.g. quota).
 - Keep the extension new-tab-only: no popup and no separate options entrypoint. The Options overlay lives on the new tab page itself, which `options_ui` points at (`newtab.html?view=settings`).
 - Keep the checked-in `package.json.version` at `0.0.0`; release builds set the manifest version from the `RELEASE_VERSION` environment variable.

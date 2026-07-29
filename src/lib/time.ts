@@ -51,16 +51,51 @@ export const isSameLocalDay = (a: Date, b: Date): boolean =>
 // Cache instances by their options so repeated renders (and ticking clocks) reuse one formatter.
 const formatterCache = new Map<string, Intl.DateTimeFormat>()
 
-const getFormatter = (options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat => {
-  const key = JSON.stringify(options)
+const getFormatter = (
+  options: Intl.DateTimeFormatOptions,
+  // Display formatting follows the browser's locale; only a machine-read value pins one.
+  locale?: string
+): Intl.DateTimeFormat => {
+  const key = `${locale ?? ""}|${JSON.stringify(options)}`
   let formatter = formatterCache.get(key)
 
   if (!formatter) {
-    formatter = new Intl.DateTimeFormat(undefined, options)
+    formatter = new Intl.DateTimeFormat(locale, options)
     formatterCache.set(key, formatter)
   }
 
   return formatter
+}
+
+// How far a zone sits from UTC, in minutes.
+// A zone changes offset under a card without the widget changing at all, as a daylight saving changeover does, so reading it as a number makes "it moved" a plain comparison.
+// The locale is pinned because the display of an offset is localized while the value is not.
+export const getTimeZoneOffsetMinutes = (
+  date: Date,
+  timeZone: string
+): number => {
+  let name: string
+
+  try {
+    name =
+      getFormatter({ timeZone, timeZoneName: "longOffset" }, "en-US")
+        .formatToParts(date)
+        .find((part) => part.type === "timeZoneName")?.value || ""
+  } catch {
+    // An unreadable zone has no offset to compare; call it UTC so a bad value reads as unchanged rather than flagging its card forever.
+    return 0
+  }
+
+  // A zone sitting exactly on UTC formats as a bare "GMT", with no offset.
+  const match = name.match(/([+-])(\d{1,2})(?::(\d{2}))?/)
+
+  if (!match) {
+    return 0
+  }
+
+  const minutes = Number(match[2]) * 60 + Number(match[3] || 0)
+
+  return match[1] === "-" ? -minutes : minutes
 }
 
 export const formatClockTime = (date: Date, widget: ClockWidget): string =>
@@ -158,6 +193,32 @@ const countdownRepeatSteps = (
   }
 
   return steps
+}
+
+// The most recent occurrence a countdown has already passed, or null while it is still counting down to its first.
+// A repeating countdown returns the occurrence it rolled off, which changes every cycle, so the value doubles as a marker for "this card moved on since you last looked".
+export const getLastElapsedCountdownTarget = (
+  widget: CountdownWidget,
+  now = new Date()
+): string | null => {
+  const { targetAt, repeat } = widget.settings
+  const target = new Date(targetAt)
+
+  if (Number.isNaN(target.getTime())) {
+    return null
+  }
+
+  if (!repeat || repeat === "none") {
+    return target.getTime() <= now.getTime() ? target.toISOString() : null
+  }
+
+  // Steps count to the first occurrence after now, so the one before it is the last that elapsed.
+  // Zero means the anchor itself is still ahead of us.
+  const steps = countdownRepeatSteps(targetAt, repeat, now)
+
+  return steps === 0
+    ? null
+    : advanceByRepeat(target, repeat, steps - 1).toISOString()
 }
 
 // Resolve what a countdown means right now: a repeating one shows its next occurrence, and a start that cannot fill a bar is dropped.

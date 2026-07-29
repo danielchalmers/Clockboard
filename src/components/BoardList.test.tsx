@@ -361,3 +361,64 @@ describe("BoardList", () => {
     expect(screen.queryByLabelText("Actions for Local time")).not.toBeInTheDocument()
   })
 })
+
+// Focus is the acknowledgement, not Enter or Space: dnd-kit already claims those on a focused card to begin a keyboard drag.
+describe("settling a card that needs attention", () => {
+  const habit: Widget = {
+    id: "walk",
+    kind: "habit",
+    title: "Daily walk",
+    colorPreset: "amber",
+    settings: { history: [] }
+  }
+  const now = new Date(2026, 5, 19, 9, 0, 0)
+  const attentionIds = new Set(["walk"])
+
+  const renderHabit = (onAcknowledge?: () => void) =>
+    render(
+      <BoardList
+        attentionIds={attentionIds}
+        items={[habit]}
+        now={now}
+        onAcknowledge={onAcknowledge}
+      />
+    )
+
+  it("acknowledges on a click anywhere on the card, and on focus", () => {
+    const onAcknowledge = vi.fn()
+    const { container } = renderHabit(onAcknowledge)
+
+    fireEvent.click(screen.getByRole("heading", { name: "Daily walk" }))
+    expect(onAcknowledge).toHaveBeenCalledWith("walk")
+
+    onAcknowledge.mockClear()
+    ;(container.querySelector(".board-row--draggable") as HTMLElement).focus()
+    expect(onAcknowledge).toHaveBeenCalledWith("walk")
+  })
+
+  it("leaves Enter to dnd-kit so keyboard reordering keeps working", () => {
+    const { container } = renderHabit()
+    const card = container.querySelector(".board-row--draggable") as HTMLElement
+
+    expect(fireEvent.keyDown(card, { key: "Enter", code: "Enter" })).toBe(true)
+  })
+
+  it("says nothing on a card that is already settled", () => {
+    const onAcknowledge = vi.fn()
+    render(<BoardList items={[habit]} now={now} onAcknowledge={onAcknowledge} />)
+
+    fireEvent.click(screen.getByRole("heading", { name: "Daily walk" }))
+
+    expect(onAcknowledge).not.toHaveBeenCalled()
+  })
+
+  // A habit is only day-sensitive, so the memo comparator is the only thing that lets an acknowledgement through before midnight.
+  it("drops the dot on the next render, not at midnight", () => {
+    const { container, rerender } = renderHabit()
+    expect(container.querySelector(".board-row__attention-dot")).not.toBeNull()
+
+    rerender(<BoardList attentionIds={new Set()} items={[habit]} now={now} />)
+
+    expect(container.querySelector(".board-row__attention-dot")).toBeNull()
+  })
+})

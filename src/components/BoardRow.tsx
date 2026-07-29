@@ -69,6 +69,8 @@ interface BoardRowProps {
   dragHandleProps?: ComponentPropsWithoutRef<"div">
   className?: string
   style?: CSSProperties
+  // The card's content moved on its own since this browser last saw it.
+  attention?: boolean
   onWidgetChange?: (widget: Widget) => void
 }
 
@@ -543,6 +545,7 @@ interface CardShellProps {
   dragHandleProps?: ComponentPropsWithoutRef<"div">
   className?: string
   style?: CSSProperties
+  attention?: boolean
   bodyClassName?: string
   detail?: ReactNode
   children: ReactNode
@@ -551,7 +554,7 @@ interface CardShellProps {
 // The shared card frame: a themed article, the drag frame, and the title/detail header.
 // Each widget kind supplies only its body (and an optional detail line), so the wrapper lives in one place instead of being repeated per kind.
 const CardShell = forwardRef<HTMLElement, CardShellProps>(function CardShell(
-  { item, articleProps, dragHandleProps, className, style, bodyClassName, detail, children },
+  { item, articleProps, dragHandleProps, className, style, attention, bodyClassName, detail, children },
   ref
 ) {
   const rowClassName = [
@@ -584,10 +587,16 @@ const CardShell = forwardRef<HTMLElement, CardShellProps>(function CardShell(
       <div className="board-row__header">
         <div className="board-row__identity">
           <h2 className="board-row__title">{item.title}</h2>
+          {attention ? <span className="sr-only">Needs attention</span> : null}
           {detail !== undefined ? (
             <p className="board-row__detail">{detail}</p>
           ) : null}
         </div>
+        {/* A card whose content moved on its own wears a dot until the user touches it; the page header says how many to look for. */}
+        {/* Plain text carries it for screen readers rather than a live region, since the board re-renders every second. */}
+        {attention ? (
+          <span aria-hidden="true" className="board-row__attention-dot" />
+        ) : null}
         {/* A quiet badge in the card's own accent, so a glance tells the kind apart even when two cards share a color. */}
         <span aria-hidden="true" className="board-row__badge">
           <WidgetIcon kind={item.kind} size={18} />
@@ -609,11 +618,12 @@ export const BoardRow = forwardRef<HTMLElement, BoardRowProps>(function BoardRow
     dragHandleProps,
     className,
     style,
+    attention,
     onWidgetChange
   },
   ref
 ) {
-  const shell = { item, articleProps, dragHandleProps, className, style }
+  const shell = { item, articleProps, dragHandleProps, className, style, attention }
 
   if (item.kind === "clock") {
     const detail =
