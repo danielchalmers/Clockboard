@@ -84,6 +84,23 @@ const ICON_PATHS: Record<WidgetKind, React.ReactNode> = {
       strokeLinejoin="round"
       strokeWidth="1.7"
     />
+  ),
+  todo: (
+    <>
+      <path
+        d="m4 7.5 2 2 3.5-3.5M4 17l2 2 3.5-3.5"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M13 8h7M13 17h7"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.8"
+      />
+    </>
   )
 }
 

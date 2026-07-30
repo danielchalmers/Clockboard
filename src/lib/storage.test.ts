@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { STORED_DAYS, toDayKey } from "./habit"
-import type { CountdownWidget, DayboardState, HabitWidget } from "./types"
+import type {
+  CountdownWidget,
+  DayboardState,
+  HabitWidget,
+  TodoWidget
+} from "./types"
 
 const STORAGE_KEY = "dayboard-state"
 
@@ -145,6 +150,30 @@ describe("readDayboardState", () => {
     expect(habit.settings.history).toContain("2026-07-09")
     expect(habit.settings.history).toContain("2026-07-03")
     expect(habit.settings.history).not.toContain("2026-07-02")
+  })
+
+  it("cleans up a todo list from an imported or hand-edited board", async () => {
+    const { store } = stubChromeStorage()
+    store.set(STORAGE_KEY, {
+      widgets: [
+        {
+          id: "todo-1",
+          kind: "todo",
+          title: "Today",
+          colorPreset: "mint",
+          settings: {
+            tasks: [{ id: "a", text: "  Buy milk  ", done: true }, "not a task"]
+          }
+        }
+      ]
+    })
+
+    const { readDayboardState } = await import("./storage")
+    const state = await readDayboardState()
+
+    expect((state.widgets[0] as TodoWidget).settings.tasks).toEqual([
+      { id: "a", text: "Buy milk", done: true }
+    ])
   })
 
   it("retires a legacy countdown display setting", async () => {

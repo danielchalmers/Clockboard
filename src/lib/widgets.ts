@@ -8,6 +8,7 @@ import {
   type HabitWidget,
   type StopwatchWidget,
   type TimerWidget,
+  type TodoWidget,
   type Widget,
   type WidgetKind
 } from "./types"
@@ -98,6 +99,19 @@ const createHabitWidget = (): HabitWidget => ({
   }
 })
 
+// A new list starts empty rather than with sample tasks: the first thing you do
+// with a todo card is type your own, and pre-filled rows would only be things
+// to check off and delete.
+const createTodoWidget = (): TodoWidget => ({
+  id: crypto.randomUUID(),
+  kind: "todo",
+  title: "New list",
+  colorPreset: randomColorPreset(),
+  settings: {
+    tasks: []
+  }
+})
+
 const createTimerWidget = (): TimerWidget => ({
   id: crypto.randomUUID(),
   kind: "timer",
@@ -151,6 +165,11 @@ export const widgetRegistry: {
     kind: "habit",
     editor: {},
     createDefault: createHabitWidget
+  },
+  todo: {
+    kind: "todo",
+    editor: {},
+    createDefault: createTodoWidget
   }
 }
 
