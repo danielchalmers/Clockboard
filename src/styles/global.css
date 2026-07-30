@@ -1029,17 +1029,15 @@ details > summary::-webkit-details-marker {
 .todo-task__box,
 .todo-task__box:hover,
 .todo-task__box:focus {
-  align-items: center;
   appearance: none;
   background: color-mix(in srgb, var(--card-accent-resolved) 8%, transparent);
   border: 1.5px solid color-mix(in srgb, var(--card-accent-resolved) 55%, transparent);
-  border-radius: 6px;
+  border-radius: 5px;
   block-size: 18px;
   box-shadow: none;
-  display: flex;
+  display: block;
   flex: none;
   inline-size: 18px;
-  justify-content: center;
   margin: 0;
   min-block-size: 0;
   padding: 0;
@@ -1056,17 +1054,19 @@ details > summary::-webkit-details-marker {
   border-color: var(--card-accent-resolved);
 }
 
-/* The tick is two borders of an empty box rather than a glyph, so it stays
-   crisp at any zoom and takes the card's own background as its color. The box
-   centers it as a flex item: positioning it by hand would rotate it about a
-   point off the middle and leave it sitting high and to the left. */
+/* The tick is a masked round-capped stroke — the same line language as the
+   kind icons — painted in the card's own background. The mask centers the
+   glyph itself, so nothing is nudged into place by hand. (Two rotated borders
+   used to fake it, with square-cut ends and arms that never quite matched.) */
 .todo-task__box:checked::after {
-  border: solid var(--card-bg-resolved);
-  border-width: 0 2px 2px 0;
-  block-size: 9px;
+  --tick: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2.5 6.5 5 9l4.5-5.5" fill="none" stroke="%23000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  background: var(--card-bg-resolved);
+  block-size: 100%;
   content: "";
-  inline-size: 5px;
-  transform: rotate(45deg);
+  display: block;
+  -webkit-mask: var(--tick) center / 11px no-repeat;
+  mask: var(--tick) center / 11px no-repeat;
+  inline-size: 100%;
 }
 
 /* Keyboard focus on a row's controls is a hairline ring in the page's ink
@@ -1129,7 +1129,7 @@ details > summary::-webkit-details-marker {
 }
 
 /* Part of the card rather than a form control sitting on it, with its text
-   lined up under the task text rather than under the checkboxes. */
+   lined up under the task text: the 28px is the box and the gap beside it. */
 .todo-add__field {
   background: transparent;
   border: 0;
@@ -1138,7 +1138,7 @@ details > summary::-webkit-details-marker {
   font-size: 0.98rem;
   inline-size: 100%;
   min-block-size: 0;
-  padding: 4px 0 4px 27px;
+  padding: 4px 0 4px 28px;
 }
 
 .todo-add__field:hover,
