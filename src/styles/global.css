@@ -1022,18 +1022,62 @@ details > summary::-webkit-details-marker {
   padding-block: 2px;
 }
 
-/* Undo the page's text-input sizing and let the card's own accent color the
-   box, the same accent the primary buttons and habit dots use. */
-.todo-task__box {
-  accent-color: var(--card-accent-resolved);
-  background: none;
-  block-size: 17px;
-  border: 0;
+/* Drawn rather than native so the box carries the card's own accent, and so
+   the page's text-input rules — sized for a 46px field, and glowing on any
+   focus at all — are kept off a control this small. Pointing at or clicking
+   the box is answered by the box itself, not by a ring around it. */
+.todo-task__box,
+.todo-task__box:hover,
+.todo-task__box:focus {
+  align-items: center;
+  appearance: none;
+  background: color-mix(in srgb, var(--card-accent-resolved) 8%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--card-accent-resolved) 55%, transparent);
+  border-radius: 6px;
+  block-size: 18px;
+  box-shadow: none;
+  display: flex;
   flex: none;
-  inline-size: 17px;
+  inline-size: 18px;
+  justify-content: center;
   margin: 0;
   min-block-size: 0;
   padding: 0;
+  transition: background-color var(--t-fast), border-color var(--t-fast);
+}
+
+.todo-task__check:hover .todo-task__box {
+  border-color: color-mix(in srgb, var(--card-accent-resolved) 80%, transparent);
+}
+
+.todo-task__box:checked,
+.todo-task__check:hover .todo-task__box:checked {
+  background: var(--card-accent-resolved);
+  border-color: var(--card-accent-resolved);
+}
+
+/* The tick is two borders of an empty box rather than a glyph, so it stays
+   crisp at any zoom and takes the card's own background as its color. The box
+   centers it as a flex item: positioning it by hand would rotate it about a
+   point off the middle and leave it sitting high and to the left. */
+.todo-task__box:checked::after {
+  border: solid var(--card-bg-resolved);
+  border-width: 0 2px 2px 0;
+  block-size: 9px;
+  content: "";
+  inline-size: 5px;
+  transform: rotate(45deg);
+}
+
+/* Keyboard focus on a row's controls is a hairline ring in the page's ink
+   rather than the accent glow the page puts on every input: that glow fires on
+   plain clicks too, which on a box this small reads as a smudge, and drawn in
+   the accent it would all but vanish around an already-accent-filled box. */
+.todo-task__box:focus-visible,
+.todo-task__remove:focus-visible {
+  box-shadow: none;
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
 }
 
 .todo-task__text {

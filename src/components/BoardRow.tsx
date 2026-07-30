@@ -425,6 +425,27 @@ const TodoBody = ({
   const [draft, setDraft] = useState("")
   const { tasks } = item.settings
   const isFull = tasks.length >= MAX_TASKS
+  const rows = useRef<(HTMLLIElement | null)[]>([])
+  const fieldRef = useRef<HTMLInputElement>(null)
+  // Where to send focus after the list changes. Removing a task, and adding
+  // the one that takes the field away, both unmount the control that had
+  // focus — without this the keyboard is dropped on the page body and loses
+  // its place on the card.
+  const landing = useRef<{ row: number; on: string } | null>(null)
+
+  useEffect(() => {
+    const spot = landing.current
+
+    if (!spot) {
+      return
+    }
+
+    landing.current = null
+    // Removing the last task leaves no row to land on, and the field is always
+    // back by then, so it is the natural fallback.
+    const target = rows.current[spot.row]?.querySelector<HTMLElement>(spot.on)
+    ;(target ?? fieldRef.current)?.focus()
+  }, [tasks])
 
   const apply = (nextTasks: TodoTask[]) =>
     onWidgetChange?.({ ...item, settings: { tasks: nextTasks } })
@@ -435,16 +456,38 @@ const TodoBody = ({
     const nextTasks = addTask(tasks, draft)
 
     if (nextTasks !== tasks) {
+      // The fourth task takes the field away, so follow it onto the task
+      // itself — its box, not its remove button, which is a bad place to leave
+      // a keyboard right after typing.
+      if (nextTasks.length >= MAX_TASKS) {
+        landing.current = {
+          row: nextTasks.length - 1,
+          on: ".todo-task__box"
+        }
+      }
+
       apply(nextTasks)
       setDraft("")
     }
   }
 
+  // Focus follows the list up, the way it does in any other list: the row that
+  // takes the removed one's place.
+  const remove = (row: number, id: string) => {
+    landing.current = { row, on: ".todo-task__remove" }
+    apply(removeTask(tasks, id))
+  }
+
   return (
     <>
       <ul className="todo-list">
-        {tasks.map((task) => (
-          <li className="todo-task" key={task.id}>
+        {tasks.map((task, row) => (
+          <li
+            className="todo-task"
+            key={task.id}
+            ref={(node) => {
+              rows.current[row] = node
+            }}>
             <label className="todo-task__check">
               <input
                 checked={task.done}
@@ -462,7 +505,7 @@ const TodoBody = ({
             <button
               aria-label={`Remove ${task.text}`}
               className="todo-task__remove"
-              onClick={() => apply(removeTask(tasks, task.id))}
+              onClick={() => remove(row, task.id)}
               type="button">
               <svg
                 aria-hidden="true"
@@ -482,9 +525,10 @@ const TodoBody = ({
         ))}
       </ul>
       {/* A full list has nowhere left to type, which says so without a disabled
-          box or a line of copy. The form is what lets Enter commit the task,
-          including from a phone keyboard's Go key. */}
+          box or a line of copy. */}
       {isFull ? null : (
+        // The form is what lets Enter commit the task, including from a phone
+        // keyboard's Go key.
         <form
           className="todo-add"
           onSubmit={(event) => {
@@ -497,11 +541,18 @@ const TodoBody = ({
             maxLength={MAX_TASK_LENGTH}
             onChange={(event) => setDraft(event.currentTarget.value)}
             placeholder="Add a task..."
+            ref={fieldRef}
             type="text"
             value={draft}
           />
         </form>
       )}
+      {/* The field going away needs explaining to anyone who can't see it go.
+          This sits last so the list stays the field's own previous sibling —
+          the empty-card rule that drops the divider hangs off that. */}
+      <span className="sr-only" role="status">
+        {isFull ? `${item.title} is full — remove a task to add another` : ""}
+      </span>
     </>
   )
 }

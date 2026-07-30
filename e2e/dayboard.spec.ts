@@ -1150,6 +1150,44 @@ test("a todo list fills up on the card, persists, and clears again", async ({
   await expect(todoCard().getByLabel("Add a task to Today")).toBeVisible()
 })
 
+test("a todo card keeps the keyboard's place as tasks come and go", async ({
+  page,
+  extensionId
+}) => {
+  await openNewTab(page, extensionId)
+
+  await page.getByRole("button", { name: "Add widget" }).click()
+  await page.getByRole("button", { name: "Add todo" }).click()
+  await page.getByLabel("Name").fill("Today")
+  await page.getByRole("button", { name: "Save todo" }).click()
+
+  const card = page
+    .locator(".board-row")
+    .filter({ has: page.getByRole("heading", { name: "Today", exact: true }) })
+  const field = () => card.getByLabel("Add a task to Today")
+
+  for (const task of ["One", "Two", "Three", "Four"]) {
+    await field().fill(task)
+    await field().press("Enter")
+  }
+
+  // The fourth task takes the field away, so focus follows it onto the task
+  // rather than being dropped on the page body.
+  await expect(card.getByRole("checkbox", { name: "Four" })).toBeFocused()
+
+  // Removing a task hands focus to the row that takes its place.
+  await card.getByRole("checkbox", { name: "One" }).focus()
+  await page.keyboard.press("Tab")
+  await expect(card.getByRole("button", { name: "Remove One" })).toBeFocused()
+  await page.keyboard.press("Enter")
+  await expect(card.getByRole("button", { name: "Remove Two" })).toBeFocused()
+
+  // Removing the last row falls back to the field, which is back by then.
+  await card.getByRole("button", { name: "Remove Four" }).focus()
+  await page.keyboard.press("Enter")
+  await expect(field()).toBeFocused()
+})
+
 test("a habit marked after midnight credits the new day", async ({
   page,
   extensionId

@@ -352,9 +352,11 @@ describe("BoardRow", () => {
     const { rerender } = render(<BoardRow item={todo(tasks)} now={todoAt} />)
 
     // Nowhere left to type is what says the list is full — there is no
-    // disabled box and no line of copy explaining the rule.
+    // disabled box and no line of copy explaining the rule. A live region
+    // carries the same news to anyone who can't see the field go.
     expect(screen.queryByLabelText("Add a task to Today")).not.toBeInTheDocument()
     expect(screen.getAllByRole("checkbox")).toHaveLength(MAX_TASKS)
+    expect(screen.getByRole("status")).toHaveTextContent("Today is full")
 
     rerender(<BoardRow item={todo(tasks.slice(1))} now={todoAt} />)
 
