@@ -33,8 +33,7 @@ const createClockWidget = (): ClockWidget => ({
   }
 })
 
-// The span starts the moment the countdown is added, so a new card shows a
-// progress bar filling toward its target without anyone configuring one.
+// The span starts the moment the countdown is added, so a new card shows a progress bar filling toward its target without anyone configuring one.
 // Clearing the start in the dialog is what falls back to the time remaining.
 const createCountdownWidget = (now = new Date()): CountdownWidget => {
   const target = new Date(now)
@@ -99,9 +98,7 @@ const createHabitWidget = (): HabitWidget => ({
   }
 })
 
-// A new list starts empty rather than with sample tasks: the first thing you do
-// with a todo card is type your own, and pre-filled rows would only be things
-// to check off and delete.
+// A new list starts empty rather than with sample tasks: the first thing you do with a todo card is type your own, and pre-filled rows would only be things to check off and delete.
 const createTodoWidget = (): TodoWidget => ({
   id: crypto.randomUUID(),
   kind: "todo",
@@ -204,12 +201,9 @@ export const moveWidgetToIndex = (
   return nextWidgets
 }
 
-// Move an active (non-archived) widget one step up or down relative to the
-// other active widgets. The board only shows active widgets, and archived ones
-// are not guaranteed to sit after them in storage — a widget added once
-// something is archived lands past it — so the menu's Move back/next must
-// against the visible neighbor rather than the raw array neighbor (which could
-// be a hidden archived widget, making the move a silent no-op).
+// Move an active (non-archived) widget one step up or down relative to the other active widgets.
+// The board only shows active widgets, and archived ones are not guaranteed to sit after them in storage, since a widget added once something is archived lands past it.
+// So the menu's Move back/next must act on the visible neighbor rather than the raw array neighbor, which could be a hidden archived widget, making the move a silent no-op.
 export const moveActiveWidget = (
   widgets: Widget[],
   id: string,
@@ -246,9 +240,8 @@ export const reorderWidgets = (
   return moveWidgetToIndex(widgets, fromIndex, toIndex)
 }
 
-// Archiving moves the widget to the end so the active widgets stay a contiguous
-// block at the front. That keeps index-based moves (the menu's Move back/next)
-// lined up with what is actually on the board.
+// Archiving moves the widget to the end so the active widgets stay a contiguous block at the front.
+// That keeps index-based moves (the menu's Move back/next) lined up with what is actually on the board.
 export const archiveWidget = (widgets: Widget[], id: string): Widget[] => {
   const target = widgets.find((widget) => widget.id === id)
 
@@ -262,10 +255,8 @@ export const archiveWidget = (widgets: Widget[], id: string): Widget[] => {
   ]
 }
 
-// Restoring drops the widget back in just after the last active widget, so it
-// rejoins the bottom of the board rather than the top. When `beforeId` names an
-// active widget — the board card an archived one was dropped onto — the widget
-// takes that card's slot instead, pushing it and everything after one step down.
+// Restoring drops the widget back in just after the last active widget, so it rejoins the bottom of the board rather than the top.
+// When `beforeId` names an active widget (the board card an archived one was dropped onto) the widget takes that card's slot instead, pushing it and everything after one step down.
 export const restoreWidget = (
   widgets: Widget[],
   id: string,

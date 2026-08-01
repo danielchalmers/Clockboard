@@ -26,17 +26,13 @@ import type { Widget } from "~/lib/types"
 interface BoardListProps {
   items: Widget[]
   now: Date
-  // Marks this list as the place archived cards land when dragged back: the
-  // grid highlights while a foreign card is in flight, and the empty state
-  // becomes a drop target of its own.
+  // Marks this list as the place archived cards land when dragged back: the grid highlights while a foreign card is in flight, and the empty state becomes a drop target of its own.
   restoreTarget?: boolean
   renderItemActions?: (item: Widget, index: number) => ReactNode
   onWidgetChange?: (widget: Widget) => void
 }
 
-// With no cards on the board there is no slot to aim an archived card at, so
-// the empty-state placeholder itself doubles as the restore target while a
-// drag is under way.
+// With no cards on the board there is no slot to aim an archived card at, so the empty-state placeholder itself doubles as the restore target while a drag is under way.
 const EmptyState = ({ restoreTarget }: { restoreTarget: boolean }) => {
   const { active } = useDndContext()
   const { setNodeRef, isOver } = useDroppable({
@@ -75,25 +71,17 @@ const EmptyState = ({ restoreTarget }: { restoreTarget: boolean }) => {
   )
 }
 
-// Interactive widgets (a note's textarea, a timer's buttons) own their key and
-// right-click behavior, so the card must not hijack those events for dragging
-// or its context menu when they originate inside such a control.
+// Interactive widgets (a note's textarea, a timer's buttons) own their key and right-click behavior, so the card must not hijack those events for dragging or its context menu when they originate inside such a control.
 const FORM_FIELD_SELECTOR =
   "input, textarea, select, button, [contenteditable='true']"
 
 const isFromInteractiveControl = (event: { target: EventTarget | null }) =>
   Boolean((event.target as HTMLElement | null)?.closest(FORM_FIELD_SELECTOR))
 
-// Right-clicking a stretch of selected text is a reach for Copy, not for the
-// card's own menu, so the card steps aside and lets the browser's menu through.
-// Only a selection touching this card counts — a leftover highlight elsewhere
-// on the page should not disarm the menu here.
+// Right-clicking a stretch of selected text is a reach for Copy, not for the card's own menu, so the card steps aside and lets the browser's menu through.
+// Only a selection touching this card counts; a leftover highlight elsewhere on the page should not disarm the menu here.
 //
-// The test is whether the range overlaps the card, not where its common
-// ancestor sits: triple-clicking a quote selects the whole block and Chrome
-// runs the range on to the start of the next one, which lifts the common
-// ancestor clear out of the card and made that check miss the most ordinary
-// way of selecting a line.
+// The test is whether the range overlaps the card, not where its common ancestor sits: triple-clicking a quote selects the whole block and Chrome runs the range on to the start of the next one, which lifts the common ancestor clear out of the card and made that check miss the most ordinary way of selecting a line.
 export const hasSelectionWithin = (card: HTMLElement): boolean => {
   const selection = card.ownerDocument.defaultView?.getSelection()
 
@@ -148,9 +136,8 @@ interface WidgetContextMenuProps {
 const getMenuItems = (panel: HTMLElement) =>
   Array.from(panel.querySelectorAll<HTMLButtonElement>("button:not([disabled])"))
 
-// A free-form context menu that spawns under the cursor. It uses the native
-// Popover API so it renders in the top layer — escaping the card's clipped,
-// overflow-hidden bounds — and gets light-dismiss + Escape handling for free.
+// A free-form context menu that spawns under the cursor.
+// It uses the native Popover API so it renders in the top layer, escaping the card's clipped, overflow-hidden bounds, and gets light-dismiss + Escape handling for free.
 const WidgetContextMenu = ({
   x,
   y,
@@ -167,8 +154,7 @@ const WidgetContextMenu = ({
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
-  // Promote the menu to the top layer, move focus into it (it sits outside the
-  // card's tab order), and mirror native dismissals (Escape / click-away) into React.
+  // Promote the menu to the top layer, move focus into it (it sits outside the card's tab order), and mirror native dismissals (Escape / click-away) into React.
   useLayoutEffect(() => {
     const menu = menuRef.current
     const panel = panelRef.current
@@ -182,12 +168,10 @@ const WidgetContextMenu = ({
     try {
       menu.showPopover()
     } catch {
-      // Already shown — ignore.
+      // Already shown, so ignore.
     }
 
-    // Focus without scrolling: a menu opened near the bottom of a scrollable
-    // page would otherwise scroll the focused item into view, and that scroll
-    // trips the close-on-scroll handler below, dismissing the menu instantly.
+    // Focus without scrolling: a menu opened near the bottom of a scrollable page would otherwise scroll the focused item into view, and that scroll trips the close-on-scroll handler below, dismissing the menu instantly.
     getMenuItems(panel)[0]?.focus({ preventScroll: true })
 
     const handleToggle = (event: Event) => {
@@ -201,8 +185,7 @@ const WidgetContextMenu = ({
     return () => menu.removeEventListener("toggle", handleToggle)
   }, [])
 
-  // Keep the menu on screen, measuring the settled layout box (offsetWidth/Height
-  // ignore the scale-up transform so we clamp against the real size).
+  // Keep the menu on screen, measuring the settled layout box (offsetWidth/Height ignore the scale-up transform so we clamp against the real size).
   useLayoutEffect(() => {
     const panel = panelRef.current
 
@@ -219,10 +202,8 @@ const WidgetContextMenu = ({
     })
   }, [x, y])
 
-  // A viewport-fixed menu drifts away from its card on scroll or resize, so close
-  // it. Hide it through the Popover API (not a bare React unmount) so the browser
-  // runs its native focus-restoration and returns focus to the opener; the
-  // resulting toggle event then clears the React state.
+  // A viewport-fixed menu drifts away from its card on scroll or resize, so close it.
+  // Hide it through the Popover API (not a bare React unmount) so the browser runs its native focus-restoration and returns focus to the opener; the resulting toggle event then clears the React state.
   useEffect(() => {
     const close = () => {
       const menu = menuRef.current
@@ -302,8 +283,7 @@ const WidgetContextMenu = ({
         aria-label={label}
         className="card-menu__panel"
         onClick={(event) => {
-          // Only a chosen item dismisses the menu — clicks on the panel's
-          // padding or a separator are inert, like a native menu.
+          // Only a chosen item dismisses the menu; clicks on the panel's padding or a separator are inert, like a native menu.
           if ((event.target as HTMLElement).closest("button")) {
             onClose()
           }
@@ -329,19 +309,15 @@ interface SortableBoardRowProps {
   onWidgetChange?: (widget: Widget) => void
 }
 
-// Time-sensitive widgets must re-render on every tick; the rest can skip both
-// the per-second tick and unrelated edits as long as their own props are equal.
+// Time-sensitive widgets must re-render on every tick; the rest can skip both the per-second tick and unrelated edits as long as their own props are equal.
 export const isTimeSensitive = (kind: Widget["kind"]) =>
   kind === "clock" ||
   kind === "countdown" ||
   kind === "stopwatch" ||
   kind === "timer"
 
-// Day-sensitive widgets read `now` only to ask which local day it is: the habit
-// widget's streak, dot row and "Mark today" write, and the quote widget's daily
-// rotation. They skip the per-second tick like any still widget, but they must
-// re-render at midnight — a tab left open overnight would otherwise hold
-// yesterday's `now` and mark yesterday when the user marks today.
+// Day-sensitive widgets read `now` only to ask which local day it is: the habit widget's dot row and "Mark today" write, and the quote widget's daily rotation.
+// They skip the per-second tick like any still widget, but they must re-render at midnight, or a tab left open overnight would hold yesterday's `now` and mark yesterday when the user marks today.
 export const isDaySensitive = (kind: Widget["kind"]) =>
   kind === "habit" || kind === "quote"
 
@@ -406,8 +382,7 @@ const SortableBoardRow = memo(({
       return
     }
 
-    // Let a note's textarea (etc.) keep its native copy/paste menu, and step
-    // aside entirely when there is text selected on this card to copy.
+    // Let a note's textarea (etc.) keep its native copy/paste menu, and step aside entirely when there is text selected on this card to copy.
     if (
       isFromInteractiveControl(event) ||
       hasSelectionWithin(event.currentTarget)
@@ -424,9 +399,7 @@ const SortableBoardRow = memo(({
   }
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
-    // Keys typed into an interactive control (a note's textarea, a button) stay
-    // with that control — never start a drag or open the menu — except Escape,
-    // which still closes an open menu.
+    // Keys typed into an interactive control (a note's textarea, a button) stay with that control and never start a drag or open the menu, except Escape, which still closes an open menu.
     if (isFromInteractiveControl(event) && event.key !== "Escape") {
       return
     }
@@ -461,10 +434,8 @@ const SortableBoardRow = memo(({
     deferToDragKeys(event)
   }
 
-  // Only the pointer activator moves to the frame so dragging starts from the
-  // border; keyboard dragging stays on the focusable card via handleKeyDown,
-  // which still defers to the sortable's onKeyDown listener. dnd-kit types its
-  // listeners loosely as `Function`, so narrow the pointer-down handler here.
+  // Only the pointer activator moves to the frame so dragging starts from the border; keyboard dragging stays on the focusable card via handleKeyDown, which still defers to the sortable's onKeyDown listener.
+  // dnd-kit types its listeners loosely as `Function`, so narrow the pointer-down handler here.
   const onPointerDown = listeners?.onPointerDown as
     | PointerEventHandler<HTMLDivElement>
     | undefined
@@ -484,10 +455,8 @@ const SortableBoardRow = memo(({
       onWidgetChange={onWidgetChange}
       ref={setNodeRef}
       style={{
-        // The drag overlay renders the lifted card that follows the cursor, so
-        // the in-list item stays in place as a dimmed placeholder. Translating
-        // it here is what previously made it snap back to its slot when dragged
-        // over the archive zone (a droppable outside the sortable list).
+        // The drag overlay renders the lifted card that follows the cursor, so the in-list item stays in place as a dimmed placeholder.
+        // Translating it here is what previously made it snap back to its slot when dragged over the archive zone (a droppable outside the sortable list).
         transform: isDragging ? undefined : CSS.Transform.toString(transform),
         transition: prefersReducedMotion ? undefined : transition
       }}
@@ -505,13 +474,11 @@ export const BoardList = ({
   const [openMenu, setOpenMenu] = useState<OpenMenu | null>(null)
   const prefersReducedMotion = usePrefersReducedMotion()
 
-  // The drag context lives in BoardDnd, shared with the other list so cards
-  // can cross between the board and the archive mid-drag.
+  // The drag context lives in BoardDnd, shared with the other list so cards can cross between the board and the archive mid-drag.
   const { active } = useDndContext()
   const activeId = active ? String(active.id) : null
 
-  // Any open card menu must not linger under a drag (light dismiss only covers
-  // pointer drags, not keyboard-initiated ones).
+  // Any open card menu must not linger under a drag (light dismiss only covers pointer drags, not keyboard-initiated ones).
   useEffect(() => {
     if (activeId) {
       setOpenMenu(null)
@@ -521,9 +488,8 @@ export const BoardList = ({
   // Stable so the memoized rows can skip re-rendering when only the tick changes.
   const closeMenu = useCallback(() => setOpenMenu(null), [])
 
-  // Cards on the board at first render must not animate in — the page should
-  // simply be there on a new tab. Only cards that show up later (added,
-  // restored) play the entrance animation.
+  // Cards on the board at first render must not animate in; the page should simply be there on a new tab.
+  // Only cards that show up later (added, restored) play the entrance animation.
   const initialIdsRef = useRef<ReadonlySet<string> | null>(null)
   if (initialIdsRef.current === null) {
     initialIdsRef.current = new Set(items.map((item) => item.id))
@@ -537,8 +503,7 @@ export const BoardList = ({
   const itemIds = items.map((item) => item.id)
   const hasActions = Boolean(renderItemActions)
 
-  // A card lifted from the other list — for the board that means an archived
-  // card is in flight, and this whole grid is where it can land.
+  // A card lifted from the other list: for the board that means an archived card is in flight, and this whole grid is where it can land.
   const isForeignDrag = Boolean(
     activeId && !items.some((item) => item.id === activeId)
   )

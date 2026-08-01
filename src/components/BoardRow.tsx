@@ -72,8 +72,7 @@ interface BoardRowProps {
   onWidgetChange?: (widget: Widget) => void
 }
 
-// Auto-save notes a short beat after typing stops to stay well under
-// chrome.storage.sync's write-rate limits while still feeling instant.
+// Auto-save notes a short beat after typing stops to stay well under chrome.storage.sync's write-rate limits while still feeling instant.
 const NOTE_SAVE_DELAY = 600
 
 const NoteField = ({
@@ -91,8 +90,7 @@ const NoteField = ({
   const onChangeRef = useRef(onWidgetChange)
   onChangeRef.current = onWidgetChange
 
-  // Adopt external updates (another tab, an edit dialog) unless the user is
-  // actively typing here, so a remote change never clobbers an in-progress note.
+  // Adopt external updates (another tab, an edit dialog) unless the user is actively typing here, so a remote change never clobbers an in-progress note.
   useEffect(() => {
     if (document.activeElement === fieldRef.current) {
       return
@@ -152,8 +150,7 @@ const NoteField = ({
 const QuoteField = ({ item, now }: { item: QuoteWidget; now: Date }) => {
   const quotes = cleanQuotes(item.settings.quotes)
 
-  // "open" rotation picks once per tab open; the seed is fixed for the mount so
-  // the board's per-second re-render never reshuffles it.
+  // "open" rotation picks once per tab open; the seed is fixed for the mount so the board's per-second re-render never reshuffles it.
   const [openSeed] = useState(() => Math.random())
 
   if (quotes.length === 0) {
@@ -233,8 +230,7 @@ const TimerBody = ({
   const apply = (settings: TimerWidget["settings"]) =>
     onWidgetChange?.({ ...item, settings })
 
-  // Settle the timer the moment it counts down to zero while running, and — when
-  // this timer opted into a chime — sound it once on that transition.
+  // Settle the timer the moment it counts down to zero while running, and when this timer opted into a chime, sound it once on that transition.
   useEffect(() => {
     if (running && done) {
       if (chime) {
@@ -271,9 +267,8 @@ const TimerBody = ({
       {done && !running ? (
         <p className="board-row__meta board-row__meta--alert">Time&rsquo;s up</p>
       ) : null}
-      {/* A polite live region announces the finish once (the visible text above
-          is decorative for screen readers). It stays mounted and empty until
-          the timer is done so the change is what gets read out. */}
+      {/* A polite live region announces the finish once (the visible text above is decorative for screen readers).
+          It stays mounted and empty until the timer is done so the change is what gets read out. */}
       <span className="sr-only" role="status">
         {done && !running ? `${item.title} timer finished` : ""}
       </span>
@@ -317,8 +312,7 @@ const HabitBody = ({
     0
   )
   const dots = useRef<(HTMLButtonElement | null)[]>([])
-  // The row is a single tab stop — today, until the arrows move it — rather
-  // than seven, which a board of habits would turn into a long walk.
+  // The row is a single tab stop (today, until the arrows move it) rather than seven, which a board of habits would turn into a long walk.
   const [focused, setFocused] = useState<number | null>(null)
   const tabStop = focused ?? lastMarkable
 
@@ -349,15 +343,14 @@ const HabitBody = ({
   return (
     <>
       <div className="habit-week">
-        {/* One narrow letter per column. The dots carry their own full date,
-            so the headers are decoration for screen readers. */}
+        {/* One narrow letter per column.
+            The dots carry their own full date, so the headers are decoration for screen readers. */}
         <div className="habit-weekdays" aria-hidden="true">
           {weekdayInitials().map((letter, index) => (
             <span key={index}>{letter}</span>
           ))}
         </div>
-        {/* A toolbar rather than a plain group: it tells a screen reader that
-            the arrows walk the row, which is what the roving tab stop does. */}
+        {/* A toolbar rather than a plain group: it tells a screen reader that the arrows walk the row, which is what the roving tab stop does. */}
         <div
           aria-label="This week"
           aria-orientation="horizontal"
@@ -366,8 +359,7 @@ const HabitBody = ({
           {week.map((day, index) => {
             const key = toDayKey(day)
             const label = formatDayLabel(day)
-            // Day keys sort chronologically as strings, so a plain compare
-            // tells a day that hasn't arrived from one that has.
+            // Day keys sort chronologically as strings, so a plain compare tells a day that hasn't arrived from one that has.
             const className = [
               "habit-day",
               isDoneOn(history, day) ? "habit-day--done" : "",
@@ -398,9 +390,7 @@ const HabitBody = ({
           })}
         </div>
       </div>
-      {/* The week's dates share the button's line rather than taking one of
-          their own: with the weekday letters above the dots, a card that can't
-          grow has no height left for a third row. */}
+      {/* The week's dates share the button's line rather than taking one of their own: with the weekday letters above the dots, a card that can't grow has no height left for a third row. */}
       <div className="habit-footer">
         <button
           aria-pressed={done}
@@ -427,10 +417,8 @@ const TodoBody = ({
   const isFull = tasks.length >= MAX_TASKS
   const rows = useRef<(HTMLLIElement | null)[]>([])
   const fieldRef = useRef<HTMLInputElement>(null)
-  // Where to send focus after the list changes. Removing a task, and adding
-  // the one that takes the field away, both unmount the control that had
-  // focus — without this the keyboard is dropped on the page body and loses
-  // its place on the card.
+  // Where to send focus after the list changes.
+  // Removing a task, and adding the one that takes the field away, both unmount the control that had focus; without this the keyboard is dropped on the page body and loses its place on the card.
   const landing = useRef<{ row: number; on: string } | null>(null)
 
   useEffect(() => {
@@ -441,8 +429,7 @@ const TodoBody = ({
     }
 
     landing.current = null
-    // Removing the last task leaves no row to land on, and the field is always
-    // back by then, so it is the natural fallback.
+    // Removing the last task leaves no row to land on, and the field is always back by then, so it is the natural fallback.
     const target = rows.current[spot.row]?.querySelector<HTMLElement>(spot.on)
     ;(target ?? fieldRef.current)?.focus()
   }, [tasks])
@@ -450,15 +437,12 @@ const TodoBody = ({
   const apply = (nextTasks: TodoTask[]) =>
     onWidgetChange?.({ ...item, settings: { tasks: nextTasks } })
 
-  // The field only clears when a task actually landed, so nothing typed is
-  // thrown away by a blank or full add.
+  // The field only clears when a task actually landed, so nothing typed is thrown away by a blank or full add.
   const add = () => {
     const nextTasks = addTask(tasks, draft)
 
     if (nextTasks !== tasks) {
-      // The fourth task takes the field away, so follow it onto the task
-      // itself — its box, not its remove button, which is a bad place to leave
-      // a keyboard right after typing.
+      // The fourth task takes the field away, so follow it onto the task itself: its box, not its remove button, which is a bad place to leave a keyboard right after typing.
       if (nextTasks.length >= MAX_TASKS) {
         landing.current = {
           row: nextTasks.length - 1,
@@ -471,8 +455,7 @@ const TodoBody = ({
     }
   }
 
-  // Focus follows the list up, the way it does in any other list: the row that
-  // takes the removed one's place.
+  // Focus follows the list up, the way it does in any other list: the row that takes the removed one's place.
   const remove = (row: number, id: string) => {
     landing.current = { row, on: ".todo-task__remove" }
     apply(removeTask(tasks, id))
@@ -524,11 +507,9 @@ const TodoBody = ({
           </li>
         ))}
       </ul>
-      {/* A full list has nowhere left to type, which says so without a disabled
-          box or a line of copy. */}
+      {/* A full list has nowhere left to type, which says so without a disabled box or a line of copy. */}
       {isFull ? null : (
-        // The form is what lets Enter commit the task, including from a phone
-        // keyboard's Go key.
+        // The form is what lets Enter commit the task, including from a phone keyboard's Go key.
         <form
           className="todo-add"
           onSubmit={(event) => {
@@ -548,8 +529,7 @@ const TodoBody = ({
         </form>
       )}
       {/* The field going away needs explaining to anyone who can't see it go.
-          This sits last so the list stays the field's own previous sibling —
-          the empty-card rule that drops the divider hangs off that. */}
+          This sits last so the list stays the field's own previous sibling, which the empty-card rule that drops the divider hangs off. */}
       <span className="sr-only" role="status">
         {isFull ? `${item.title} is full — remove a task to add another` : ""}
       </span>
@@ -568,9 +548,8 @@ interface CardShellProps {
   children: ReactNode
 }
 
-// The shared card frame: a themed article, the drag frame, and the title/detail
-// header. Each widget kind supplies only its body (and an optional detail line),
-// so the wrapper lives in one place instead of being repeated per kind.
+// The shared card frame: a themed article, the drag frame, and the title/detail header.
+// Each widget kind supplies only its body (and an optional detail line), so the wrapper lives in one place instead of being repeated per kind.
 const CardShell = forwardRef<HTMLElement, CardShellProps>(function CardShell(
   { item, articleProps, dragHandleProps, className, style, bodyClassName, detail, children },
   ref
@@ -588,9 +567,8 @@ const CardShell = forwardRef<HTMLElement, CardShellProps>(function CardShell(
     ...getPresetCssVars(item.colorPreset)
   }
 
-  // The frame is an overlay that only covers the padded edge around the content,
-  // so dragging starts from the border while the body stays selectable. It only
-  // renders when a drag handle is wired up.
+  // The frame is an overlay that only covers the padded edge around the content, so dragging starts from the border while the body stays selectable.
+  // It only renders when a drag handle is wired up.
   const frame = dragHandleProps ? (
     <div className="board-row__frame" aria-hidden="true" {...dragHandleProps} />
   ) : null
@@ -610,8 +588,7 @@ const CardShell = forwardRef<HTMLElement, CardShellProps>(function CardShell(
             <p className="board-row__detail">{detail}</p>
           ) : null}
         </div>
-        {/* A quiet badge in the card's own accent, so a glance tells the kind
-            apart even when two cards share a color. */}
+        {/* A quiet badge in the card's own accent, so a glance tells the kind apart even when two cards share a color. */}
         <span aria-hidden="true" className="board-row__badge">
           <WidgetIcon kind={item.kind} size={18} />
         </span>
@@ -698,9 +675,7 @@ export const BoardRow = forwardRef<HTMLElement, BoardRowProps>(function BoardRow
   }
 
   if (item.kind === "todo") {
-    // No detail line and no tally: the whole list is on screen, so counting
-    // what's done only repeats what the checkboxes already say — and the room
-    // that line would take is the room the fourth task needs.
+    // No detail line and no tally: the whole list is on screen, so counting what's done only repeats what the checkboxes already say, and the room that line would take is the room the fourth task needs.
     return (
       <CardShell {...shell} bodyClassName="board-row__body--todo" ref={ref}>
         <TodoBody item={item} onWidgetChange={onWidgetChange} />

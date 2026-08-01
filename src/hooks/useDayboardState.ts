@@ -21,8 +21,7 @@ interface UseDayboardStateResult {
 }
 
 export const useDayboardState = (): UseDayboardStateResult => {
-  // Hydrate the first render synchronously from the localStorage mirror so the
-  // board paints immediately; the async chrome.storage read reconciles after.
+  // Hydrate the first render synchronously from the localStorage mirror so the board paints immediately; the async chrome.storage read reconciles after.
   const [state, setState] = useState<DayboardState | null>(readCachedDayboardState)
   const [isLoading, setIsLoading] = useState(state === null)
   const [error, setError] = useState<string | null>(null)
@@ -37,8 +36,7 @@ export const useDayboardState = (): UseDayboardStateResult => {
       setState(await readDayboardState())
       setError(null)
     } catch (cause) {
-      // A cached board on screen beats a blocking error page, so only surface
-      // the failure when there is nothing to show.
+      // A cached board on screen beats a blocking error page, so only surface the failure when there is nothing to show.
       if (!stateRef.current) {
         setError(cause instanceof Error ? cause.message : "Unable to load data")
       }
@@ -71,9 +69,8 @@ export const useDayboardState = (): UseDayboardStateResult => {
     try {
       await writeDayboardState(nextState)
     } catch {
-      // The optimistic update never persisted (e.g. chrome.storage.sync quota
-      // or write-rate limit). Roll back so the UI matches storage and surface a
-      // calm notice instead of silently diverging.
+      // The optimistic update never persisted (e.g. chrome.storage.sync quota or write-rate limit).
+      // Roll back so the UI matches storage and surface a calm notice instead of silently diverging.
       if (previous) {
         setState(previous)
       }
@@ -83,8 +80,7 @@ export const useDayboardState = (): UseDayboardStateResult => {
 
   const dismissSaveError = useCallback(() => setSaveError(null), [])
 
-  // Read state through the ref so these stay referentially stable across
-  // renders, which lets the memoized board rows skip unrelated re-renders.
+  // Read state through the ref so these stay referentially stable across renders, which lets the memoized board rows skip unrelated re-renders.
   const setWidgets = useCallback(
     async (widgets: Widget[]) => {
       const current = stateRef.current

@@ -1,5 +1,5 @@
-// A soft two-note chime played with the Web Audio API — no bundled asset and no
-// network. Used (opt-in) when a timer reaches zero.
+// A soft two-note chime played with the Web Audio API, so there is no bundled asset and no network.
+// Used (opt-in) when a timer reaches zero.
 
 type AudioContextCtor = typeof AudioContext
 
@@ -26,8 +26,7 @@ const getContext = (): AudioContext | null => {
   return context
 }
 
-// Warm up the audio context from a user gesture (e.g. pressing Start) so the
-// later, gesture-less chime is allowed to play under autoplay policies.
+// Warm up the audio context from a user gesture (e.g. pressing Start) so the later, gesture-less chime is allowed to play under autoplay policies.
 export const primeChime = (): void => {
   const ctx = getContext()
   if (ctx && ctx.state === "suspended") {

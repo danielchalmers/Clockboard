@@ -37,8 +37,7 @@ describe("createWidget", () => {
       expect(preset).not.toBe("slate")
     })
 
-    // 40 draws over 11 hues collide on a single value with probability ~0,
-    // so seeing variety proves the pick is actually random.
+    // 40 draws over 11 hues collide on a single value with probability ~0, so seeing variety proves the pick is actually random.
     expect(new Set(presets).size).toBeGreaterThan(1)
   })
 
@@ -46,8 +45,7 @@ describe("createWidget", () => {
     const now = new Date(2026, 5, 19, 12, 34, 0)
     const countdown = createActualWidget("countdown", now)
 
-    // A start is what makes the card a progress bar, so a brand-new countdown
-    // fills toward its target without anyone choosing a display.
+    // A start is what makes the card a progress bar, so a brand-new countdown fills toward its target without anyone choosing a display.
     expect(countdown.settings.startAt).toBe(now.toISOString())
     expect(new Date(countdown.settings.targetAt).getTime()).toBeGreaterThan(
       now.getTime()
@@ -116,9 +114,8 @@ describe("moveActiveWidget", () => {
   })
 
   it("reorders against the visible neighbor, skipping interleaved archived widgets", () => {
-    // "delta" was added after "charlie" was archived, so it sits past the
-    // archived widget in storage. Moving it up must step over the hidden
-    // archived widget and land above the previous *visible* widget.
+    // "delta" was added after "charlie" was archived, so it sits past the archived widget in storage.
+    // Moving it up must step over the hidden archived widget and land above the previous *visible* widget.
     const widgets = [
       createWidget("alpha", "Alpha"),
       createWidget("beta", "Beta"),

@@ -22,8 +22,7 @@ import type { Widget } from "~/lib/types"
 
 export const ARCHIVE_DROP_ID = "dayboard-archive-dropzone"
 
-// Registered by the active board's empty state, so an archived card can still
-// be dragged home when there are no board cards left to aim at.
+// Registered by the active board's empty state, so an archived card can still be dragged home when there are no board cards left to aim at.
 export const BOARD_DROP_ID = "dayboard-board-dropzone"
 
 const ARCHIVE_ICON = (
@@ -36,10 +35,8 @@ const ARCHIVE_ICON = (
   />
 )
 
-// The archive drop target only exists mid-drag, pinned to the bottom of the
-// viewport so it is always reachable however tall the board is. Restoring has
-// no counterpart zone: an archived card is dropped straight onto the board,
-// into the exact slot it should take.
+// The archive drop target only exists mid-drag, pinned to the bottom of the viewport so it is always reachable however tall the board is.
+// Restoring has no counterpart zone: an archived card is dropped straight onto the board, into the exact slot it should take.
 const ArchiveDropZone = () => {
   const { setNodeRef, isOver } = useDroppable({ id: ARCHIVE_DROP_ID })
 
@@ -56,12 +53,9 @@ const ArchiveDropZone = () => {
   )
 }
 
-// A keyboard drag ends on Space, Enter, or Tab and cancels on Escape, a window
-// resize, or the tab being hidden — and on nothing the pointer does. So a drag
-// started from the keyboard and then abandoned for the mouse simply stays up:
-// the lifted card hangs over the board, and because a sensor is still holding
-// the drag, every pointer drag after it is refused too — until the user happens
-// to guess Escape. Put the card down as soon as attention moves elsewhere.
+// A keyboard drag ends on Space, Enter, or Tab and cancels on Escape, a window resize, or the tab being hidden, but on nothing the pointer does.
+// So a drag started from the keyboard and then abandoned for the mouse simply stays up: the lifted card hangs over the board, and because a sensor is still holding the drag, every pointer drag after it is refused too, until the user happens to guess Escape.
+// Put the card down as soon as attention moves elsewhere.
 const EndStrandedKeyboardDrag = () => {
   const { active, activatorEvent } = useDndContext()
   const isKeyboardDrag =
@@ -72,9 +66,7 @@ const EndStrandedKeyboardDrag = () => {
       return
     }
 
-    // The sensor's cancel is Escape on the document, so send one: that takes
-    // the normal path — teardown, onDragCancel, focus handed back — instead of
-    // needing a back door into dnd-kit.
+    // The sensor's cancel is Escape on the document, so send one: that takes the normal path (teardown, onDragCancel, focus handed back) instead of needing a back door into dnd-kit.
     const escape = () =>
       document.dispatchEvent(
         new KeyboardEvent("keydown", {
@@ -88,16 +80,13 @@ const EndStrandedKeyboardDrag = () => {
 
     const release = () => {
       escape()
-      // The sensor attaches that key listener in a timeout of its own, so for
-      // the first task after the drag starts there is nothing listening yet.
-      // A second attempt on the next task is guaranteed to land behind it,
-      // because the sensor's timeout was queued first.
+      // The sensor attaches that key listener in a timeout of its own, so for the first task after the drag starts there is nothing listening yet.
+      // A second attempt on the next task is guaranteed to land behind it, because the sensor's timeout was queued first.
       window.clearTimeout(retry)
       retry = window.setTimeout(escape)
     }
 
-    // Capture, so the common case releases before dnd-kit's pointer activator
-    // sees the press and the same press can start an ordinary drag.
+    // Capture, so the common case releases before dnd-kit's pointer activator sees the press and the same press can start an ordinary drag.
     document.addEventListener("pointerdown", release, true)
     window.addEventListener("blur", release)
 
@@ -112,22 +101,18 @@ const EndStrandedKeyboardDrag = () => {
 }
 
 interface BoardDndProps {
-  // The full storage list — both boards' cards — so any dragged id resolves.
+  // The full storage list, both boards' cards, so any dragged id resolves.
   widgets: Widget[]
   now: Date
   onReorder?: (activeId: string, overId: string) => void
   onArchive?: (id: string) => void
-  // `beforeId` is the board card whose slot the restored widget takes; omitted
-  // when the drop had no specific target (the empty-board zone).
+  // `beforeId` is the board card whose slot the restored widget takes; omitted when the drop had no specific target (the empty-board zone).
   onRestore?: (id: string, beforeId?: string) => void
-  // Render prop: receives the list to display, which mid-drag may be a preview
-  // where the dragged archived card already sits in its board slot.
+  // Render prop: receives the list to display, which mid-drag may be a preview where the dragged archived card already sits in its board slot.
   children: (widgets: Widget[]) => ReactNode
 }
 
-// One drag context shared by the active board and the archived list, so a card
-// can travel between them: an archived card drops onto a specific board slot to
-// restore there, while an active card drops onto the floating archive zone.
+// One drag context shared by the active board and the archived list, so a card can travel between them: an archived card drops onto a specific board slot to restore there, while an active card drops onto the floating archive zone.
 export const BoardDnd = ({
   widgets,
   now,
@@ -138,18 +123,13 @@ export const BoardDnd = ({
 }: BoardDndProps) => {
   const [activeId, setActiveId] = useState<string | null>(null)
 
-  // While an archived card hovers over the board, this holds the widgets as if
-  // the restore already happened — the card joins the board's sortable list as
-  // a placeholder, so the other cards part to make room exactly like a native
-  // reorder. Dropping commits it; dragging away or cancelling discards it.
+  // While an archived card hovers over the board, this holds the widgets as if the restore already happened: the card joins the board's sortable list as a placeholder, so the other cards part to make room exactly like a native reorder.
+  // Dropping commits it; dragging away or cancelling discards it.
   const [restorePreview, setRestorePreview] = useState<Widget[] | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      // Any movement at all lifts the card. An 8px threshold meant the pointer
-      // ran ahead of the card for the first few pixels of every drag, which
-      // reads as lag rather than as a deliberate guard — and the drag handle is
-      // the card's own ring, where there is no click for a threshold to
-      // protect.
+      // Any movement at all lifts the card.
+      // An 8px threshold meant the pointer ran ahead of the card for the first few pixels of every drag, which reads as lag rather than as a deliberate guard, and the drag handle is the card's own ring, where there is no click for a threshold to protect.
       activationConstraint: {
         distance: 0
       }
@@ -171,8 +151,7 @@ export const BoardDnd = ({
     const dragged = widgets.find((widget) => widget.id === active.id)
 
     // Only a restore drag crosses lists; board drags keep native sorting.
-    // Hovering the card's own slot (its archive origin, or its preview
-    // placeholder once slotted in) changes nothing.
+    // Hovering the card's own slot (its archive origin, or its preview placeholder once slotted in) changes nothing.
     if (!dragged?.archived || over?.id === active.id) {
       return
     }
@@ -187,21 +166,19 @@ export const BoardDnd = ({
       : undefined
 
     if (!target || target.archived) {
-      // Back over the archive (or nowhere) — the card returns to its origin.
+      // Back over the archive (or nowhere), so the card returns to its origin.
       setRestorePreview(null)
       return
     }
 
-    // Entering the board: slot the card in before the hovered one. Once it is
-    // a member of the board's sortable list, dnd-kit's own sort transforms
-    // track the cursor, so the preview must not be rebuilt on every hover.
+    // Entering the board: slot the card in before the hovered one.
+    // Once it is a member of the board's sortable list, dnd-kit's own sort transforms track the cursor, so the preview must not be rebuilt on every hover.
     setRestorePreview(
       (preview) => preview ?? restoreWidget(widgets, dragged.id, target.id)
     )
   }
 
-  // The preview already encodes the final order; persistence still goes through
-  // restoreWidget, so hand back the card in front of which it was dropped.
+  // The preview already encodes the final order; persistence still goes through restoreWidget, so hand back the card in front of which it was dropped.
   const commitRestore = (finalOrder: Widget[], draggedId: string) => {
     const board = finalOrder.filter((widget) => !widget.archived)
     const index = board.findIndex((widget) => widget.id === draggedId)
@@ -239,8 +216,7 @@ export const BoardDnd = ({
 
     const target = widgets.find((widget) => widget.id === over.id)
 
-    // A restore drop confirms the preview slot, nudged to the final hovered
-    // card if the pointer kept sorting within the board after slotting in.
+    // A restore drop confirms the preview slot, nudged to the final hovered card if the pointer kept sorting within the board after slotting in.
     if (dragged.archived && preview) {
       if (over.id === active.id) {
         commitRestore(preview, dragged.id)
@@ -257,10 +233,7 @@ export const BoardDnd = ({
       return
     }
 
-    // Within one list it is a plain reorder; across lists the direction decides:
-    // an archived card dropped on a board card restores into that card's slot,
-    // and a board card dropped among the archived cards simply archives (the
-    // archive keeps no meaningful order to aim for).
+    // Within one list it is a plain reorder; across lists the direction decides: an archived card dropped on a board card restores into that card's slot, and a board card dropped among the archived cards simply archives (the archive keeps no meaningful order to aim for).
     if (Boolean(dragged.archived) === Boolean(target.archived)) {
       onReorder?.(dragged.id, target.id)
     } else if (dragged.archived) {
@@ -278,8 +251,7 @@ export const BoardDnd = ({
   return (
     <DndContext
       collisionDetection={closestCenter}
-      // The preview moves a card between lists mid-drag, reshaping the board,
-      // so droppable rects must be re-measured as the layout changes.
+      // The preview moves a card between lists mid-drag, reshaping the board, so droppable rects must be re-measured as the layout changes.
       measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
       onDragCancel={handleDragCancel}
       onDragEnd={handleDragEnd}
@@ -291,10 +263,7 @@ export const BoardDnd = ({
       {activeItem && !activeItem.archived && onArchive ? (
         <ArchiveDropZone />
       ) : null}
-      {/* The lifted card follows the cursor in a portal, so it keeps tracking
-          the pointer even over the archive zone and the other list (which sit
-          outside its own sortable context) instead of snapping back to its
-          slot. */}
+      {/* The lifted card follows the cursor in a portal, so it keeps tracking the pointer even over the archive zone and the other list (which sit outside its own sortable context) instead of snapping back to its slot. */}
       <DragOverlay dropAnimation={null}>
         {activeItem ? (
           <BoardRow className="board-row--overlay" item={activeItem} now={now} />

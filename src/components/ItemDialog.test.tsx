@@ -72,9 +72,7 @@ describe("ItemDialog", () => {
     const onClose = vi.fn()
     const onSave = vi.fn()
 
-    // Mount closed, then open it the way the app does — flipping isOpen and
-    // supplying the item together — so the focus/Escape wiring has to survive
-    // the draft being adopted on open.
+    // Mount closed, then open it the way the app does, flipping isOpen and supplying the item together, so the focus/Escape wiring has to survive the draft being adopted on open.
     const { rerender } = render(
       <ItemDialog
         isOpen={false}

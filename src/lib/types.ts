@@ -55,10 +55,9 @@ export interface CountdownWidget extends WidgetBase {
   settings: {
     targetAt: string
     /**
-     * Span start for the progress bar (the target is the span end). Setting a
-     * start is what turns the card into a progress bar; clearing it goes back
-     * to the remaining-time text. New countdowns start from their creation
-     * time, so a bar is the default without asking.
+     * Span start for the progress bar (the target is the span end).
+     * Setting a start is what turns the card into a progress bar; clearing it goes back to the remaining-time text.
+     * New countdowns start from their creation time, so a bar is the default without asking.
      */
     startAt?: string
     /** When set, the target rolls forward to the next occurrence as it passes. */
@@ -115,9 +114,8 @@ export interface HabitWidget extends WidgetBase {
   kind: "habit"
   settings: {
     /**
-     * Local day keys (YYYY-MM-DD) on which the habit was marked done, pruned
-     * to the week the dot row can show — an unbounded list eventually grew
-     * into the chrome.storage.sync per-item quota the whole board shares.
+     * Local day keys (YYYY-MM-DD) on which the habit was marked done, pruned to the week the dot row can show.
+     * An unbounded list eventually grew into the chrome.storage.sync per-item quota the whole board shares.
      */
     history: string[]
   }
@@ -141,9 +139,8 @@ export type Widget =
   | HabitWidget
   | TodoWidget
 
-// Dayboard's philosophy is that the board just works: the layout is
-// responsive, dragging is always available, and the board centers itself in
-// the viewport. The only setting left is the optional greeting name.
+// Dayboard's philosophy is that the board just works: the layout is responsive, dragging is always available, and the board centers itself in the viewport.
+// The only setting left is the optional greeting name.
 export interface DayboardSettings {
   /** Optional name used to personalize the greeting; empty hides it. */
   name: string
@@ -161,22 +158,18 @@ export interface DayboardState {
 export const DEFAULT_TIME_ZONE =
   Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
 
-// The first-run board. It is intentionally pre-styled with a varied, calm mix of
-// widget kinds and curated colors so a brand-new tab feels customized at a glance
-// and shows what the board can do — rather than a blank two-card placeholder.
-// Each title opens with an emoji, both because it warms up the first board and
-// because it shows that a title is free text you can put anything in.
+// The first-run board.
+// It is intentionally pre-styled with a varied, calm mix of widget kinds and curated colors so a brand-new tab feels customized at a glance and shows what the board can do, rather than a blank two-card placeholder.
+// Each title opens with an emoji, both because it warms up the first board and because it shows that a title is free text you can put anything in.
 // Everything here is editable; these are just inviting starting points.
 export const createDefaultWidgets = (now = new Date()): Widget[] => {
-  // Tomorrow at 9am local, repeating daily so this anchor stays evergreen
-  // instead of slipping into the past after the first day.
+  // Tomorrow at 9am local, repeating daily so this anchor stays evergreen instead of slipping into the past after the first day.
   const tomorrowMorning = new Date(now)
   tomorrowMorning.setDate(now.getDate() + 1)
   tomorrowMorning.setHours(9, 0, 0, 0)
 
-  // The current calendar year as a fixed span. `now` always sits inside it, so
-  // the progress bar reads as a meaningful fraction on first paint and never
-  // needs to roll forward.
+  // The current calendar year as a fixed span.
+  // `now` always sits inside it, so the progress bar reads as a meaningful fraction on first paint and never needs to roll forward.
   const yearStart = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0)
   const yearEnd = new Date(now.getFullYear() + 1, 0, 1, 0, 0, 0, 0)
 

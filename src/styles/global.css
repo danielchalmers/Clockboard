@@ -4,15 +4,12 @@
   color-scheme: light dark;
   accent-color: var(--accent);
 
-  /* Fonts. The weight scale across this file tops out at 650 and lives mostly
-     in the 500-600 range: headings that carry by size and letter-spacing
-     rather than by mass. It used to reach 800, which on the system fallback
-     matched the black cut of the family and made the big numbers on the cards
-     look stamped rather than set. */
+  /* Fonts.
+     The weight scale across this file tops out at 650 and lives mostly in the 500-600 range: headings that carry by size and letter-spacing rather than by mass.
+     It used to reach 800, which on the system fallback matched the black cut of the family and made the big numbers on the cards look stamped rather than set. */
   --font-sans: "Outfit", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  /* Warm paper neutrals (light fallbacks) — a touch of warmth instead of the
-     flat gray of a stock new tab. */
+  /* Warm paper neutrals (light fallbacks): a touch of warmth instead of the flat gray of a stock new tab. */
   --bg: hsl(40, 30%, 97%);
   --text: hsl(240, 12%, 10%);
   --muted: hsl(240, 6%, 42%);
@@ -23,9 +20,7 @@
   --surface-strong: hsl(40, 20%, 94%);
   --accent: Highlight;
   --accent-text: HighlightText;
-  /* Pressed states stay in the accent's own family — shaded toward black
-     rather than blended with the page ink, which used to turn a colored
-     accent gray under the pointer. */
+  /* Pressed states stay in the accent's own family, shaded toward black rather than blended with the page ink, which used to turn a colored accent gray under the pointer. */
   --accent-hover: color-mix(in srgb, var(--accent) 88%, #000);
   --accent-active: color-mix(in srgb, var(--accent) 78%, #000);
   --danger: #e03131;
@@ -40,13 +35,13 @@
   /* Focus ring */
   --focus-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
 
-  /* Border Radius — a rounder, friendlier shape language. */
+  /* Border Radius: a rounder, friendlier shape language. */
   --radius-sm: 10px;
   --radius: 14px;
   --radius-lg: 22px;
   --radius-xl: 28px;
 
-  /* Motion — calm, decelerating curves; no overshoot anywhere. */
+  /* Motion: calm, decelerating curves; no overshoot anywhere. */
   --t-micro: 100ms cubic-bezier(0.4, 0, 0.2, 1);
   --t-fast: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --t-normal: 300ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -93,16 +88,13 @@ body,
   min-height: 100%;
 }
 
-/* Always reserve room for the scrollbar so the centered board keeps its width
-   and position. Without this, revealing the archive or adding enough widgets to
-   overflow the viewport pops a scrollbar in and shifts everything sideways. */
+/* Always reserve room for the scrollbar so the centered board keeps its width and position.
+   Without this, revealing the archive or adding enough widgets to overflow the viewport pops a scrollbar in and shifts everything sideways. */
 html {
   scrollbar-gutter: stable;
 }
 
-/* The flex column lets `.page` center itself vertically when the board is
-   short (both block margins claim the free space evenly), and collapse to a
-   normal top-scrolling document when it grows tall. */
+/* The flex column lets `.page` center itself vertically when the board is short (both block margins claim the free space evenly), and collapse to a normal top-scrolling document when it grows tall. */
 #root {
   display: flex;
   flex-direction: column;
@@ -163,18 +155,15 @@ a {
   text-decoration: none;
 }
 
-/* Highlighting text anywhere on the board picks up the browser's accent, the
-   same color the primary buttons and focus rings are drawn from. */
+/* Highlighting text anywhere on the board picks up the browser's accent, the same color the primary buttons and focus rings are drawn from. */
 ::selection {
   background: color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 /* ── Page Layout ───────────────────────────────────────────────────────── */
 
-/* The board floats in the middle of the viewport: clear of the omnibox
-   suggestions that drop over the top of a new tab, without hugging the bottom.
-   The auto block margins split the free space; when the board outgrows the
-   viewport they collapse to the padding and the page scrolls from the top. */
+/* The board floats in the middle of the viewport: clear of the omnibox suggestions that drop over the top of a new tab, without hugging the bottom.
+   The auto block margins split the free space; when the board outgrows the viewport they collapse to the padding and the page scrolls from the top. */
 .page {
   inline-size: min(1300px, calc(100% - 64px));
   margin: auto;
@@ -198,7 +187,7 @@ a {
   margin-block-end: 48px;
 }
 
-/* The greeting is the hero — personal beats branded on a page you see all day.
+/* The greeting is the hero: personal beats branded on a page you see all day.
    Set in the plain text color: quiet confidence, no effects. */
 .page-header__greeting {
   color: var(--text);
@@ -316,8 +305,7 @@ details > summary::-webkit-details-marker {
   position: relative;
 }
 
-/* Free-form widget menu: a native popover pinned under the cursor in the top
-   layer, with the UA popover styles reset back to our own panel styling. */
+/* Free-form widget menu: a native popover pinned under the cursor in the top layer, with the UA popover styles reset back to our own panel styling. */
 .card-menu {
   position: fixed;
   inset: auto;
@@ -331,11 +319,8 @@ details > summary::-webkit-details-marker {
   z-index: 200;
 }
 
-/* Menu panels are the most "product" surface in the app: a nearly opaque card
-   with a hairline border, layered shadow, and an inner highlight along the top
-   edge — the details that read as depth without any color noise. Only a trace
-   of translucency is left: enough to feel like glass, not enough to let a card
-   underneath show through and fight the labels for legibility. */
+/* Menu panels are the most "product" surface in the app: a nearly opaque card with a hairline border, layered shadow, and an inner highlight along the top edge, the details that read as depth without any color noise.
+   Only a trace of translucency is left: enough to feel like glass, not enough to let a card underneath show through and fight the labels for legibility. */
 .add-menu__panel,
 .card-menu__panel {
   background: color-mix(in srgb, var(--surface) 98%, transparent);
@@ -380,8 +365,7 @@ details > summary::-webkit-details-marker {
   inset-block-start: calc(100% + 8px);
   inset-inline-end: 0;
   min-inline-size: 268px;
-  /* Stay on screen and scroll if the list of widget kinds is taller than the
-     viewport (e.g. a short window). */
+  /* Stay on screen and scroll if the list of widget kinds is taller than the viewport (e.g. a short window). */
   max-block-size: calc(100vh - 120px);
   overflow-y: auto;
 }
@@ -459,8 +443,8 @@ details > summary::-webkit-details-marker {
 }
 
 /* ── Kind chips ────────────────────────────────────────────────────────────
-   Each widget kind wears its own hue in the edit dialog, where the chip stands
-   for one particular card. The hues echo the card presets. */
+   Each widget kind wears its own hue in the edit dialog, where the chip stands for one particular card.
+   The hues echo the card presets. */
 
 .menu-chip {
   --chip: hsl(220, 25%, 50%);
@@ -481,9 +465,7 @@ details > summary::-webkit-details-marker {
   border-radius: 14px;
 }
 
-/* The add menu is a list of actions, not a set of existing cards, so its chips
-   drop the per-kind hues and take the browser's accent — one calm color for
-   the whole menu, with the glyph left to say which kind each row is. */
+/* The add menu is a list of actions, not a set of existing cards, so its chips drop the per-kind hues and take the browser's accent: one calm color for the whole menu, with the glyph left to say which kind each row is. */
 .add-menu__panel .menu-chip {
   --chip: var(--accent);
 }
@@ -510,10 +492,8 @@ details > summary::-webkit-details-marker {
 
 /* ── Board Layout ──────────────────────────────────────────────────────── */
 
-/* `auto-fill`, not `auto-fit`: auto-fit collapses the tracks nothing landed in,
-   so a lone card — one archived widget, or a board pared down to a single
-   widget — stretched itself across every column it could reach. Keeping the
-   empty tracks holds every card at one column's width, whatever the count. */
+/* `auto-fill`, not `auto-fit`: auto-fit collapses the tracks nothing landed in, so a lone card (one archived widget, or a board pared down to a single widget) stretched itself across every column it could reach.
+   Keeping the empty tracks holds every card at one column's width, whatever the count. */
 .board-list {
   display: grid;
   gap: 28px;
@@ -522,8 +502,7 @@ details > summary::-webkit-details-marker {
 
 /* ── Archive ───────────────────────────────────────────────────────────── */
 
-/* A floating drop target that only appears mid-drag, pinned to the bottom of
-   the viewport so it is always reachable however tall the board is. */
+/* A floating drop target that only appears mid-drag, pinned to the bottom of the viewport so it is always reachable however tall the board is. */
 .archive-dropzone {
   align-items: center;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
@@ -561,9 +540,7 @@ details > summary::-webkit-details-marker {
   margin-block-start: 40px;
 }
 
-/* The archive is a footnote to the board, not a second section of it: the
-   toggle sits back in the quiet ink at a small size and only steps forward to
-   the normal text color once you are actually pointing at it. */
+/* The archive is a footnote to the board, not a second section of it: the toggle sits back in the quiet ink at a small size and only steps forward to the normal text color once you are actually pointing at it. */
 .archive-toggle {
   border: 1px solid transparent;
   border-radius: 999px;
@@ -609,8 +586,7 @@ details > summary::-webkit-details-marker {
   gap: 24px;
   grid-template-rows: auto 1fr;
   /* Every card is one fixed size so the board reads as a single calm surface.
-     Content adapts to the card — quotes step down through sizing tiers, notes
-     scroll — instead of stretching it. */
+     Content adapts to the card (quotes step down through sizing tiers, notes scroll) instead of stretching it. */
   block-size: 240px;
   padding: 26px 30px 24px;
   position: relative;
@@ -621,8 +597,7 @@ details > summary::-webkit-details-marker {
     box-shadow var(--t-fast);
 }
 
-/* Cards present at page load must simply be there; only cards that appear
-   while the board is on screen (added, restored) get the entrance. */
+/* Cards present at page load must simply be there; only cards that appear while the board is on screen (added, restored) get the entrance. */
 .board-row--enter {
   animation: card-enter var(--t-normal) var(--ease-out) both;
 }
@@ -657,8 +632,7 @@ details > summary::-webkit-details-marker {
   }
 }
 
-/* A very subtle inner radial gradient gives each colored card a hint of light
-   falling from the corner (slate stays flat and neutral). */
+/* A very subtle inner radial gradient gives each colored card a hint of light falling from the corner (slate stays flat and neutral). */
 .board-row:not(.board-row--theme-slate)::before {
   content: "";
   position: absolute;
@@ -682,8 +656,7 @@ details > summary::-webkit-details-marker {
   margin: 0;
   color: var(--text);
   overflow-wrap: anywhere;
-  /* Cards no longer grow with their content, so a runaway title ellipsizes
-     after two lines instead of squeezing the body. */
+  /* Cards no longer grow with their content, so a runaway title ellipsizes after two lines instead of squeezing the body. */
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -750,10 +723,8 @@ details > summary::-webkit-details-marker {
   color: var(--quiet);
 }
 
-/* Quote cards render the chosen line as a styled pull-quote. Cards are one
-   fixed size and so is the quote: one calm size for every length — simple and
-   predictable — with the clamp ellipsizing whatever can't fit on four lines
-   rather than growing the card or reflowing the text. */
+/* Quote cards render the chosen line as a styled pull-quote.
+   Cards are one fixed size and so is the quote: one calm, predictable size for every length, with the clamp ellipsizing whatever can't fit on four lines rather than growing the card or reflowing the text. */
 .quote-text {
   align-self: center;
   color: var(--text);
@@ -872,8 +843,7 @@ details > summary::-webkit-details-marker {
   border-color: color-mix(in srgb, var(--card-accent-resolved) 45%, var(--card-border-resolved));
 }
 
-/* The card's own accent drives its primary action, so a rose timer starts
-   with a rose button. */
+/* The card's own accent drives its primary action, so a rose timer starts with a rose button. */
 .timer-button--primary {
   background: var(--card-accent-resolved);
   border-color: transparent;
@@ -889,17 +859,14 @@ details > summary::-webkit-details-marker {
   font-weight: 600;
 }
 
-/* Habit week — the card's main content: the current week as a row of dots
-   under its weekday letters, so the row reads as the week it is rather than
-   as seven unlabeled days. */
+/* Habit week, the card's main content: the current week as a row of dots under its weekday letters, so the row reads as the week it is rather than as seven unlabeled days. */
 .habit-week {
   display: grid;
   gap: 8px;
   margin-block: 6px 0;
 }
 
-/* The action and the week's dates share the last line, so a habit with a
-   two-line title still has room for its button. */
+/* The action and the week's dates share the last line, so a habit with a two-line title still has room for its button. */
 .habit-footer {
   align-items: center;
   display: flex;
@@ -908,8 +875,7 @@ details > summary::-webkit-details-marker {
   margin-block-start: 14px;
 }
 
-/* The dates only say which week the dots belong to — a hint to reach for, not
-   something to read every time the card is glanced at. */
+/* The dates only say which week the dots belong to: a hint to reach for, not something to read every time the card is glanced at. */
 .habit-footer .board-row__meta {
   opacity: 0.6;
 }
@@ -929,8 +895,7 @@ details > summary::-webkit-details-marker {
   text-align: center;
 }
 
-/* The button spans its whole column so the target is comfortable, while the
-   dot inside stays the small mark it always was. */
+/* The button spans its whole column so the target is comfortable, while the dot inside stays the small mark it always was. */
 .habit-day {
   align-items: center;
   background: none;
@@ -983,17 +948,15 @@ details > summary::-webkit-details-marker {
     color-mix(in srgb, var(--card-accent-resolved) 18%, transparent);
 }
 
-/* Todo list — four tasks always fit, so nothing here scrolls. The tasks and
-   the field they are typed into sit together under the title, anchored to the
-   top so the tasks stay put when the fourth one takes the field away. */
+/* Todo list: four tasks always fit, so nothing here scrolls.
+   The tasks and the field they are typed into sit together under the title, anchored to the top so the tasks stay put when the fourth one takes the field away. */
 .board-row__body--todo {
   align-content: start;
   align-self: start;
   gap: 8px;
 }
 
-/* A checklist is a dense surface rather than one hero value, so it takes the
-   room the other cards spend on breathing space under the title. */
+/* A checklist is a dense surface rather than one hero value, so it takes the room the other cards spend on breathing space under the title. */
 .board-row:has(> .board-row__body--todo) {
   gap: 16px;
 }
@@ -1022,10 +985,8 @@ details > summary::-webkit-details-marker {
   padding-block: 2px;
 }
 
-/* Drawn rather than native so the box carries the card's own accent, and so
-   the page's text-input rules — sized for a 46px field, and glowing on any
-   focus at all — are kept off a control this small. Pointing at or clicking
-   the box is answered by the box itself, not by a ring around it. */
+/* Drawn rather than native so the box carries the card's own accent, and so the page's text-input rules (sized for a 46px field, and glowing on any focus at all) are kept off a control this small.
+   Pointing at or clicking the box is answered by the box itself, not by a ring around it. */
 .todo-task__box,
 .todo-task__box:hover,
 .todo-task__box:focus {
@@ -1054,10 +1015,9 @@ details > summary::-webkit-details-marker {
   border-color: var(--card-accent-resolved);
 }
 
-/* The tick is a masked round-capped stroke — the same line language as the
-   kind icons — painted in the card's own background. The mask centers the
-   glyph itself, so nothing is nudged into place by hand. (Two rotated borders
-   used to fake it, with square-cut ends and arms that never quite matched.) */
+/* The tick is a masked round-capped stroke, the same line language as the kind icons, painted in the card's own background.
+   The mask centers the glyph itself, so nothing is nudged into place by hand.
+   (Two rotated borders used to fake it, with square-cut ends and arms that never quite matched.) */
 .todo-task__box:checked::after {
   --tick: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2.5 6.5 5 9l4.5-5.5" fill="none" stroke="%23000" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
   background: var(--card-bg-resolved);
@@ -1069,10 +1029,7 @@ details > summary::-webkit-details-marker {
   inline-size: 100%;
 }
 
-/* Keyboard focus on a row's controls is a hairline ring in the page's ink
-   rather than the accent glow the page puts on every input: that glow fires on
-   plain clicks too, which on a box this small reads as a smudge, and drawn in
-   the accent it would all but vanish around an already-accent-filled box. */
+/* Keyboard focus on a row's controls is a hairline ring in the page's ink rather than the accent glow the page puts on every input: that glow fires on plain clicks too, which on a box this small reads as a smudge, and drawn in the accent it would all but vanish around an already-accent-filled box. */
 .todo-task__box:focus-visible,
 .todo-task__remove:focus-visible {
   box-shadow: none;
@@ -1117,8 +1074,7 @@ details > summary::-webkit-details-marker {
   transition: border-color var(--t-fast);
 }
 
-/* The rule divides written tasks from the one being typed, so on an empty
-   card there is nothing for it to divide. */
+/* The rule divides written tasks from the one being typed, so on an empty card there is nothing for it to divide. */
 .todo-list:empty + .todo-add {
   border-block-start: 0;
   padding-block-start: 0;
@@ -1128,8 +1084,7 @@ details > summary::-webkit-details-marker {
   border-color: color-mix(in srgb, var(--card-accent-resolved) 55%, var(--card-border-resolved));
 }
 
-/* Part of the card rather than a form control sitting on it, with its text
-   lined up under the task text: the 28px is the box and the gap beside it. */
+/* Part of the card rather than a form control sitting on it, with its text lined up under the task text: the 28px is the box and the gap beside it. */
 .todo-add__field {
   background: transparent;
   border: 0;
@@ -1185,20 +1140,17 @@ details > summary::-webkit-details-marker {
   margin: 0;
 }
 
-/* Secondary meta (e.g. the clock's time-zone abbreviation) is set apart by
-   weight rather than fading toward transparent, which kept it fully opaque for
-   contrast. */
+/* Secondary meta (e.g. the clock's time-zone abbreviation) is set apart by weight rather than fading toward transparent, which kept it fully opaque for contrast. */
 .board-row__meta span {
   font-weight: 450;
 }
 
-/* The frame overlay is the only draggable surface. It sits beneath the content
-   and a donut clip-path cuts a hole through its middle, leaving just the card's
-   padded outer ring as the drag handle. Grabbing the border starts a drag while
-   the body text — and the empty space between rows — stay non-draggable. */
+/* The frame overlay is the only draggable surface.
+   It sits beneath the content and a donut clip-path cuts a hole through its middle, leaving just the card's padded outer ring as the drag handle.
+   Grabbing the border starts a drag while the body text, and the empty space between rows, stay non-draggable. */
 .board-row__frame {
-  /* Wide enough to grab without aiming. The card's own padding is 24-30px, so
-     an 18px ring still stops short of the text and controls inside. */
+  /* Wide enough to grab without aiming.
+     The card's own padding is 24-30px, so an 18px ring still stops short of the text and controls inside. */
   --frame-ring: 18px;
   position: absolute;
   inset: 0;
@@ -1224,18 +1176,16 @@ details > summary::-webkit-details-marker {
   cursor: grabbing;
 }
 
-/* Lift the content above the frame so pointer interactions over text select it
-   instead of initiating a drag. (The actions menu is a separate top-layer
-   popover, so it always renders above the card regardless of this stacking.) */
+/* Lift the content above the frame so pointer interactions over text select it instead of initiating a drag.
+   (The actions menu is a separate top-layer popover, so it always renders above the card regardless of this stacking.) */
 .board-row__header,
 .board-row__body {
   position: relative;
   z-index: 1;
 }
 
-/* Hover & Interactive effects — only light up when the draggable frame is
-   hovered, so hovering the body stays calm and undistracting. The lifted
-   shadow borrows the card's own accent for a soft colored glow. */
+/* Hover and interactive effects only light up when the draggable frame is hovered, so hovering the body stays calm and undistracting.
+   The lifted shadow borrows the card's own accent for a soft colored glow. */
 .board-row--draggable:has(.board-row__frame:hover):not(.board-row--dragging),
 .board-row--draggable:focus-visible,
 .board-row--menu-open {
@@ -1243,20 +1193,17 @@ details > summary::-webkit-details-marker {
   box-shadow: var(--shadow-card-hover);
 }
 
-/* The in-list card while it is being dragged. The overlay under the cursor is
-   already the card, so drawing a faded second copy in the slot just made it
-   look like the widget had been duplicated. Hide it and let the gap the other
-   cards open up be the only thing that marks where it will land. The slot
-   itself has to stay — it is the drop target the sort is measured against —
-   and it goes transparent rather than `visibility: hidden`, which would drop
-   the card out of the accessibility tree and blur it mid keyboard drag. */
+/* The in-list card while it is being dragged.
+   The overlay under the cursor is already the card, so drawing a faded second copy in the slot just made it look like the widget had been duplicated.
+   Hide it and let the gap the other cards open up be the only thing that marks where it will land.
+   The slot itself has to stay, since it is the drop target the sort is measured against, and it goes transparent rather than `visibility: hidden`, which would drop the card out of the accessibility tree and blur it mid keyboard drag. */
 .board-row--dragging {
   opacity: 0;
   animation: none !important;
   transition: none !important;
 }
 
-/* The drag overlay clone — the actual lifted card that follows the cursor. */
+/* The drag overlay clone: the actual lifted card that follows the cursor. */
 .board-row--overlay {
   cursor: grabbing;
   border-color: var(--card-accent-resolved);
@@ -1264,15 +1211,13 @@ details > summary::-webkit-details-marker {
   animation: none;
 }
 
-/* Disable default transitions and optimize for GPU layers during active drag operations */
 .board-list--dragging .board-row {
   transition: none;
   will-change: transform;
 }
 
-/* While an archived card is in flight the whole active board reads as the
-   restore target. The precise slot needs no ring of its own — the gap the
-   other cards open up already shows where the card is going. */
+/* While an archived card is in flight the whole active board reads as the restore target.
+   The precise slot needs no ring of its own: the gap the other cards open up already shows where the card is going. */
 .board-list--restore-target {
   border-radius: var(--radius-lg);
   outline: 2px dashed color-mix(in srgb, var(--accent) 45%, transparent);
@@ -1342,8 +1287,7 @@ select:focus {
   color: var(--danger);
 }
 
-/* A calm, non-blocking notice pinned to the bottom of the viewport (e.g. a
-   failed save). */
+/* A calm, non-blocking notice pinned to the bottom of the viewport (e.g. a failed save). */
 .board-notice {
   align-items: center;
   background: var(--surface);
@@ -1423,8 +1367,7 @@ select:focus {
   letter-spacing: 0.05em;
 }
 
-/* A single non-wrapping row: swatches shrink evenly below their 32px ideal
-   when the dialog is narrower than the full set, instead of spilling over. */
+/* A single non-wrapping row: swatches shrink evenly below their 32px ideal when the dialog is narrower than the full set, instead of spilling over. */
 .color-preset-picker {
   align-items: center;
   display: flex;
@@ -1564,16 +1507,13 @@ select:focus {
   justify-content: end;
 }
 
-/* A footer row with something quiet on the left (e.g. the GitHub link) and
-   the primary action on the right. */
+/* A footer row with something quiet on the left (e.g. the GitHub link) and the primary action on the right. */
 .modal-dialog__actions--split {
   align-items: center;
   justify-content: space-between;
 }
 
-/* Quiet links sit together on the footer's left; the negative inline start
-   pulls the first link's text back flush with the dialog edge, past its
-   hover padding. */
+/* Quiet links sit together on the footer's left; the negative inline start pulls the first link's text back flush with the dialog edge, past its hover padding. */
 .settings-footer-links {
   align-items: center;
   display: flex;
@@ -1615,8 +1555,7 @@ select:focus {
 
 /* ── Options dialog ────────────────────────────────────────────────────── */
 
-/* The dialog reads as a short, well-set page: sections separated by hairlines,
-   with the label / control / hint rhythm repeated in each. */
+/* The dialog reads as a short, well-set page: sections separated by hairlines, with the label / control / hint rhythm repeated in each. */
 .settings-sections {
   display: grid;
   gap: 28px;
@@ -1795,8 +1734,7 @@ select:focus {
   line-height: 1.5;
 }
 
-/* An empty board doubles as the restore drop target while an archived card is
-   being dragged, so it lights up like a drop zone instead of sitting inert. */
+/* An empty board doubles as the restore drop target while an archived card is being dragged, so it lights up like a drop zone instead of sitting inert. */
 .empty-state--restore {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--line-strong));
 }

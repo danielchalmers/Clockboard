@@ -209,8 +209,7 @@ describe("readDayboardState", () => {
     const state = await readDayboardState()
     const [kept, dropped] = state.widgets as CountdownWidget[]
 
-    // The old key goes either way; a card that was showing text keeps showing
-    // it rather than turning into a bar it never had.
+    // The old key goes either way; a card that was showing text keeps showing it rather than turning into a bar it never had.
     expect(kept!.settings).toEqual({
       targetAt: "2026-12-31T00:00:00.000Z",
       startAt: "2026-01-01T00:00:00.000Z"
@@ -274,10 +273,7 @@ describe("writeDayboardState", () => {
     expect(store.get(STORAGE_KEY)).toEqual(sampleState)
   })
 
-  // chrome.storage.sync rejects any single item over QUOTA_BYTES_PER_ITEM
-  // (8192 bytes of key + serialized value), and the whole board lives under
-  // one key — so even a board packed with habits at their fullest must stay
-  // under it or every save starts failing.
+  // chrome.storage.sync rejects any single item over QUOTA_BYTES_PER_ITEM (8192 bytes of key + serialized value), and the whole board lives under one key, so even a board packed with habits at their fullest must stay under it or every save starts failing.
   it("keeps a board of full habit histories under the sync per-item quota", async () => {
     const QUOTA_BYTES_PER_ITEM = 8192
     const fullHistory = Array.from({ length: STORED_DAYS }, (_, offset) => {

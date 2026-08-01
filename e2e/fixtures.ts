@@ -8,8 +8,7 @@ const extensionPath = path.resolve(
   "../.output/chrome-mv3"
 )
 
-// Loads the real built extension into a persistent context so tests exercise
-// chrome.storage.sync and the new tab override exactly as Chrome runs them.
+// Loads the real built extension into a persistent context so tests exercise chrome.storage.sync and the new tab override exactly as Chrome runs them.
 export const test = base.extend<{
   context: BrowserContext
   extensionId: string

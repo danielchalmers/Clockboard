@@ -13,9 +13,8 @@ interface SettingsDialogProps {
   importError?: string | null
 }
 
-// Dayboard keeps options to a minimum on purpose — the layout, dragging, and
-// placement all just work. What's left is the greeting name and moving the
-// board between browsers.
+// Dayboard keeps options to a minimum on purpose: the layout, dragging, and placement all just work.
+// What's left is the greeting name and moving the board between browsers.
 export const SettingsDialog = ({
   isOpen,
   settings,

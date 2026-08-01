@@ -93,8 +93,8 @@ describe("isDaySensitive", () => {
   })
 })
 
-// A new tab can sit open overnight. These rows skip the per-second tick, so they
-// only see a fresh `now` if the memo lets midnight through.
+// A new tab can sit open overnight.
+// These rows skip the per-second tick, so they only see a fresh `now` if the memo lets midnight through.
 describe("a board left open across local midnight", () => {
   const lateMonday = new Date(2026, 2, 2, 23, 59, 0)
   const earlyTuesday = new Date(2026, 2, 3, 0, 1, 0)
@@ -318,9 +318,7 @@ describe("BoardList", () => {
     expect(screen.queryByLabelText("Actions for Local time")).not.toBeInTheDocument()
   })
 
-  // Triple-clicking a line is the most ordinary way to select one, and Chrome
-  // runs the resulting range past the end of the block it started in — so the
-  // range's common ancestor lands outside the card entirely.
+  // Triple-clicking a line is the most ordinary way to select one, and Chrome runs the resulting range past the end of the block it started in, so the range's common ancestor lands outside the card entirely.
   it("leaves the native menu alone when the selection runs past the card", () => {
     const { container } = renderBoard()
 
