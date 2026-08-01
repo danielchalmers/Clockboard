@@ -19,7 +19,6 @@ export const getDaypart = (now: Date): Daypart => {
   return "night"
 }
 
-// A calm, time-of-day greeting for the board header.
 export const getTimeOfDayGreeting = (now: Date): string => {
   switch (getDaypart(now)) {
     case "morning":
@@ -33,7 +32,6 @@ export const getTimeOfDayGreeting = (now: Date): string => {
   }
 }
 
-// Optionally personalize the greeting with a trimmed name.
 export const getGreeting = (now: Date, name = ""): string => {
   const base = getTimeOfDayGreeting(now)
   const trimmed = name.trim()

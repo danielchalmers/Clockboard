@@ -14,10 +14,8 @@ export interface ColorPresetDefinition {
   dark: ColorPresetTheme
 }
 
-// One neutral anchor plus eleven hues spaced around the wheel, ordered
-// spectrally so the picker reads as a gradient. Backgrounds carry a real wash
-// of color, and accents sit at full saturation so progress bars, habit dots,
-// and swatches pop instead of receding.
+// One neutral anchor plus eleven hues spaced around the wheel, ordered spectrally so the picker reads as a gradient.
+// Backgrounds carry a real wash of color, and accents sit at full saturation so progress bars, habit dots, and swatches pop instead of receding.
 export const COLOR_PRESETS: ColorPresetDefinition[] = [
   {
     id: "slate",
@@ -213,9 +211,8 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
   }
 ]
 
-// A random hue for newly created widgets, so every new card arrives already
-// looking at home on the board. Neutral slate is skipped — it reads as "no
-// color chosen" — but stays available in the picker as a deliberate choice.
+// A random hue for newly created widgets, so every new card arrives already looking at home on the board.
+// Neutral slate is skipped because it reads as "no color chosen", but stays available in the picker as a deliberate choice.
 export const randomColorPreset = (): WidgetColorPreset => {
   const hues = COLOR_PRESETS.filter((preset) => preset.id !== "slate")
 

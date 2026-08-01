@@ -41,16 +41,14 @@ export const isoInstantToDateTimeInputValue = (instant: string): string => {
 }
 
 // Whether two instants land on the same day of the user's local calendar.
-// Widgets that only care which day it is compare ticks with this, so they notice
-// midnight without re-rendering on every second in between.
+// Widgets that only care which day it is compare ticks with this, so they notice midnight without re-rendering on every second in between.
 export const isSameLocalDay = (a: Date, b: Date): boolean =>
   a.getDate() === b.getDate() &&
   a.getMonth() === b.getMonth() &&
   a.getFullYear() === b.getFullYear()
 
-// Intl.DateTimeFormat construction parses options on every call and is among the
-// pricier locale operations; format() itself is cheap. Cache instances by their
-// options so repeated renders (and ticking clocks) reuse one formatter.
+// Intl.DateTimeFormat construction parses options on every call and is among the pricier locale operations; format() itself is cheap.
+// Cache instances by their options so repeated renders (and ticking clocks) reuse one formatter.
 const formatterCache = new Map<string, Intl.DateTimeFormat>()
 
 const getFormatter = (options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat => {
@@ -90,9 +88,7 @@ export const formatTimeZoneName = (date: Date, timeZone: string): string => {
   return parts.find((part) => part.type === "timeZoneName")?.value || timeZone
 }
 
-// Move an instant forward by whole repeat steps, using calendar arithmetic so
-// the time of day survives DST and a monthly countdown keeps its day number
-// instead of drifting the way repeated single steps would.
+// Move an instant forward by whole repeat steps, using calendar arithmetic so the time of day survives DST and a monthly countdown keeps its day number instead of drifting the way repeated single steps would.
 const advanceByRepeat = (
   base: Date,
   repeat: CountdownRepeat | undefined,
@@ -127,10 +123,8 @@ const APPROXIMATE_STEP_MS: Record<Exclude<CountdownRepeat, "none">, number> = {
   yearly: 31_556_952_000
 }
 
-// How many repeat steps a stored target has to move to land on its first
-// occurrence after now. The count is estimated from the elapsed span and then
-// nudged into place, so an hourly countdown left alone for a year costs a
-// couple of comparisons rather than thousands of iterations.
+// How many repeat steps a stored target has to move to land on its first occurrence after now.
+// The count is estimated from the elapsed span and then nudged into place, so an hourly countdown left alone for a year costs a couple of comparisons rather than thousands of iterations.
 const countdownRepeatSteps = (
   targetAt: string,
   repeat: CountdownRepeat | undefined,
@@ -166,11 +160,9 @@ const countdownRepeatSteps = (
   return steps
 }
 
-// Resolve what a countdown means right now: a repeating one shows its next
-// occurrence, and a start that cannot fill a bar is dropped. Both ends of a
-// repeating span move together so the bar keeps its length each cycle instead
-// of stretching from the original start forever. The result is computed on the
-// fly — the stored widget stays the anchor, so every tab agrees without writes.
+// Resolve what a countdown means right now: a repeating one shows its next occurrence, and a start that cannot fill a bar is dropped.
+// Both ends of a repeating span move together so the bar keeps its length each cycle instead of stretching from the original start forever.
+// The result is computed on the fly, so the stored widget stays the anchor and every tab agrees without writes.
 export const resolveCountdown = (
   widget: CountdownWidget,
   now = new Date()
@@ -186,8 +178,7 @@ export const resolveCountdown = (
   const start = startAt ? new Date(startAt) : null
   const steps = countdownRepeatSteps(targetAt, repeat, now)
 
-  // A start that does not parse, or that does not sit before the target, is not
-  // a span a bar can fill; the card falls back to the remaining-time text.
+  // A start that does not parse, or that does not sit before the target, is not a span a bar can fill; the card falls back to the remaining-time text.
   const hasSpan =
     start !== null &&
     !Number.isNaN(start.getTime()) &&
@@ -262,8 +253,8 @@ const getCountdownStatus = (totalMs: number): CountdownParts["status"] => {
 const pluralize = (value: number, unit: string): string =>
   `${value} ${unit}${value === 1 ? "" : "s"}`
 
-// Fraction (0..1) of the way from the widget's start to its target, for the
-// progress display. Falls back gracefully when no usable start span exists.
+// Fraction (0..1) of the way from the widget's start to its target, for the progress display.
+// Falls back gracefully when no usable start span exists.
 export const getCountdownProgress = (
   widget: CountdownWidget,
   now = new Date()

@@ -1,7 +1,6 @@
 import type { WidgetKind } from "~/lib/types"
 
-// One line-icon per widget kind, shared by the add menu, the card headers, and
-// the edit dialog so every surface names a kind with the same visual.
+// One line-icon per widget kind, shared by the add menu, the card headers, and the edit dialog so every surface names a kind with the same visual.
 const ICON_PATHS: Record<WidgetKind, React.ReactNode> = {
   clock: (
     <>

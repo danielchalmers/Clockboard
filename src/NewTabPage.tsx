@@ -25,8 +25,8 @@ interface EditorState {
   item: Widget
 }
 
-// Leading icons for the card context menu. The move icons point in reading
-// order (back/forward), matching the "back/next" labels.
+// Leading icons for the card context menu.
+// The move icons point in reading order (back/forward), matching the "back/next" labels.
 const MENU_ICON_PATHS = {
   moveBack: "M19 12H5m6-6-6 6 6 6",
   moveNext: "M5 12h14m-6-6 6 6-6 6",
@@ -49,9 +49,8 @@ const MenuIcon = ({ name }: { name: keyof typeof MENU_ICON_PATHS }) => (
   </svg>
 )
 
-// A line apiece so the menu says what each kind is, rather than leaving "Add
-// quote" and "Add note" to be told apart by guesswork. Plain descriptions of
-// what the card shows — this is a menu, not a place to sell the widget.
+// A line apiece so the menu says what each kind is, rather than leaving "Add quote" and "Add note" to be told apart by guesswork.
+// Plain descriptions of what the card shows: this is a menu, not a place to sell the widget.
 const ADD_MENU_KINDS: { kind: WidgetKind; label: string; hint: string }[] = [
   { kind: "clock", label: "Clock", hint: "Current time in a time zone" },
   { kind: "countdown", label: "Countdown", hint: "Time left until a date" },
@@ -63,8 +62,8 @@ const ADD_MENU_KINDS: { kind: WidgetKind; label: string; hint: string }[] = [
   { kind: "todo", label: "Todo", hint: "Four tasks you check off" }
 ]
 
-// The new tab page doubles as the extension's options page. When the browser
-// opens it as options it appends `?view=settings`, so the overlay shows itself.
+// The new tab page doubles as the extension's options page.
+// When the browser opens it as options it appends `?view=settings`, so the overlay shows itself.
 const wantsSettingsView = (): boolean => {
   if (typeof window === "undefined") {
     return false
@@ -114,8 +113,7 @@ export function NewTabPage() {
       window.removeEventListener("pointerdown", closeMenusAfterOutsidePointerDown)
   }, [])
 
-  // Only the very first run (no cached board yet) waits on storage; a spinner
-  // would just flash, so stay blank on the page background until it resolves.
+  // Only the very first run (no cached board yet) waits on storage; a spinner would just flash, so stay blank on the page background until it resolves.
   if (isLoading) {
     return null
   }
@@ -238,8 +236,7 @@ export function NewTabPage() {
             <details
               className="add-menu"
               onKeyDown={(event) => {
-                // Native <details> ignores Escape; close it and refocus the
-                // toggle so the disclosure behaves like a real popup.
+                // Native <details> ignores Escape; close it and refocus the toggle so the disclosure behaves like a real popup.
                 if (event.key === "Escape" && event.currentTarget.open) {
                   event.currentTarget.removeAttribute("open")
                   event.currentTarget
@@ -269,9 +266,7 @@ export function NewTabPage() {
               <div className="add-menu__panel">
                 {ADD_MENU_KINDS.map(({ kind, label, hint }) => (
                   <button
-                    // The subtitle would otherwise land in the accessible name
-                    // and bury the action, so name the button and offer the
-                    // line as its description.
+                    // The subtitle would otherwise land in the accessible name and bury the action, so name the button and offer the line as its description.
                     aria-describedby={`add-${kind}-hint`}
                     aria-label={`Add ${label.toLowerCase()}`}
                     className="menu-button menu-button--described"
@@ -297,12 +292,8 @@ export function NewTabPage() {
             </details>
           </div>
         </header>
-        {/* One drag context spans the board and the archived list, so an
-            archived card can be dragged straight into the exact board slot it
-            should take, while an active card heads for the archive drop zone.
-            The lists render from BoardDnd's view of the widgets, which mid-drag
-            previews the restore — the dragged card already sitting in its
-            board slot. */}
+        {/* One drag context spans the board and the archived list, so an archived card can be dragged straight into the exact board slot it should take, while an active card heads for the archive drop zone.
+            The lists render from BoardDnd's view of the widgets, which mid-drag previews the restore with the dragged card already sitting in its board slot. */}
         <BoardDnd
           now={now}
           widgets={state.widgets}
@@ -328,9 +319,7 @@ export function NewTabPage() {
                   onWidgetChange={updateWidget}
                   renderItemActions={(item, index) => (
                     <>
-                      {/* The board reads left-to-right, top-to-bottom, so the
-                          menu moves in reading order — "up/down" would lie in
-                          a multi-column grid. */}
+                      {/* The board reads left-to-right, top-to-bottom, so the menu moves in reading order; "up/down" would lie in a multi-column grid. */}
                       <button
                         aria-label={`Move ${item.title} back`}
                         className="menu-button"

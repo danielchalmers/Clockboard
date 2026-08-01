@@ -36,20 +36,15 @@ export const ItemDialog = ({
   onSave
 }: ItemDialogProps) => {
   const [draft, setDraft] = useState<Widget | null>(item)
-  // Raw strings for the datetime-local fields so a cleared/intermediate value is
-  // shown as typed instead of snapping back to the stored target.
+  // Raw strings for the datetime-local fields so a cleared/intermediate value is shown as typed instead of snapping back to the stored target.
   const [targetInput, setTargetInput] = useState<string | null>(null)
   const [startInput, setStartInput] = useState<string | null>(null)
   const [syncedItem, setSyncedItem] = useState(item)
   const dialogRef = useRef<HTMLElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
 
-  // Adopt a newly opened item during render (not in an effect) so the dialog
-  // body — and the focusable section that useModalFocus wires into — exist on
-  // the very first open render. Deferring the draft to an effect left the
-  // section null for one render, after which the focus hook's deps never
-  // changed again, so focus-move, the focus trap, and Escape-to-close were
-  // silently never attached.
+  // Adopt a newly opened item during render (not in an effect) so the dialog body, and the focusable section that useModalFocus wires into, exist on the very first open render.
+  // Deferring the draft to an effect left the section null for one render, after which the focus hook's deps never changed again, so focus-move, the focus trap, and Escape-to-close were silently never attached.
   if (item !== syncedItem) {
     setSyncedItem(item)
     setDraft(item)
@@ -127,8 +122,7 @@ export const ItemDialog = ({
     )
   }
 
-  // Clearing the field is a real choice, not an intermediate state: an empty
-  // start drops the progress bar and puts the card back to time remaining.
+  // Clearing the field is a real choice, not an intermediate state: an empty start drops the progress bar and puts the card back to time remaining.
   const updateStartAt = (value: string) => {
     setStartInput(value)
     const startAt = dateTimeInputValueToIsoInstant(value)
@@ -202,10 +196,8 @@ export const ItemDialog = ({
     <div
       className="modal-backdrop"
       onPointerDown={(event) => {
-        // Clicking the backdrop commits the edit — the same as pressing Save or
-        // Enter — so dismissing the dialog feels fluid instead of throwing the
-        // work away. Native form validation still blocks the save and keeps the
-        // dialog open if a required field is empty.
+        // Clicking the backdrop commits the edit, the same as pressing Save or Enter, so dismissing the dialog feels fluid instead of throwing the work away.
+        // Native form validation still blocks the save and keeps the dialog open if a required field is empty.
         if (event.target === event.currentTarget) {
           formRef.current?.requestSubmit()
         }
@@ -254,8 +246,7 @@ export const ItemDialog = ({
 
             {draft.kind === "clock" ? (
               <label className="form-label-group">
-                {/* It looks like a plain text box, but it is backed by the full
-                    IANA list — worth saying, or you would type a city and lose. */}
+                {/* It looks like a plain text box, but it is backed by the full IANA list, which is worth saying or you would type a city and lose. */}
                 <span>Time zone (type to search)</span>
                 <input
                   list="dayboard-time-zones"
@@ -410,8 +401,7 @@ export const ItemDialog = ({
             {draft.kind === "quote" ? (
               <>
                 <label className="form-label-group">
-                  {/* The one-per-line rule is only in the placeholder, which is
-                      gone the moment there is a quote in the box. */}
+                  {/* The one-per-line rule is only in the placeholder, which is gone the moment there is a quote in the box. */}
                   <span>Quotes (one per line)</span>
                   <textarea
                     className="quote-list-input"

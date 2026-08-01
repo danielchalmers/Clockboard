@@ -18,16 +18,14 @@ const hasWidgets = (value: unknown): value is { widgets: unknown[] } =>
   value !== null &&
   Array.isArray((value as { widgets?: unknown }).widgets)
 
-// Keep only entries that look like widgets of a known kind, so a hand-edited or
-// imported file with junk rows renders the valid widgets instead of blank cards.
+// Keep only entries that look like widgets of a known kind, so a hand-edited or imported file with junk rows renders the valid widgets instead of blank cards.
 const isValidWidget = (value: unknown): value is Widget =>
   typeof value === "object" &&
   value !== null &&
   typeof (value as Widget).id === "string" &&
   (value as Widget).kind in widgetRegistry
 
-// Fill any missing or malformed fields with their defaults so a partial or
-// hand-edited imported board still loads cleanly.
+// Fill any missing or malformed fields with their defaults so a partial or hand-edited imported board still loads cleanly.
 const normalizeSettings = (value: unknown): DayboardSettings => {
   const stored = (typeof value === "object" && value !== null
     ? value
@@ -38,11 +36,8 @@ const normalizeSettings = (value: unknown): DayboardSettings => {
   }
 }
 
-// Countdowns used to carry a `display` setting choosing between the remaining
-// time and a progress bar; a start date is now the only switch. Boards written
-// before that still carry the key, so retire it on read — dropping the start
-// alongside it when the card was set to text, which would otherwise come back
-// as a bar the owner never asked for.
+// Countdowns used to carry a `display` setting choosing between the remaining time and a progress bar; a start date is now the only switch.
+// Boards written before that still carry the key, so retire it on read, dropping the start alongside it when the card was set to text, which would otherwise come back as a bar the owner never asked for.
 const normalizeCountdown = (widget: CountdownWidget): CountdownWidget => {
   const { display, startAt, ...settings } = widget.settings as
     CountdownWidget["settings"] & { display?: string }
@@ -56,12 +51,9 @@ const normalizeCountdown = (widget: CountdownWidget): CountdownWidget => {
     : { ...widget, settings }
 }
 
-// Habit history used to be stored unbounded — every completed day key — which
-// after a year or two of use is large enough that two habits blow the sync
-// per-item quota and every save of the board fails. Prune to the visible week
-// on read so existing boards shrink the first time they load. Todo lists are
-// held to the same limits the card enforces, so an imported file cannot arrive
-// carrying more than a board can save.
+// Habit history used to be stored unbounded, every completed day key, which after a year or two of use is large enough that two habits blow the sync per-item quota and every save of the board fails.
+// Prune to the visible week on read so existing boards shrink the first time they load.
+// Todo lists are held to the same limits the card enforces, so an imported file cannot arrive carrying more than a board can save.
 const normalizeWidget = (widget: Widget): Widget => {
   if (widget.kind === "habit") {
     return {
@@ -91,15 +83,13 @@ const normalizeState = (value: unknown): DayboardState => {
   }
 }
 
-// chrome.storage.sync reads are async IPC, so every new tab would open blank
-// for a few frames while waiting on them. Mirroring the last-known board into
-// localStorage lets the first render hydrate synchronously; the authoritative
-// sync read then reconciles anything that changed on another device.
+// chrome.storage.sync reads are async IPC, so every new tab would open blank for a few frames while waiting on them.
+// Mirroring the last-known board into localStorage lets the first render hydrate synchronously; the authoritative sync read then reconciles anything that changed on another device.
 const cacheDayboardState = (state: DayboardState) => {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(state))
   } catch {
-    // Best effort — an unavailable or full localStorage only costs speed.
+    // Best effort: an unavailable or full localStorage only costs speed.
   }
 }
 
@@ -126,9 +116,8 @@ export const readDayboardState = async (): Promise<DayboardState> => {
 export const serializeDayboardState = (state: DayboardState): string =>
   JSON.stringify(state, null, 2)
 
-// Parse an exported file back into state for the Import option. Throws on
-// invalid JSON or a payload that is not a board, so callers can reject the file
-// rather than silently replacing the board with defaults.
+// Parse an exported file back into state for the Import option.
+// Throws on invalid JSON or a payload that is not a board, so callers can reject the file rather than silently replacing the board with defaults.
 export const parseDayboardState = (text: string): DayboardState => {
   const parsed: unknown = JSON.parse(text)
 

@@ -8,8 +8,7 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    // `.claude` holds agent worktrees — full checkouts whose tests must not be
-    // collected into this repo's run.
+    // `.claude` holds agent worktrees, full checkouts whose tests must not be collected into this repo's run.
     exclude: [
       "**/node_modules/**",
       "**/.output/**",

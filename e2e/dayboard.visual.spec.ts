@@ -48,8 +48,7 @@ const storyState: DayboardState = {
       kind: "countdown",
       title: "Summer vacation",
       colorPreset: "slate",
-      // A start turns this one into a progress bar, so the story shows both
-      // countdown presentations side by side.
+      // A start turns this one into a progress bar, so the story shows both countdown presentations side by side.
       settings: {
         targetAt: "2025-06-28T13:00:00.000Z",
         startAt: "2025-04-01T13:00:00.000Z"
@@ -74,8 +73,7 @@ const storyState: DayboardState = {
       kind: "habit",
       title: "Morning walk",
       colorPreset: "slate",
-      // A partly filled week around the story's Friday: some days done, today
-      // still open, the weekend ahead.
+      // A partly filled week around the story's Friday: some days done, today still open, the weekend ahead.
       settings: { history: ["2025-05-05", "2025-05-06", "2025-05-08"] }
     }
   ],
@@ -169,9 +167,7 @@ test("captures Dayboard product screenshots", async ({
   ).toHaveCount(0)
 
   await page.setViewportSize({ width: 390, height: 844 })
-  // Scroll through the page once before the stitched full-page capture:
-  // straight after a viewport resize Chromium can leave off-screen tiles
-  // unpainted, which showed up as a blank band across the middle cards.
+  // Scroll through the page once before the stitched full-page capture: straight after a viewport resize Chromium can leave off-screen tiles unpainted, which showed up as a blank band across the middle cards.
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
   await page.evaluate(() => window.scrollTo(0, 0))
   await attachScreenshot(testInfo, page, "dayboard-main-mobile", {

@@ -9,16 +9,13 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])'
 ].join(", ")
 
-// Make a modal dialog keyboard-correct: move focus into it on open, trap Tab so
-// focus cannot escape to the page behind the backdrop, close on Escape, and
-// restore focus to whatever opened it when it closes.
+// Make a modal dialog keyboard-correct: move focus into it on open, trap Tab so focus cannot escape to the page behind the backdrop, close on Escape, and restore focus to whatever opened it when it closes.
 export const useModalFocus = (
   isOpen: boolean,
   containerRef: RefObject<HTMLElement | null>,
   onClose: () => void
 ) => {
-  // onClose is often recreated each render; keep the latest without re-running
-  // the effect (which would steal focus back to the top on every render).
+  // onClose is often recreated each render; keep the latest without re-running the effect (which would steal focus back to the top on every render).
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 

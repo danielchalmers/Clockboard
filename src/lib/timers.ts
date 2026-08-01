@@ -9,8 +9,7 @@ export interface DurationParts {
   seconds: number
 }
 
-// Format a millisecond span as H:MM:SS (dropping the hours segment under an
-// hour), e.g. 90_000 -> "1:30", 3_661_000 -> "1:01:01".
+// Format a millisecond span as H:MM:SS (dropping the hours segment under an hour), e.g. 90_000 -> "1:30", 3_661_000 -> "1:01:01".
 export const formatDuration = (ms: number): string => {
   const totalSeconds = Math.floor(Math.max(0, ms) / 1000)
   const hours = Math.floor(totalSeconds / 3600)

@@ -26,8 +26,7 @@ describe("BoardRow", () => {
     expect(screen.getByRole("heading", { name: "UTC" })).toBeInTheDocument()
     expect(screen.getByLabelText("UTC time")).toHaveTextContent(/12:30/)
     expect(screen.getByText(/Thu, Jan 1, 2026/).closest(".board-row__meta")).toHaveTextContent("UTC")
-    
-    // Check that data-color-preset attribute is correctly rendered
+
     const article = container.querySelector("article")
     expect(article).toHaveAttribute("data-color-preset", "rose")
   })
@@ -59,8 +58,7 @@ describe("BoardRow", () => {
 
     const frame = container.querySelector(".board-row__frame")
     expect(frame).toHaveAttribute("id", "drag-handle")
-    // The heading is a sibling of the drag frame, not nested inside it, so the
-    // body text sits outside the draggable surface and stays selectable.
+    // The heading is a sibling of the drag frame, not nested inside it, so the body text sits outside the draggable surface and stays selectable.
     expect(frame?.contains(screen.getByRole("heading", { name: "UTC" }))).toBe(
       false
     )
@@ -277,8 +275,7 @@ describe("BoardRow", () => {
     fireEvent.keyDown(dot(3), { key: "Home" })
     expect(dot(2)).toHaveFocus()
 
-    // Left from Monday and right past today both stay put: there is nothing
-    // behind the start of the week, and the days ahead cannot be marked.
+    // Left from Monday and right past today both stay put: there is nothing behind the start of the week, and the days ahead cannot be marked.
     fireEvent.keyDown(dot(2), { key: "ArrowLeft" })
     expect(dot(2)).toHaveFocus()
 
@@ -351,9 +348,8 @@ describe("BoardRow", () => {
 
     const { rerender } = render(<BoardRow item={todo(tasks)} now={todoAt} />)
 
-    // Nowhere left to type is what says the list is full — there is no
-    // disabled box and no line of copy explaining the rule. A live region
-    // carries the same news to anyone who can't see the field go.
+    // Nowhere left to type is what says the list is full: there is no disabled box and no line of copy explaining the rule.
+    // A live region carries the same news to anyone who can't see the field go.
     expect(screen.queryByLabelText("Add a task to Today")).not.toBeInTheDocument()
     expect(screen.getAllByRole("checkbox")).toHaveLength(MAX_TASKS)
     expect(screen.getByRole("status")).toHaveTextContent("Today is full")
