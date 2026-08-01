@@ -12,7 +12,8 @@ import type {
   CountdownRepeat,
   QuoteRotation,
   Widget,
-  WidgetColorPreset
+  WidgetColorPreset,
+  WidgetKind
 } from "~/lib/types"
 import { widgetRegistry } from "~/lib/widgets"
 import { ColorPresetPicker } from "~/components/ColorPresetPicker"
@@ -54,17 +55,10 @@ export const ItemDialog = ({
 
   useModalFocus(isOpen, dialogRef, onClose)
 
-  const title = useMemo(() => {
-    if (!draft) {
-      return ""
-    }
-
-    const widgetDefinition = widgetRegistry[draft.kind]
-
-    return mode === "add"
-      ? `Add ${widgetDefinition.kind}`
-      : `Edit ${widgetDefinition.kind}`
-  }, [draft, mode])
+  const title = useMemo(
+    () => (draft ? `${mode === "add" ? "Add" : "Edit"} ${draft.kind}` : ""),
+    [draft, mode]
+  )
 
   if (!isOpen || !draft) {
     return null
@@ -72,8 +66,7 @@ export const ItemDialog = ({
 
   const widgetDefinition = widgetRegistry[draft.kind]
 
-  const submitLabel =
-    mode === "add" ? `Save ${widgetDefinition.kind}` : "Save changes"
+  const submitLabel = mode === "add" ? `Save ${draft.kind}` : "Save changes"
 
   const updateTitle = (title: string) => {
     setDraft((current) => (current ? { ...current, title } : current))
@@ -83,79 +76,56 @@ export const ItemDialog = ({
     setDraft((current) => (current ? { ...current, colorPreset } : current))
   }
 
-  const updateTimeZone = (timeZone: string) => {
+  // Merge a patch into the draft's settings, leaving the fields the form didn't touch alone.
+  // Every field belongs to exactly one kind, so the runtime check both guards a stale draft and is what makes the cast sound: the spread is only reached once `current` really is that kind.
+  const patchSettings = <K extends WidgetKind>(
+    kind: K,
+    patch: Partial<Extract<Widget, { kind: K }>["settings"]>
+  ) => {
     setDraft((current) =>
-      current?.kind === "clock"
-        ? {
-            ...current,
-            settings: {
-              timeZone
-            }
-          }
+      current?.kind === kind
+        ? ({ ...current, settings: { ...current.settings, ...patch } } as Widget)
         : current
     )
+  }
+
+  const updateTimeZone = (timeZone: string) => {
+    patchSettings("clock", { timeZone })
   }
 
   const updateTargetAt = (value: string) => {
     setTargetInput(value)
     const targetAt = dateTimeInputValueToIsoInstant(value)
 
-    setDraft((current) =>
-      current?.kind === "countdown" && targetAt
-        ? {
-            // Preserve startAt/repeat when only the target changes.
-            ...current,
-            settings: { ...current.settings, targetAt }
-          }
-        : current
-    )
+    // Patching leaves startAt/repeat in place when only the target changes.
+    if (targetAt) {
+      patchSettings("countdown", { targetAt })
+    }
   }
 
   const updateRepeat = (value: string) => {
-    setDraft((current) =>
-      current?.kind === "countdown"
-        ? {
-            ...current,
-            settings: { ...current.settings, repeat: value as CountdownRepeat }
-          }
-        : current
-    )
+    patchSettings("countdown", { repeat: value as CountdownRepeat })
   }
 
   // Clearing the field is a real choice, not an intermediate state: an empty start drops the progress bar and puts the card back to time remaining.
+  // A value that is present but not yet a whole date is mid-typing, so the draft stays as it was.
   const updateStartAt = (value: string) => {
     setStartInput(value)
     const startAt = dateTimeInputValueToIsoInstant(value)
 
-    setDraft((current) => {
-      if (current?.kind !== "countdown" || (value !== "" && !startAt)) {
-        return current
-      }
+    if (value !== "" && !startAt) {
+      return
+    }
 
-      return {
-        ...current,
-        settings: { ...current.settings, startAt: startAt ?? undefined }
-      }
-    })
+    patchSettings("countdown", { startAt: startAt ?? undefined })
   }
 
   const updateQuotes = (value: string) => {
-    setDraft((current) =>
-      current?.kind === "quote"
-        ? { ...current, settings: { ...current.settings, quotes: textToQuotes(value) } }
-        : current
-    )
+    patchSettings("quote", { quotes: textToQuotes(value) })
   }
 
   const updateRotation = (value: string) => {
-    setDraft((current) =>
-      current?.kind === "quote"
-        ? {
-            ...current,
-            settings: { ...current.settings, rotation: value as QuoteRotation }
-          }
-        : current
-    )
+    patchSettings("quote", { rotation: value as QuoteRotation })
   }
 
   const updateDuration = (part: keyof DurationParts, value: number) => {
@@ -185,11 +155,7 @@ export const ItemDialog = ({
   }
 
   const updateChime = (chime: boolean) => {
-    setDraft((current) =>
-      current?.kind === "timer"
-        ? { ...current, settings: { ...current.settings, chime } }
-        : current
-    )
+    patchSettings("timer", { chime })
   }
 
   return (

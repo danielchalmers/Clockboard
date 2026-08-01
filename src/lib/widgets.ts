@@ -16,18 +16,22 @@ import {
 const DEFAULT_TIMER_DURATION_MS = 5 * 60 * 1000
 
 export interface WidgetDefinition<K extends WidgetKind> {
-  kind: K
   editor: {
     targetLabel?: string
   }
   createDefault: (now?: Date) => Extract<Widget, { kind: K }>
 }
 
-const createClockWidget = (): ClockWidget => ({
+// Every kind opens the same way, so the one rule worth keeping in a single place is the color: a new card always arrives on a random colorful preset, never neutral slate.
+const createBase = <K extends WidgetKind>(kind: K, title: string) => ({
   id: crypto.randomUUID(),
-  kind: "clock",
-  title: "New clock",
-  colorPreset: randomColorPreset(),
+  kind,
+  title,
+  colorPreset: randomColorPreset()
+})
+
+const createClockWidget = (): ClockWidget => ({
+  ...createBase("clock", "New clock"),
   settings: {
     timeZone: DEFAULT_TIME_ZONE
   }
@@ -40,10 +44,7 @@ const createCountdownWidget = (now = new Date()): CountdownWidget => {
   target.setHours(target.getHours() + 1, 0, 0, 0)
 
   return {
-    id: crypto.randomUUID(),
-    kind: "countdown",
-    title: "New countdown",
-    colorPreset: randomColorPreset(),
+    ...createBase("countdown", "New countdown"),
     settings: {
       targetAt: target.toISOString(),
       startAt: now.toISOString()
@@ -52,20 +53,14 @@ const createCountdownWidget = (now = new Date()): CountdownWidget => {
 }
 
 const createNoteWidget = (): NoteWidget => ({
-  id: crypto.randomUUID(),
-  kind: "note",
-  title: "New note",
-  colorPreset: randomColorPreset(),
+  ...createBase("note", "New note"),
   settings: {
     text: ""
   }
 })
 
 const createQuoteWidget = (): QuoteWidget => ({
-  id: crypto.randomUUID(),
-  kind: "quote",
-  title: "Daily quote",
-  colorPreset: randomColorPreset(),
+  ...createBase("quote", "Daily quote"),
   settings: {
     quotes: [
       "The secret of getting ahead is getting started.",
@@ -77,10 +72,7 @@ const createQuoteWidget = (): QuoteWidget => ({
 })
 
 const createStopwatchWidget = (): StopwatchWidget => ({
-  id: crypto.randomUUID(),
-  kind: "stopwatch",
-  title: "Stopwatch",
-  colorPreset: randomColorPreset(),
+  ...createBase("stopwatch", "Stopwatch"),
   settings: {
     running: false,
     elapsedMs: 0,
@@ -89,10 +81,7 @@ const createStopwatchWidget = (): StopwatchWidget => ({
 })
 
 const createHabitWidget = (): HabitWidget => ({
-  id: crypto.randomUUID(),
-  kind: "habit",
-  title: "New habit",
-  colorPreset: randomColorPreset(),
+  ...createBase("habit", "New habit"),
   settings: {
     history: []
   }
@@ -100,20 +89,14 @@ const createHabitWidget = (): HabitWidget => ({
 
 // A new list starts empty rather than with sample tasks: the first thing you do with a todo card is type your own, and pre-filled rows would only be things to check off and delete.
 const createTodoWidget = (): TodoWidget => ({
-  id: crypto.randomUUID(),
-  kind: "todo",
-  title: "New list",
-  colorPreset: randomColorPreset(),
+  ...createBase("todo", "New list"),
   settings: {
     tasks: []
   }
 })
 
 const createTimerWidget = (): TimerWidget => ({
-  id: crypto.randomUUID(),
-  kind: "timer",
-  title: "Timer",
-  colorPreset: randomColorPreset(),
+  ...createBase("timer", "Timer"),
   settings: {
     durationMs: DEFAULT_TIMER_DURATION_MS,
     running: false,
@@ -127,44 +110,36 @@ export const widgetRegistry: {
   [K in WidgetKind]: WidgetDefinition<K>
 } = {
   clock: {
-    kind: "clock",
     editor: {},
     createDefault: createClockWidget
   },
   countdown: {
-    kind: "countdown",
     editor: {
       targetLabel: "When"
     },
     createDefault: createCountdownWidget
   },
   note: {
-    kind: "note",
     editor: {},
     createDefault: createNoteWidget
   },
   quote: {
-    kind: "quote",
     editor: {},
     createDefault: createQuoteWidget
   },
   stopwatch: {
-    kind: "stopwatch",
     editor: {},
     createDefault: createStopwatchWidget
   },
   timer: {
-    kind: "timer",
     editor: {},
     createDefault: createTimerWidget
   },
   habit: {
-    kind: "habit",
     editor: {},
     createDefault: createHabitWidget
   },
   todo: {
-    kind: "todo",
     editor: {},
     createDefault: createTodoWidget
   }

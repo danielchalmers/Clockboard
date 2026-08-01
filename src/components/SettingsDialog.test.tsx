@@ -1,32 +1,32 @@
 import { fireEvent, render, screen } from "@testing-library/react"
+import type { ComponentProps } from "react"
 import { describe, expect, it, vi } from "vitest"
 
 import { SettingsDialog } from "./SettingsDialog"
 import { DEFAULT_SETTINGS } from "~/lib/types"
 
+// An open dialog on default settings with inert callbacks, so each test names only the props it actually cares about.
+const settingsDialog = (
+  props: Partial<ComponentProps<typeof SettingsDialog>> = {}
+) => (
+  <SettingsDialog
+    isOpen
+    settings={DEFAULT_SETTINGS}
+    onChange={() => {}}
+    onClose={() => {}}
+    {...props}
+  />
+)
+
 describe("SettingsDialog", () => {
   it("renders nothing when closed", () => {
-    const { container } = render(
-      <SettingsDialog
-        isOpen={false}
-        settings={DEFAULT_SETTINGS}
-        onChange={() => {}}
-        onClose={() => {}}
-      />
-    )
+    const { container } = render(settingsDialog({ isOpen: false }))
 
     expect(container).toBeEmptyDOMElement()
   })
 
   it("keeps the options minimal — no layout knobs to fiddle with", () => {
-    render(
-      <SettingsDialog
-        isOpen
-        settings={DEFAULT_SETTINGS}
-        onChange={() => {}}
-        onClose={() => {}}
-      />
-    )
+    render(settingsDialog())
 
     expect(screen.queryByRole("switch")).not.toBeInTheDocument()
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument()
@@ -34,14 +34,7 @@ describe("SettingsDialog", () => {
 
   it("edits the greeting name", () => {
     const onChange = vi.fn()
-    render(
-      <SettingsDialog
-        isOpen
-        settings={DEFAULT_SETTINGS}
-        onChange={onChange}
-        onClose={() => {}}
-      />
-    )
+    render(settingsDialog({ onChange }))
 
     fireEvent.change(screen.getByLabelText("Your name"), {
       target: { value: "Sam" }
@@ -53,16 +46,7 @@ describe("SettingsDialog", () => {
   it("exports from the Export button and imports a chosen file", () => {
     const onExport = vi.fn()
     const onImport = vi.fn()
-    render(
-      <SettingsDialog
-        isOpen
-        settings={DEFAULT_SETTINGS}
-        onChange={() => {}}
-        onClose={() => {}}
-        onExport={onExport}
-        onImport={onImport}
-      />
-    )
+    render(settingsDialog({ onExport, onImport }))
 
     fireEvent.click(screen.getByRole("button", { name: "Export" }))
     expect(onExport).toHaveBeenCalledTimes(1)
@@ -75,15 +59,7 @@ describe("SettingsDialog", () => {
   })
 
   it("shows an import error when one is provided", () => {
-    render(
-      <SettingsDialog
-        isOpen
-        settings={DEFAULT_SETTINGS}
-        onChange={() => {}}
-        onClose={() => {}}
-        importError="That file is not a Dayboard board."
-      />
-    )
+    render(settingsDialog({ importError: "That file is not a Dayboard board." }))
 
     expect(
       screen.getByText("That file is not a Dayboard board.")
@@ -91,14 +67,7 @@ describe("SettingsDialog", () => {
   })
 
   it("links to the project on GitHub", () => {
-    render(
-      <SettingsDialog
-        isOpen
-        settings={DEFAULT_SETTINGS}
-        onChange={() => {}}
-        onClose={() => {}}
-      />
-    )
+    render(settingsDialog())
 
     expect(
       screen.getByRole("link", { name: /Dayboard on GitHub/ })
@@ -106,14 +75,7 @@ describe("SettingsDialog", () => {
   })
 
   it("offers a feedback link to the GitHub issues page", () => {
-    render(
-      <SettingsDialog
-        isOpen
-        settings={DEFAULT_SETTINGS}
-        onChange={() => {}}
-        onClose={() => {}}
-      />
-    )
+    render(settingsDialog())
 
     expect(
       screen.getByRole("link", { name: /Give feedback/ })
@@ -122,14 +84,7 @@ describe("SettingsDialog", () => {
 
   it("closes from the Done button", () => {
     const onClose = vi.fn()
-    render(
-      <SettingsDialog
-        isOpen
-        settings={DEFAULT_SETTINGS}
-        onChange={() => {}}
-        onClose={onClose}
-      />
-    )
+    render(settingsDialog({ onClose }))
 
     fireEvent.click(screen.getByRole("button", { name: "Done" }))
 

@@ -2,7 +2,6 @@ import { useRef } from "react"
 
 import { useModalFocus } from "~/hooks/useModalFocus"
 import type { Widget } from "~/lib/types"
-import { widgetRegistry } from "~/lib/widgets"
 
 interface DeleteDialogProps {
   isOpen: boolean
@@ -25,8 +24,6 @@ export const DeleteDialog = ({
     return null
   }
 
-  const widgetDefinition = widgetRegistry[item.kind]
-
   return (
     <div
       className="modal-backdrop"
@@ -45,7 +42,7 @@ export const DeleteDialog = ({
         <div className="modal-dialog__header">
           <div>
             <h2 className="modal-dialog__title" id="delete-dialog-title">
-              Delete {widgetDefinition.kind}?
+              Delete {item.kind}?
             </h2>
             <p className="modal-dialog__subtitle">
               {item.archived

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs"
 import type { Page } from "@playwright/test"
 
 import { expect, test } from "./fixtures"
+import { boxOf, cardByTitle } from "./helpers"
 
 const openNewTab = async (page: Page, extensionId: string) => {
   await page.goto(`chrome-extension://${extensionId}/newtab.html`)
@@ -11,19 +12,8 @@ const openNewTab = async (page: Page, extensionId: string) => {
 }
 
 const dragWidget = async (page: Page, sourceTitle: string, targetTitle: string) => {
-  const source = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: sourceTitle }) })
-  const target = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: targetTitle }) })
-
-  const sourceBox = await source.boundingBox()
-  const targetBox = await target.boundingBox()
-
-  if (!sourceBox || !targetBox) {
-    throw new Error("Unable to locate widget bounds for dragging")
-  }
+  const sourceBox = await boxOf(cardByTitle(page, sourceTitle), "the dragged card")
+  const targetBox = await boxOf(cardByTitle(page, targetTitle), "the drop target card")
 
   // Grab the draggable frame (the padded top edge), not the body, which is no longer a drag handle.
   // Move by the center-to-center delta so the card still lands on the target's position regardless of where it was grabbed.
@@ -40,10 +30,17 @@ const dragWidget = async (page: Page, sourceTitle: string, targetTitle: string) 
   await page.mouse.up()
 }
 
+// The whole add flow for the common case: open the menu, pick the kind, name it, save.
+// Anything that needs to assert mid-flow or fill an extra field still writes the steps out.
+const addWidget = async (page: Page, kind: string, title: string) => {
+  await page.getByRole("button", { name: "Add widget" }).click()
+  await page.getByRole("button", { name: `Add ${kind}` }).click()
+  await page.getByLabel("Name").fill(title)
+  await page.getByRole("button", { name: `Save ${kind}` }).click()
+}
+
 const openWidgetMenu = async (page: Page, title: string) => {
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: title }) })
+  const card = cardByTitle(page, title)
 
   await card.click({ button: "right" })
 }
@@ -104,11 +101,8 @@ test("centers the board in the viewport with no docking option", async ({
 
   // The board floats in the middle: clear of the omnibox suggestions that drop over the top of a new tab, without hugging the bottom.
   // There is no setting for this; it just works.
-  const header = await page.locator(".page-header").boundingBox()
-  const board = await page.locator(".board-list").boundingBox()
-  if (!header || !board) {
-    throw new Error("Unable to measure board layout")
-  }
+  const header = await boxOf(page.locator(".page-header"), "the page header")
+  const board = await boxOf(page.locator(".board-list"), "the board")
 
   const above = header.y
   const below = viewport.height - (board.y + board.height)
@@ -127,7 +121,7 @@ test("keeps the board from shifting when a scrollbar appears", async ({
 
   // A tall viewport: the short default board fits with no vertical scrollbar.
   await page.setViewportSize({ width: 1000, height: 1600 })
-  const roomy = await page.locator(".page").boundingBox()
+  const roomy = await boxOf(page.locator(".page"), "the page at a tall viewport")
 
   // A short viewport: the same board now overflows and a scrollbar appears.
   await page.setViewportSize({ width: 1000, height: 400 })
@@ -137,11 +131,7 @@ test("keeps the board from shifting when a scrollbar appears", async ({
       document.documentElement.clientHeight
   )
   expect(overflows).toBe(true)
-  const scrolled = await page.locator(".page").boundingBox()
-
-  if (!roomy || !scrolled) {
-    throw new Error("Unable to measure the page box")
-  }
+  const scrolled = await boxOf(page.locator(".page"), "the page once it scrolls")
 
   // The reserved gutter keeps the page the same width and in the same place, so the board doesn't jump sideways when the scrollbar shows up.
   expect(scrolled.width).toBeCloseTo(roomy.width, 0)
@@ -295,14 +285,8 @@ test("widget menu spawns under the cursor and breaks free of the card", async ({
 }) => {
   await openNewTab(page, extensionId)
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
-  const cardBox = await card.boundingBox()
-
-  if (!cardBox) {
-    throw new Error("Unable to locate widget bounds")
-  }
+  const card = cardByTitle(page, "🕒 Local time")
+  const cardBox = await boxOf(card, "the widget card")
 
   // Right-click near the card's bottom-right corner.
   const cursorX = cardBox.x + cardBox.width - 12
@@ -317,11 +301,7 @@ test("widget menu spawns under the cursor and breaks free of the card", async ({
     page.getByRole("menuitem", { name: "Edit 🕒 Local time" })
   ).toBeVisible()
 
-  const menuBox = await menu.boundingBox()
-
-  if (!menuBox) {
-    throw new Error("Unable to locate widget menu bounds")
-  }
+  const menuBox = await boxOf(menu, "the widget menu")
 
   // The menu opens at the cursor instead of a fixed corner of the card...
   expect(menuBox.x).toBeGreaterThan(cardBox.x + cardBox.width / 2)
@@ -343,14 +323,8 @@ test("widget menu stays within the viewport when opened near the screen edge", a
     throw new Error("Unable to determine viewport size")
   }
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
-  const cardBox = await card.boundingBox()
-
-  if (!cardBox) {
-    throw new Error("Unable to locate widget bounds")
-  }
+  const card = cardByTitle(page, "🕒 Local time")
+  const cardBox = await boxOf(card, "the widget card")
 
   // Right-click near the card's right edge (at mid-height, clear of the rounded corners), where an unclamped menu would spill off screen.
   const cursorX = cardBox.x + cardBox.width - 6
@@ -369,11 +343,7 @@ test("widget menu stays within the viewport when opened near the screen edge", a
       Promise.all(panel.getAnimations().map((animation) => animation.finished))
     )
 
-  const menuBox = await menu.boundingBox()
-
-  if (!menuBox) {
-    throw new Error("Unable to locate widget menu bounds")
-  }
+  const menuBox = await boxOf(menu, "the widget menu")
 
   // The cursor sat past the right edge minus the menu width, so it must have been clamped back.
   expect(menuBox.x).toBeLessThan(cursorX)
@@ -389,9 +359,7 @@ test("widget menu supports keyboard navigation", async ({
 }) => {
   await openNewTab(page, extensionId)
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "🌅 Tomorrow morning" }) })
+  const card = cardByTitle(page, "🌅 Tomorrow morning")
 
   // Open the menu from the keyboard, with no pointer involved.
   await card.focus()
@@ -438,9 +406,7 @@ test("widget menu closes on resize and returns focus to its card", async ({
 }) => {
   await openNewTab(page, extensionId)
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "🌅 Tomorrow morning" }) })
+  const card = cardByTitle(page, "🌅 Tomorrow morning")
 
   await card.focus()
   await card.press("ContextMenu")
@@ -504,10 +470,7 @@ test("the menu's Move back reorders even after a widget was archived", async ({
   await openWidgetMenu(page, "📅 This year")
   await page.getByRole("menuitem", { name: "Archive 📅 This year" }).click()
 
-  await page.getByRole("button", { name: "Add widget" }).click()
-  await page.getByRole("button", { name: "Add clock" }).click()
-  await page.getByLabel("Name").fill("New clock")
-  await page.getByRole("button", { name: "Save clock" }).click()
+  await addWidget(page, "clock", "New clock")
 
   const titles = page.locator(".board-list").first().locator("h2")
   await expect(titles).toHaveText([
@@ -540,11 +503,7 @@ test("right-clicking selected text gets the browser's menu, not the card's", asy
   await openNewTab(page, extensionId)
 
   const quote = page.locator(".quote-text")
-  const box = await quote.boundingBox()
-
-  if (!box) {
-    throw new Error("Unable to measure the quote")
-  }
+  const box = await boxOf(quote, "the quote")
 
   // Triple-click is the ordinary way to select a line, and it is the case that matters: the range Chrome builds runs past the end of the block, so the card has to notice a selection that overlaps it rather than one contained by it.
   await quote.click({ clickCount: 3 })
@@ -575,11 +534,7 @@ test("dragging across a widget body selects text instead of reordering", async (
   await expect(titles).toHaveText(defaultOrder)
 
   const heading = page.getByRole("heading", { name: "🕒 Local time" })
-  const box = await heading.boundingBox()
-
-  if (!box) {
-    throw new Error("Unable to locate widget heading bounds")
-  }
+  const box = await boxOf(heading, "the widget heading")
 
   // Start the drag a little in from the edge so the press lands squarely on the title text (which is selectable) rather than the card's padded draggable edge, then drag across the rest of the title.
   await page.mouse.move(box.x + 24, box.y + box.height / 2)
@@ -616,15 +571,9 @@ test("the empty middle of a card is not a drag handle", async ({
   ]
   await expect(titles).toHaveText(defaultOrder)
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
-  const cardBox = await card.boundingBox()
-  const headerBox = await card.locator(".board-row__header").boundingBox()
-
-  if (!cardBox || !headerBox) {
-    throw new Error("Unable to measure card layout")
-  }
+  const card = cardByTitle(page, "🕒 Local time")
+  const cardBox = await boxOf(card, "the card")
+  const headerBox = await boxOf(card.locator(".board-row__header"), "the card header")
 
   // A point in the empty gap between the header and the body, interior space that the drag frame's donut hole now excludes.
   // Pressing and moving here must not start a drag (only the surrounding edge is a handle).
@@ -651,11 +600,7 @@ test("only the draggable frame lights the card up on hover", async ({
   await openNewTab(page, extensionId)
 
   const card = page.locator(".board-row--draggable").first()
-  const box = await card.boundingBox()
-
-  if (!box) {
-    throw new Error("Unable to locate widget bounds")
-  }
+  const box = await boxOf(card, "the widget card")
 
   const readStyle = () =>
     card.evaluate((el) => {
@@ -813,10 +758,7 @@ test("typing in a note does not start a drag or open the widget menu", async ({
 }) => {
   await openNewTab(page, extensionId)
 
-  await page.getByRole("button", { name: "Add widget" }).click()
-  await page.getByRole("button", { name: "Add note" }).click()
-  await page.getByLabel("Name").fill("Scratch")
-  await page.getByRole("button", { name: "Save note" }).click()
+  await addWidget(page, "note", "Scratch")
 
   const field = page.getByLabel("Scratch note")
   await field.click()
@@ -843,9 +785,7 @@ test("add quote flow shows a quote and keeps the daily pick across reloads", asy
   await expect(page.getByRole("heading", { name: "Mantras" })).toBeVisible()
 
   // Scope to the Mantras card; the default board ships its own quote widget too.
-  const mantras = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Mantras" }) })
+  const mantras = cardByTitle(page, "Mantras")
   const quote = mantras.locator(".quote-text")
   const shown = (await quote.textContent())?.trim() ?? ""
   expect(["Stay curious.", "Keep going."]).toContain(shown)
@@ -879,10 +819,7 @@ test("all widgets share one card size, even with a long quote", async ({
   const heights = new Set<number>()
 
   for (let index = 0; index < count; index += 1) {
-    const box = await cards.nth(index).boundingBox()
-    if (!box) {
-      throw new Error("Unable to measure a card")
-    }
+    const box = await boxOf(cards.nth(index), "a card")
     heights.add(Math.round(box.height))
   }
 
@@ -896,14 +833,9 @@ test("stopwatch counts up, keeps running across a reload, and resets", async ({
 }) => {
   await openNewTab(page, extensionId)
 
-  await page.getByRole("button", { name: "Add widget" }).click()
-  await page.getByRole("button", { name: "Add stopwatch" }).click()
-  await page.getByLabel("Name").fill("Focus")
-  await page.getByRole("button", { name: "Save stopwatch" }).click()
+  await addWidget(page, "stopwatch", "Focus")
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Focus" }) })
+  const card = cardByTitle(page, "Focus")
   const value = card.locator(".board-row__value")
 
   await expect(value).toHaveText("0:00")
@@ -912,9 +844,7 @@ test("stopwatch counts up, keeps running across a reload, and resets", async ({
 
   // The running state is anchored to wall-clock time, so it keeps ticking after a reload.
   await page.reload()
-  const reloaded = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Focus" }) })
+  const reloaded = cardByTitle(page, "Focus")
   await expect(reloaded.getByRole("button", { name: "Pause" })).toBeVisible()
   await expect(reloaded.locator(".board-row__value")).not.toHaveText("0:00")
 
@@ -936,9 +866,7 @@ test("timer counts down to a finished state and resets", async ({
   await page.getByLabel("seconds").fill("1")
   await page.getByRole("button", { name: "Save timer" }).click()
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Steep" }) })
+  const card = cardByTitle(page, "Steep")
 
   await expect(card.locator(".board-row__value")).toHaveText("0:01")
 
@@ -975,9 +903,7 @@ test("a timer's per-widget chime is opt-in, persists, and still finishes", async
   await page.getByRole("switch", { name: "Chime when it ends" }).click()
   await page.getByRole("button", { name: "Save timer" }).click()
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Steep" }) })
+  const card = cardByTitle(page, "Steep")
   await card.getByRole("button", { name: "Start" }).click()
   await expect(card.getByText("Time’s up")).toBeVisible()
 
@@ -996,14 +922,9 @@ test("add habit flow marks today and persists", async ({
 }) => {
   await openNewTab(page, extensionId)
 
-  await page.getByRole("button", { name: "Add widget" }).click()
-  await page.getByRole("button", { name: "Add habit" }).click()
-  await page.getByLabel("Name").fill("Read")
-  await page.getByRole("button", { name: "Save habit" }).click()
+  await addWidget(page, "habit", "Read")
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Read" }) })
+  const card = cardByTitle(page, "Read")
 
   await expect(card.getByRole("toolbar", { name: "This week" })).toBeVisible()
   await expect(card.locator(".habit-day")).toHaveCount(7)
@@ -1016,9 +937,7 @@ test("add habit flow marks today and persists", async ({
 
   // The marked day persists across a reload.
   await page.reload()
-  const reloaded = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Read" }) })
+  const reloaded = cardByTitle(page, "Read")
   await expect(reloaded.locator(".habit-day--today")).toHaveAttribute(
     "aria-pressed",
     "true"
@@ -1033,14 +952,9 @@ test("a habit dot fills in a day that was missed", async ({
   await page.clock.install({ time: new Date(2026, 2, 4, 10, 0, 0) })
   await openNewTab(page, extensionId)
 
-  await page.getByRole("button", { name: "Add widget" }).click()
-  await page.getByRole("button", { name: "Add habit" }).click()
-  await page.getByLabel("Name").fill("Read")
-  await page.getByRole("button", { name: "Save habit" }).click()
+  await addWidget(page, "habit", "Read")
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Read" }) })
+  const card = cardByTitle(page, "Read")
 
   await card.getByRole("button", { name: "Monday, March 2" }).click()
   await expect(
@@ -1080,16 +994,11 @@ test("a todo list fills up on the card, persists, and clears again", async ({
 }) => {
   await openNewTab(page, extensionId)
 
-  await page.getByRole("button", { name: "Add widget" }).click()
-  await page.getByRole("button", { name: "Add todo" }).click()
-  await page.getByLabel("Name").fill("Today")
-  await page.getByRole("button", { name: "Save todo" }).click()
+  await addWidget(page, "todo", "Today")
 
   // Exact, or this also picks up the default board's "Today's reminder" quote.
   const todoCard = () =>
-    page
-      .locator(".board-row")
-      .filter({ has: page.getByRole("heading", { name: "Today", exact: true }) })
+    cardByTitle(page, "Today", true)
   const card = todoCard()
 
   // Tasks are written on the card itself, so Enter is the whole interaction.
@@ -1135,14 +1044,9 @@ test("a todo card keeps the keyboard's place as tasks come and go", async ({
 }) => {
   await openNewTab(page, extensionId)
 
-  await page.getByRole("button", { name: "Add widget" }).click()
-  await page.getByRole("button", { name: "Add todo" }).click()
-  await page.getByLabel("Name").fill("Today")
-  await page.getByRole("button", { name: "Save todo" }).click()
+  await addWidget(page, "todo", "Today")
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Today", exact: true }) })
+  const card = cardByTitle(page, "Today", true)
   const field = () => card.getByLabel("Add a task to Today")
 
   for (const task of ["One", "Two", "Three", "Four"]) {
@@ -1174,14 +1078,9 @@ test("a habit marked after midnight credits the new day", async ({
   await page.clock.install({ time: new Date(2026, 2, 2, 23, 59, 0) })
   await openNewTab(page, extensionId)
 
-  await page.getByRole("button", { name: "Add widget" }).click()
-  await page.getByRole("button", { name: "Add habit" }).click()
-  await page.getByLabel("Name").fill("Read")
-  await page.getByRole("button", { name: "Save habit" }).click()
+  await addWidget(page, "habit", "Read")
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Read" }) })
+  const card = cardByTitle(page, "Read")
   await expect(card.getByRole("button", { name: "Mark today" })).toBeVisible()
 
   // Jump the clock past local midnight the way a sleeping laptop would.
@@ -1247,9 +1146,7 @@ test("a new countdown fills a progress bar from when it was added", async ({
   await page.getByLabel("Starting from").fill("2020-01-01T00:00")
   await page.getByRole("button", { name: "Save countdown" }).click()
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Project" }) })
+  const card = cardByTitle(page, "Project")
 
   await expect(
     card.getByRole("progressbar", { name: "Project progress" })
@@ -1259,9 +1156,7 @@ test("a new countdown fills a progress bar from when it was added", async ({
   // The progress display persists across a reload.
   await page.reload()
   await expect(
-    page
-      .locator(".board-row")
-      .filter({ has: page.getByRole("heading", { name: "Project" }) })
+    cardByTitle(page, "Project")
       .getByRole("progressbar")
   ).toBeVisible()
 })
@@ -1280,9 +1175,7 @@ test("clearing a countdown's start goes back to the time remaining", async ({
   await page.getByLabel("When").fill("2099-12-31T00:00")
   await page.getByRole("button", { name: "Save countdown" }).click()
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Project" }) })
+  const card = cardByTitle(page, "Project")
   await expect(card.getByRole("progressbar")).toBeVisible()
 
   await openWidgetMenu(page, "Project")
@@ -1309,9 +1202,7 @@ test("a recurring countdown rolls forward to its next occurrence", async ({
   await page.getByLabel("Starting from").fill("")
   await page.getByRole("button", { name: "Save countdown" }).click()
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Standup" }) })
+  const card = cardByTitle(page, "Standup")
 
   // It reads as upcoming (not "ago") and notes the cadence.
   await expect(card.getByText("from now")).toBeVisible()
@@ -1335,9 +1226,7 @@ test("an hourly countdown rolls forward within the hour", async ({
   await page.getByLabel("Starting from").fill("")
   await page.getByRole("button", { name: "Save countdown" }).click()
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Stand up and stretch" }) })
+  const card = cardByTitle(page, "Stand up and stretch")
 
   // The next occurrence is always under an hour out, so it never reads as past.
   await expect(card.getByText("ago")).toHaveCount(0)
@@ -1361,9 +1250,7 @@ test("editing a recurring countdown's time keeps its other settings", async ({
   await page.getByLabel("Repeats").selectOption("weekly")
   await page.getByRole("button", { name: "Save countdown" }).click()
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "Standup" }) })
+  const card = cardByTitle(page, "Standup")
   await expect(card.locator(".board-row__detail")).toContainText("repeats weekly")
 
   // Changing only the time must not wipe the repeat setting.
@@ -1373,9 +1260,7 @@ test("editing a recurring countdown's time keeps its other settings", async ({
   await page.getByRole("button", { name: "Save changes" }).click()
 
   await expect(
-    page
-      .locator(".board-row")
-      .filter({ has: page.getByRole("heading", { name: "Standup" }) })
+    cardByTitle(page, "Standup")
       .locator(".board-row__detail")
   ).toContainText("repeats weekly")
 })
@@ -1492,9 +1377,7 @@ test("a keyboard drag is released by reaching for the mouse", async ({
   await page.setViewportSize({ width: 1280, height: 1000 })
   await openNewTab(page, extensionId)
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
+  const card = cardByTitle(page, "🕒 Local time")
 
   await card.focus()
   await page.keyboard.press("Space")
@@ -1519,14 +1402,12 @@ test("dragging a widget onto the archive zone archives it", async ({
   await page.setViewportSize({ width: 1280, height: 1000 })
   await openNewTab(page, extensionId)
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
-  const box = await card.boundingBox()
+  const card = cardByTitle(page, "🕒 Local time")
+  const box = await boxOf(card, "the card being archived")
   const viewport = page.viewportSize()
 
-  if (!box || !viewport) {
-    throw new Error("Unable to measure layout for archive drag")
+  if (!viewport) {
+    throw new Error("Unable to determine viewport size")
   }
 
   // Grab the draggable frame (top edge) and drag down onto the floating archive zone pinned near the bottom of the viewport.
@@ -1538,11 +1419,7 @@ test("dragging a widget onto the archive zone archives it", async ({
 
   const dropzone = page.locator(".archive-dropzone")
   await expect(dropzone).toBeVisible()
-  const zoneBox = await dropzone.boundingBox()
-
-  if (!zoneBox) {
-    throw new Error("Archive zone has no bounds")
-  }
+  const zoneBox = await boxOf(dropzone, "the archive drop zone")
 
   await page.mouse.move(
     zoneBox.x + zoneBox.width / 2,
@@ -1565,14 +1442,8 @@ test("a card dragged toward the archive follows the cursor instead of snapping b
   await page.setViewportSize({ width: 1280, height: 1000 })
   await openNewTab(page, extensionId)
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
-  const box = await card.boundingBox()
-
-  if (!box) {
-    throw new Error("Unable to measure card bounds")
-  }
+  const card = cardByTitle(page, "🕒 Local time")
+  const box = await boxOf(card, "the card")
 
   const grabX = box.x + box.width / 2
   await page.mouse.move(grabX, box.y + 12)
@@ -1581,11 +1452,7 @@ test("a card dragged toward the archive follows the cursor instead of snapping b
 
   const dropzone = page.locator(".archive-dropzone")
   await expect(dropzone).toBeVisible()
-  const zoneBox = await dropzone.boundingBox()
-
-  if (!zoneBox) {
-    throw new Error("Archive zone has no bounds")
-  }
+  const zoneBox = await boxOf(dropzone, "the archive drop zone")
 
   const cursorY = zoneBox.y + zoneBox.height / 2
   await page.mouse.move(zoneBox.x + zoneBox.width / 2, cursorY, { steps: 20 })
@@ -1594,11 +1461,7 @@ test("a card dragged toward the archive follows the cursor instead of snapping b
   // The lifted card (the drag overlay) tracks the cursor all the way down to the archive zone rather than snapping back up to the card's original slot.
   const overlay = page.locator(".board-row--overlay")
   await expect(overlay).toBeVisible()
-  const overlayBox = await overlay.boundingBox()
-
-  if (!overlayBox) {
-    throw new Error("Overlay has no bounds")
-  }
+  const overlayBox = await boxOf(overlay, "the drag overlay")
 
   const overlayCenterY = overlayBox.y + overlayBox.height / 2
   expect(Math.abs(overlayCenterY - cursorY)).toBeLessThan(200)
@@ -1624,20 +1487,10 @@ test("dragging an archived widget onto a board card restores it into that slot",
   await page.getByRole("menuitem", { name: "Archive 🌅 Tomorrow morning" }).click()
   await page.getByRole("button", { name: "Show archived (1)" }).click()
 
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "🌅 Tomorrow morning" }) })
-  const box = await card.boundingBox()
+  const box = await boxOf(cardByTitle(page, "🌅 Tomorrow morning"), "the archived card")
 
   // Aim for the first board card: dropping there must restore into slot one, not just back onto the board somewhere.
-  const target = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: "🕒 Local time" }) })
-  const targetBox = await target.boundingBox()
-
-  if (!box || !targetBox) {
-    throw new Error("Unable to measure the archived card or its board target")
-  }
+  const targetBox = await boxOf(cardByTitle(page, "🕒 Local time"), "the board card it is dropped onto")
 
   // Grab the archived card by its frame and nudge it to start the drag.
   await page.mouse.move(box.x + box.width / 2, box.y + 12)
