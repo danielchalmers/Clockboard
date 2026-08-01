@@ -73,6 +73,7 @@ The product should feel premium, polished, quiet, and useful at a glance. The wh
 - For domain or UI behavior changes, update Vitest coverage.
 - For page-level behavior changes, update Playwright coverage.
 - Playwright loads the built extension from `.output/chrome-mv3` via `launchPersistentContext` (`e2e/fixtures.ts`, built by `e2e/global-setup.ts`) and seeds state through `chrome.storage.sync`, not a served page.
+- Reach for the shared Playwright helpers rather than rebuilding them: `cardByTitle` and `boxOf` in `e2e/helpers.ts`, and the spec-local `addWidget`/`openWidgetMenu`/`dragWidget`. A test that needs to assert mid-flow, or that drives the pointer at computed coordinates to check menu placement, should still write its steps out.
 - Before handoff after frontend work, run:
   - `npm run verify`
   - `npm run build:edge`

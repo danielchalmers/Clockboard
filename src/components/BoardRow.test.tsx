@@ -126,15 +126,18 @@ describe("BoardRow", () => {
     expect(screen.getByText("5 days")).toBeInTheDocument()
   })
 
+  // The habit tests all want the same card and differ only in which days are already marked; unlike the other kinds, none of them assert on the title or the preset.
+  const habit = (history: string[] = []): Widget => ({
+    id: "habit",
+    kind: "habit",
+    title: "Read",
+    colorPreset: "emerald",
+    settings: { history }
+  })
+
   it("marks today on a habit", () => {
     const now = new Date("2026-03-04T09:00:00.000Z")
-    const item: Widget = {
-      id: "habit",
-      kind: "habit",
-      title: "Read",
-      colorPreset: "emerald",
-      settings: { history: [] }
-    }
+    const item = habit()
     const onWidgetChange = vi.fn()
 
     render(<BoardRow item={item} now={now} onWidgetChange={onWidgetChange} />)
@@ -152,13 +155,7 @@ describe("BoardRow", () => {
 
   it("shows a completed habit as done in this week's dots", () => {
     const now = new Date("2026-03-04T09:00:00.000Z")
-    const item: Widget = {
-      id: "habit",
-      kind: "habit",
-      title: "Read",
-      colorPreset: "emerald",
-      settings: { history: [toDayKey(now)] }
-    }
+    const item = habit([toDayKey(now)])
 
     const { container } = render(<BoardRow item={item} now={now} />)
 
@@ -175,13 +172,7 @@ describe("BoardRow", () => {
   it("toggles an earlier day from its own dot", () => {
     const now = new Date(2026, 2, 4, 9, 0, 0)
     const monday = new Date(2026, 2, 2, 9, 0, 0)
-    const item: Widget = {
-      id: "habit",
-      kind: "habit",
-      title: "Read",
-      colorPreset: "emerald",
-      settings: { history: [toDayKey(now)] }
-    }
+    const item = habit([toDayKey(now)])
     const onWidgetChange = vi.fn()
 
     render(<BoardRow item={item} now={now} onWidgetChange={onWidgetChange} />)
@@ -199,13 +190,7 @@ describe("BoardRow", () => {
 
   it("leaves the days that have not arrived yet alone", () => {
     const now = new Date(2026, 2, 4, 9, 0, 0)
-    const item: Widget = {
-      id: "habit",
-      kind: "habit",
-      title: "Read",
-      colorPreset: "emerald",
-      settings: { history: [] }
-    }
+    const item = habit()
     const onWidgetChange = vi.fn()
 
     const { container } = render(
@@ -226,13 +211,7 @@ describe("BoardRow", () => {
 
   it("names the week the habit dots cover", () => {
     const now = new Date(2026, 2, 4, 9, 0, 0)
-    const item: Widget = {
-      id: "habit",
-      kind: "habit",
-      title: "Read",
-      colorPreset: "emerald",
-      settings: { history: [] }
-    }
+    const item = habit()
 
     render(<BoardRow item={item} now={now} />)
 
@@ -249,13 +228,7 @@ describe("BoardRow", () => {
   it("walks the habit week with the arrow keys from one tab stop", () => {
     const now = new Date(2026, 2, 4, 9, 0, 0)
     const dayAt = (date: number) => new Date(2026, 2, date, 9, 0, 0)
-    const item: Widget = {
-      id: "habit",
-      kind: "habit",
-      title: "Read",
-      colorPreset: "emerald",
-      settings: { history: [] }
-    }
+    const item = habit()
 
     render(<BoardRow item={item} now={now} />)
 
