@@ -109,6 +109,26 @@ describe("BoardRow", () => {
     })
   })
 
+  it("stops the bar short of complete while time is left", () => {
+    const item: Widget = {
+      id: "semester",
+      kind: "countdown",
+      title: "Semester",
+      colorPreset: "sky",
+      settings: {
+        startAt: "2026-05-26T00:00:00.000Z",
+        targetAt: "2026-08-05T00:00:00.000Z"
+      }
+    }
+
+    render(
+      <BoardRow item={item} now={new Date("2026-08-04T18:25:00.000Z")} />
+    )
+
+    expect(screen.getByText("99%")).toBeInTheDocument()
+    expect(screen.getByText("5 hours, 35 minutes left")).toBeInTheDocument()
+  })
+
   it("falls back to time remaining when a countdown has no start", () => {
     const item: Widget = {
       id: "year",

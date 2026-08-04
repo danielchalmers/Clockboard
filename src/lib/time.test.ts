@@ -4,6 +4,7 @@ import {
   dateTimeInputValueToIsoInstant,
   formatRelativeCountdown,
   getCountdownParts,
+  getCountdownPercent,
   getCountdownProgress,
   isSameLocalDay,
   isoInstantToDateTimeInputValue,
@@ -162,6 +163,29 @@ describe("getCountdownProgress", () => {
     expect(
       getCountdownProgress(noStart, new Date("2026-02-01T00:00:00.000Z"))
     ).toBe(1)
+  })
+})
+
+describe("getCountdownPercent", () => {
+  it("rounds to the nearest percent through the middle", () => {
+    expect(getCountdownPercent(0.5)).toBe(50)
+    expect(getCountdownPercent(0.504)).toBe(50)
+    expect(getCountdownPercent(0.506)).toBe(51)
+  })
+
+  it("holds short of the ends while any of the span is left", () => {
+    expect(getCountdownPercent(0.997)).toBe(99)
+    expect(getCountdownPercent(0.99999)).toBe(99)
+    expect(getCountdownPercent(0.003)).toBe(1)
+  })
+
+  it("reaches the ends only when the span is complete or untouched", () => {
+    expect(getCountdownPercent(1)).toBe(100)
+    expect(getCountdownPercent(0)).toBe(0)
+  })
+
+  it("reads an unusable span as untouched", () => {
+    expect(getCountdownPercent(Number.NaN)).toBe(0)
   })
 })
 
