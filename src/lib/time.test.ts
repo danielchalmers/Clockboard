@@ -6,6 +6,8 @@ import {
   getCountdownParts,
   getCountdownPercent,
   getCountdownProgress,
+  getLastElapsedCountdownTarget,
+  getTimeZoneOffsetMinutes,
   isSameLocalDay,
   isoInstantToDateTimeInputValue,
   resolveCountdown
@@ -236,5 +238,54 @@ describe("formatRelativeCountdown", () => {
     expect(formatRelativeCountdown(-(3 * 3_600_000 + 12 * 60_000))).toBe(
       "3 hours, 12 minutes ago"
     )
+  })
+})
+
+describe("getLastElapsedCountdownTarget", () => {
+  const now = new Date(2026, 5, 19, 12, 0, 0)
+
+  it("is null while a countdown is still ahead, its target once it is not", () => {
+    const future = new Date(2026, 8, 1).toISOString()
+    const past = new Date(2026, 0, 1).toISOString()
+
+    expect(getLastElapsedCountdownTarget(countdownWidget(future), now)).toBeNull()
+    expect(getLastElapsedCountdownTarget(countdownWidget(past), now)).toBe(past)
+    expect(getLastElapsedCountdownTarget(countdownWidget("nonsense"), now)).toBeNull()
+  })
+
+  it("tracks the occurrence a repeating countdown most recently rolled off", () => {
+    const weekly = countdownWidget(new Date(2024, 0, 3, 8, 0, 0).toISOString(), {
+      repeat: "weekly"
+    })
+
+    // The anchor is a Wednesday, so this is the Wednesday on or before `now`.
+    expect(getLastElapsedCountdownTarget(weekly, now)).toBe(
+      new Date(2026, 5, 17, 8, 0, 0).toISOString()
+    )
+
+    // Crossing the next occurrence moves the value, which is what makes it
+    // usable as a "this card moved on" marker.
+    expect(
+      getLastElapsedCountdownTarget(weekly, new Date(2026, 5, 25, 12, 0, 0))
+    ).toBe(new Date(2026, 5, 24, 8, 0, 0).toISOString())
+  })
+})
+
+describe("getTimeZoneOffsetMinutes", () => {
+  it("follows a zone across its daylight saving changeover", () => {
+    expect(
+      getTimeZoneOffsetMinutes(new Date("2026-01-15T12:00:00Z"), "America/Chicago")
+    ).toBe(-360)
+    expect(
+      getTimeZoneOffsetMinutes(new Date("2026-07-15T12:00:00Z"), "America/Chicago")
+    ).toBe(-300)
+  })
+
+  it("reads a bare-GMT zone, a half-hour zone, and junk", () => {
+    const at = new Date("2026-01-15T12:00:00Z")
+
+    expect(getTimeZoneOffsetMinutes(at, "UTC")).toBe(0)
+    expect(getTimeZoneOffsetMinutes(at, "Asia/Kolkata")).toBe(330)
+    expect(getTimeZoneOffsetMinutes(at, "Not/AZone")).toBe(0)
   })
 })

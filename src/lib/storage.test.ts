@@ -363,3 +363,39 @@ describe("watchDayboardState", () => {
     expect(removeListener).toHaveBeenCalledWith(listener)
   })
 })
+
+describe("the record of what this browser has seen", () => {
+  it("round-trips through localStorage", async () => {
+    const { readSeenAttention, writeSeenAttention } = await import("./storage")
+
+    writeSeenAttention({ walk: "2026-06-19" })
+
+    expect(readSeenAttention()).toEqual({ walk: "2026-06-19" })
+  })
+
+  it("degrades to an empty record rather than throwing", async () => {
+    const { ATTENTION_KEY, readSeenAttention } = await import("./storage")
+
+    expect(readSeenAttention()).toEqual({})
+
+    localStorage.setItem(ATTENTION_KEY, "{not json")
+    expect(readSeenAttention()).toEqual({})
+
+    // A hand-edited file can carry anything; keep only usable tokens.
+    localStorage.setItem(ATTENTION_KEY, JSON.stringify({ a: "ok", b: 42 }))
+    expect(readSeenAttention()).toEqual({ a: "ok" })
+  })
+
+  it("survives a localStorage that refuses to write", async () => {
+    const { writeSeenAttention } = await import("./storage")
+    const setItem = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("QuotaExceededError")
+      })
+
+    expect(() => writeSeenAttention({ walk: "2026-06-19" })).not.toThrow()
+
+    setItem.mockRestore()
+  })
+})

@@ -7,8 +7,10 @@ import { ItemDialog } from "~/components/ItemDialog"
 import { SettingsDialog } from "~/components/SettingsDialog"
 import { ErrorView } from "~/components/StatusViews"
 import { WidgetIcon } from "~/components/WidgetIcon"
+import { useAttention } from "~/hooks/useAttention"
 import { useDayboardState } from "~/hooks/useDayboardState"
 import { useNow } from "~/hooks/useNow"
+import { formatAttentionSummary } from "~/lib/attention"
 import { getGreeting, getHeaderDate } from "~/lib/greeting"
 import { parseDayboardState, serializeDayboardState } from "~/lib/storage"
 import {
@@ -98,6 +100,8 @@ export function NewTabPage() {
     saveError,
     dismissSaveError
   } = useDayboardState()
+  // Null while the board loads, since pruning against nothing would drop every record on a cold start.
+  const { attentionIds, acknowledge } = useAttention(state?.widgets ?? null, now)
   const [editorState, setEditorState] = useState<EditorState | null>(null)
   const [itemPendingDelete, setItemPendingDelete] = useState<Widget | null>(null)
   const [isSettingsOpen, setIsSettingsOpen] = useState(wantsSettingsView)
@@ -121,6 +125,8 @@ export function NewTabPage() {
   if (error || !state) {
     return <ErrorView message={error || "Unable to load Dayboard"} />
   }
+
+  const attentionSummary = formatAttentionSummary(attentionIds.size)
 
   const saveItem = (item: Widget) => {
     const nextWidgets =
@@ -210,6 +216,9 @@ export function NewTabPage() {
               {getGreeting(now, state.settings.name)}
             </h1>
             <p className="page-header__date">{getHeaderDate(now)}</p>
+            {attentionSummary ? (
+              <p className="page-header__attention">{attentionSummary}</p>
+            ) : null}
           </div>
           <div className="page-header__actions">
             <button
@@ -295,6 +304,7 @@ export function NewTabPage() {
         {/* One drag context spans the board and the archived list, so an archived card can be dragged straight into the exact board slot it should take, while an active card heads for the archive drop zone.
             The lists render from BoardDnd's view of the widgets, which mid-drag previews the restore with the dragged card already sitting in its board slot. */}
         <BoardDnd
+          attentionIds={attentionIds}
           now={now}
           widgets={state.widgets}
           onArchive={(id) => void setWidgets(archiveWidget(state.widgets, id))}
@@ -313,9 +323,11 @@ export function NewTabPage() {
             return (
               <>
                 <BoardList
+                  attentionIds={attentionIds}
                   items={activeWidgets}
                   now={now}
                   restoreTarget
+                  onAcknowledge={acknowledge}
                   onWidgetChange={updateWidget}
                   renderItemActions={(item, index) => (
                     <>

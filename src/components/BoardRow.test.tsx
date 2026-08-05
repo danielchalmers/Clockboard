@@ -610,3 +610,28 @@ describe("BoardRow", () => {
     })
   })
 })
+
+describe("a card that needs attention", () => {
+  const item: Widget = {
+    id: "utc",
+    kind: "clock",
+    title: "UTC",
+    colorPreset: "rose",
+    settings: { timeZone: "UTC" }
+  }
+  const now = new Date("2026-01-01T12:30:00.000Z")
+
+  it("wears a dot, and says so for screen readers", () => {
+    const { container } = render(<BoardRow attention item={item} now={now} />)
+
+    expect(container.querySelector(".board-row__attention-dot")).not.toBeNull()
+    expect(screen.getByText("Needs attention")).toHaveClass("sr-only")
+  })
+
+  it("wears neither once it is settled", () => {
+    const { container } = render(<BoardRow item={item} now={now} />)
+
+    expect(container.querySelector(".board-row__attention-dot")).toBeNull()
+    expect(screen.queryByText("Needs attention")).toBeNull()
+  })
+})

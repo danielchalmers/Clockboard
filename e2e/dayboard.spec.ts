@@ -1103,6 +1103,47 @@ test("a habit marked after midnight credits the new day", async ({
   expect(settings).toEqual({ history: ["2026-03-03"] })
 })
 
+// A new tab is a fresh load, so a card that moved while nobody was watching has to say so on arrival, and keep saying it until the user actually looks.
+test("a card that needs attention says so until the card is touched", async ({
+  page,
+  extensionId
+}) => {
+  await openNewTab(page, extensionId)
+
+  // Scoped to the list rather than through `cardByTitle`: a drag lifts a clone into a portal, so a page-wide locator would match both once one is under way.
+  const habit = page
+    .getByLabel("Dayboard widgets")
+    .locator(".board-row")
+    .filter({ has: page.getByRole("heading", { name: "Daily walk" }) })
+  const dot = habit.locator(".board-row__attention-dot")
+  const summary = page.locator(".page-header__attention")
+
+  // The default board's habit has never been marked; its clock has simply never been seen before, which is nothing to report.
+  await expect(dot).toBeVisible()
+  await expect(habit.getByText("Needs attention")).toBeAttached()
+  await expect(summary).toHaveText("1 card needs a look")
+  await expect(
+    cardByTitle(page, "Local time").locator(".board-row__attention-dot")
+  ).toHaveCount(0)
+
+  // Enter still belongs to the keyboard drag, unclaimed by acknowledging, but focusing the card to press it is itself enough to settle the card.
+  await habit.focus()
+  await expect(dot).toHaveCount(0)
+  await expect(summary).toHaveCount(0)
+  await habit.press("Enter")
+  await expect(habit).toHaveClass(/board-row--dragging/)
+
+  // Settled stays settled across a new tab.
+  await page.reload()
+  await expect(page.getByRole("button", { name: "Mark today" })).toBeVisible()
+  await expect(page.locator(".board-row__attention-dot")).toHaveCount(0)
+
+  // Forgetting what this browser has seen brings it back.
+  await page.evaluate(() => localStorage.removeItem("dayboard-attention-seen"))
+  await page.reload()
+  await expect(page.locator(".board-row__attention-dot")).toHaveCount(1)
+})
+
 test("add and edit countdown works without a time-zone field", async ({
   page,
   extensionId

@@ -104,6 +104,9 @@ interface BoardDndProps {
   // The full storage list, both boards' cards, so any dragged id resolves.
   widgets: Widget[]
   now: Date
+  // Kept in step with the lists so the lifted card and the slot it left behind
+  // never disagree about wearing the dot.
+  attentionIds?: ReadonlySet<string>
   onReorder?: (activeId: string, overId: string) => void
   onArchive?: (id: string) => void
   // `beforeId` is the board card whose slot the restored widget takes; omitted when the drop had no specific target (the empty-board zone).
@@ -116,6 +119,7 @@ interface BoardDndProps {
 export const BoardDnd = ({
   widgets,
   now,
+  attentionIds,
   onReorder,
   onArchive,
   onRestore,
@@ -266,7 +270,12 @@ export const BoardDnd = ({
       {/* The lifted card follows the cursor in a portal, so it keeps tracking the pointer even over the archive zone and the other list (which sit outside its own sortable context) instead of snapping back to its slot. */}
       <DragOverlay dropAnimation={null}>
         {activeItem ? (
-          <BoardRow className="board-row--overlay" item={activeItem} now={now} />
+          <BoardRow
+            attention={attentionIds?.has(activeItem.id)}
+            className="board-row--overlay"
+            item={activeItem}
+            now={now}
+          />
         ) : null}
       </DragOverlay>
     </DndContext>

@@ -28,9 +28,15 @@ interface BoardListProps {
   now: Date
   // Marks this list as the place archived cards land when dragged back: the grid highlights while a foreign card is in flight, and the empty state becomes a drop target of its own.
   restoreTarget?: boolean
+  // Cards whose content moved while nobody was looking; they wear a dot until the user touches them.
+  attentionIds?: ReadonlySet<string>
   renderItemActions?: (item: Widget, index: number) => ReactNode
+  onAcknowledge?: (id: string) => void
   onWidgetChange?: (widget: Widget) => void
 }
+
+// Shared so an omitted `attentionIds` costs no allocation per render.
+const NO_ATTENTION: ReadonlySet<string> = new Set()
 
 // With no cards on the board there is no slot to aim an archived card at, so the empty-state placeholder itself doubles as the restore target while a drag is under way.
 const EmptyState = ({ restoreTarget }: { restoreTarget: boolean }) => {
@@ -303,7 +309,9 @@ interface SortableBoardRowProps {
   isMenuOpen: boolean
   hasActions: boolean
   animateEnter: boolean
+  attention: boolean
   prefersReducedMotion: boolean
+  onAcknowledge?: (id: string) => void
   onCloseMenu: () => void
   onOpenMenu: (id: string, x: number, y: number) => void
   onWidgetChange?: (widget: Widget) => void
@@ -334,12 +342,17 @@ const areRowsEqual = (
   }
 
   // `now` is otherwise excluded: nothing else on these cards changes within a day.
+  // `attention` belongs here even though the time-sensitive kinds never reach
+  // this far: a habit is only day-sensitive, so without it an acknowledged
+  // habit card would keep its dot until midnight.
   return (
     prev.item === next.item &&
     prev.isMenuOpen === next.isMenuOpen &&
     prev.hasActions === next.hasActions &&
     prev.animateEnter === next.animateEnter &&
+    prev.attention === next.attention &&
     prev.prefersReducedMotion === next.prefersReducedMotion &&
+    prev.onAcknowledge === next.onAcknowledge &&
     prev.onCloseMenu === next.onCloseMenu &&
     prev.onOpenMenu === next.onOpenMenu &&
     prev.onWidgetChange === next.onWidgetChange
@@ -352,7 +365,9 @@ const SortableBoardRow = memo(({
   isMenuOpen,
   hasActions,
   animateEnter,
+  attention,
   prefersReducedMotion,
+  onAcknowledge,
   onCloseMenu,
   onOpenMenu,
   onWidgetChange
@@ -376,6 +391,15 @@ const SortableBoardRow = memo(({
   ]
     .filter(Boolean)
     .join(" ")
+
+  // Touching a card at all settles it: a click anywhere on it, or focus landing on the card or a control inside it (React's onFocus is focusin, so it bubbles).
+  // Deliberately not Enter or Space, which dnd-kit claims on the focused card to start a keyboard drag; preventing that default would quietly break reordering.
+  // Keyboard users focus a card before anything else, so focus alone covers them.
+  const acknowledge = () => {
+    if (attention) {
+      onAcknowledge?.(item.id)
+    }
+  }
 
   const handleContextMenu = (event: ReactMouseEvent<HTMLElement>) => {
     if (!hasActions) {
@@ -444,10 +468,13 @@ const SortableBoardRow = memo(({
     <BoardRow
       articleProps={{
         "aria-haspopup": hasActions ? "menu" : undefined,
+        onClick: acknowledge,
         onContextMenu: handleContextMenu,
+        onFocus: acknowledge,
         onKeyDown: handleKeyDown,
         tabIndex: 0
       }}
+      attention={attention}
       dragHandleProps={{ onPointerDown }}
       className={className}
       item={item}
@@ -468,7 +495,9 @@ export const BoardList = ({
   items,
   now,
   restoreTarget = false,
+  attentionIds = NO_ATTENTION,
   renderItemActions,
+  onAcknowledge,
   onWidgetChange
 }: BoardListProps) => {
   const [openMenu, setOpenMenu] = useState<OpenMenu | null>(null)
@@ -535,11 +564,13 @@ export const BoardList = ({
           {items.map((item) => (
             <SortableBoardRow
               animateEnter={!initialIds.has(item.id)}
+              attention={attentionIds.has(item.id)}
               hasActions={hasActions}
               isMenuOpen={openMenu?.id === item.id}
               item={item}
               key={item.id}
               now={now}
+              onAcknowledge={onAcknowledge}
               onCloseMenu={closeMenu}
               onOpenMenu={handleOpenMenu}
               onWidgetChange={onWidgetChange}
