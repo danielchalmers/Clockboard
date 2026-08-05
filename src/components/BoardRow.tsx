@@ -15,6 +15,7 @@ import {
   formatCountdownTarget,
   formatTimeZoneName,
   getCountdownParts,
+  getCountdownPercent,
   getCountdownProgress,
   resolveCountdown
 } from "~/lib/time"
@@ -705,10 +706,9 @@ export const BoardRow = forwardRef<HTMLElement, BoardRowProps>(function BoardRow
 
   // A start date is the whole switch: with a span to fill, the card is a bar.
   if (countdownItem.settings.startAt) {
-    const fraction = getCountdownProgress(countdownItem, now)
-    const percent = Math.round(fraction * 100)
+    const percent = getCountdownPercent(getCountdownProgress(countdownItem, now))
     const status =
-      fraction >= 1 ? "Complete" : countdown.label.replace(/ from now$/, " left")
+      percent >= 100 ? "Complete" : countdown.label.replace(/ from now$/, " left")
 
     return (
       <CardShell {...shell} detail={countdownDetail} ref={ref}>

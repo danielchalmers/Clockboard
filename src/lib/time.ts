@@ -337,6 +337,25 @@ export const getCountdownProgress = (
   return Math.min(1, Math.max(0, fraction))
 }
 
+// Whole-percent form of that fraction, for the number and the bar.
+// Nearest is right through the middle, but both ends have to be exact.
+// Rounding 99.7% up to 100% tells someone a countdown is over while hours are still on the clock, and rounding a freshly started 0.3% down says it never began.
+export const getCountdownPercent = (fraction: number): number => {
+  if (Number.isNaN(fraction)) {
+    return 0
+  }
+
+  if (fraction >= 1) {
+    return 100
+  }
+
+  if (fraction <= 0) {
+    return 0
+  }
+
+  return Math.min(99, Math.max(1, Math.round(fraction * 100)))
+}
+
 export const formatCountdownTarget = (widget: CountdownWidget): string => {
   const target = new Date(widget.settings.targetAt)
 
