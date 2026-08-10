@@ -180,6 +180,25 @@ describe("BoardList", () => {
     expect(screen.getByText(/add a clock, a countdown, a note/i)).toBeInTheDocument()
   })
 
+  // Deleting the last card, or archiving it, empties the board while the component stays mounted.
+  // Every hook has to run on that render too: one declared past the empty-state return is a hook fewer than the render before it, and React throws instead of showing the empty state.
+  it("swaps to the empty state when the last card goes", () => {
+    const now = new Date("2026-01-01T12:30:00.000Z")
+    const { rerender } = render(
+      <BoardList items={widgets} now={now} renderItemActions={renderActions} />
+    )
+
+    expect(() =>
+      rerender(
+        <BoardList items={[]} now={now} renderItemActions={renderActions} />
+      )
+    ).not.toThrow()
+
+    expect(
+      screen.getByRole("heading", { name: "A fresh start" })
+    ).toBeInTheDocument()
+  })
+
   it("makes each widget card draggable", () => {
     const { container } = render(<BoardList items={widgets} now={new Date("2026-01-01T12:30:00.000Z")} />)
 

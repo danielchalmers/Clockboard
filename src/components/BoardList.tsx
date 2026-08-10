@@ -486,7 +486,14 @@ export const BoardList = ({
   }, [activeId])
 
   // Stable so the memoized rows can skip re-rendering when only the tick changes.
+  // Both belong above the empty-state return below: a hook called only when the board has cards is one hook fewer on the render that empties it, which is the "rendered fewer hooks than expected" crash.
   const closeMenu = useCallback(() => setOpenMenu(null), [])
+  const handleOpenMenu = useCallback((id: string, x: number, y: number) => {
+    document
+      .querySelectorAll<HTMLDetailsElement>(".add-menu[open]")
+      .forEach((menu) => menu.removeAttribute("open"))
+    setOpenMenu({ id, x, y })
+  }, [])
 
   // Cards on the board at first render must not animate in; the page should simply be there on a new tab.
   // Only cards that show up later (added, restored) play the entrance animation.
@@ -507,13 +514,6 @@ export const BoardList = ({
   const isForeignDrag = Boolean(
     activeId && !items.some((item) => item.id === activeId)
   )
-
-  const handleOpenMenu = useCallback((id: string, x: number, y: number) => {
-    document
-      .querySelectorAll<HTMLDetailsElement>(".add-menu[open]")
-      .forEach((menu) => menu.removeAttribute("open"))
-    setOpenMenu({ id, x, y })
-  }, [])
 
   const activeMenuItem = openMenu
     ? items.find((item) => item.id === openMenu.id) ?? null

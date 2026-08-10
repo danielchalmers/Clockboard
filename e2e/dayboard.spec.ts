@@ -45,6 +45,27 @@ const openWidgetMenu = async (page: Page, title: string) => {
   await card.click({ button: "right" })
 }
 
+const DEFAULT_TITLES = [
+  "🕒 Local time",
+  "🌅 Tomorrow morning",
+  "👋 Welcome",
+  "💬 Today's reminder",
+  "🚶 Daily walk",
+  "📅 This year"
+]
+
+// The whole delete flow for a card, opened from the keyboard rather than with `openWidgetMenu`.
+// A right-click lands in the middle of the card, and for a note that is its textarea and for a habit its dot row — controls that keep their own menu — so clearing a mixed board needs the one route every kind answers.
+const deleteWidget = async (page: Page, title: string) => {
+  const card = cardByTitle(page, title)
+
+  await card.focus()
+  await card.press("ContextMenu")
+  await page.getByRole("menuitem", { name: `Delete ${title}` }).click()
+  await page.getByRole("button", { name: "Delete widget" }).click()
+  await expect(card).toHaveCount(0)
+}
+
 test("new tab page renders the default widgets and editing controls", async ({
   page,
   extensionId
@@ -1338,6 +1359,28 @@ test("delete flow removes an existing widget", async ({ page, extensionId }) => 
   await expect(page.getByText("🌅 Tomorrow morning")).toHaveCount(0)
 })
 
+test("deleting the last widget hands the board over to the empty state", async ({
+  page,
+  extensionId
+}) => {
+  // A tall viewport keeps every card and its context menu on screen; scrolling dismisses an open widget menu.
+  await page.setViewportSize({ width: 1280, height: 1600 })
+  await openNewTab(page, extensionId)
+
+  for (const title of DEFAULT_TITLES) {
+    await deleteWidget(page, title)
+  }
+
+  // The board goes from one card to none while the list stays mounted, which is the render that used to take the whole page down with it.
+  await expect(page.locator(".board-row")).toHaveCount(0)
+  await expect(
+    page.getByRole("heading", { name: "A fresh start" })
+  ).toBeVisible()
+  await expect(page.getByText("The + button up top has them all")).toBeVisible()
+  // And the page is still around the empty state, rather than the blank body React leaves behind when a render throws.
+  await expect(page.getByRole("button", { name: "Add widget" })).toBeVisible()
+})
+
 test("archiving from the menu hides a widget and it can be restored", async ({
   page,
   extensionId
@@ -1528,6 +1571,67 @@ test("dragging an archived widget onto a board card restores it into that slot",
   await expect(page.locator(".board-row h2").first()).toHaveText(
     "🌅 Tomorrow morning"
   )
+  await expect(
+    page.getByRole("button", { name: /Show archived/ })
+  ).toHaveCount(0)
+})
+
+test("dragging an archived widget onto an empty board restores it", async ({
+  page,
+  extensionId
+}) => {
+  // A tall viewport keeps the empty board and the revealed archive on one screen, so the drag never has to scroll.
+  await page.setViewportSize({ width: 1280, height: 1600 })
+  await openNewTab(page, extensionId)
+
+  // Delete every card but one, then archive that one.
+  // The board empties the other way it can: the last active card leaves for the archive, and the archived list renders below where it used to be.
+  const [last, ...others] = DEFAULT_TITLES
+
+  for (const title of others) {
+    await deleteWidget(page, title)
+  }
+
+  const lastCard = cardByTitle(page, last!)
+  await lastCard.focus()
+  await lastCard.press("ContextMenu")
+  await page.getByRole("menuitem", { name: `Archive ${last}` }).click()
+
+  await expect(page.locator(".board-row")).toHaveCount(0)
+  await expect(
+    page.getByRole("heading", { name: "A fresh start" })
+  ).toBeVisible()
+
+  await page.getByRole("button", { name: "Show archived (1)" }).click()
+
+  const box = await boxOf(cardByTitle(page, last!), "the archived card")
+
+  // Grab the archived card by its frame and nudge it to start the drag.
+  await page.mouse.move(box.x + box.width / 2, box.y + 12)
+  await page.mouse.down()
+  await page.mouse.move(box.x + box.width / 2, box.y + 36, { steps: 6 })
+
+  // With no board card left to aim at, the empty state is the drop target itself, and it changes what it says to offer the landing.
+  const emptyState = page.locator(".empty-state")
+  await expect(emptyState).toHaveClass(/empty-state--restore/)
+  await expect(
+    emptyState.getByRole("heading", { name: "Drop it here to restore" })
+  ).toBeVisible()
+
+  const emptyBox = await boxOf(emptyState, "the empty board drop target")
+  await page.mouse.move(
+    emptyBox.x + emptyBox.width / 2,
+    emptyBox.y + emptyBox.height / 2,
+    { steps: 20 }
+  )
+
+  await page.mouse.up()
+
+  // It is back on the board, and the archive is gone with it.
+  await expect(
+    page.locator(".board-list").first().getByRole("heading", { name: last! })
+  ).toBeVisible()
+  await expect(page.locator(".empty-state")).toHaveCount(0)
   await expect(
     page.getByRole("button", { name: /Show archived/ })
   ).toHaveCount(0)
