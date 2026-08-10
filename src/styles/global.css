@@ -41,7 +41,11 @@
   --radius-lg: 22px;
   --radius-xl: 28px;
 
-  /* Motion: calm, decelerating curves; no overshoot anywhere. */
+  /* Motion: calm, decelerating curves; no overshoot anywhere.
+     The `--t-*` tokens carry a duration *and* an easing, so they are already a complete
+     `transition` pair. Never append another easing after one — in the `animation`
+     shorthand that fills the timing-function slot twice and the browser drops the whole
+     declaration, silently turning the animation off. */
   --t-micro: 100ms cubic-bezier(0.4, 0, 0.2, 1);
   --t-fast: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --t-normal: 300ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -524,7 +528,7 @@ details > summary::-webkit-details-marker {
   min-block-size: 64px;
   position: fixed;
   z-index: 300;
-  animation: fade-in var(--t-fast) ease-out;
+  animation: fade-in var(--t-fast);
 }
 
 .archive-dropzone--over {
@@ -597,9 +601,11 @@ details > summary::-webkit-details-marker {
     box-shadow var(--t-fast);
 }
 
-/* Cards present at page load must simply be there; only cards that appear while the board is on screen (added, restored) get the entrance. */
+/* Cards present at page load must simply be there; only cards that appear while the board is on screen (added, restored) get the entrance.
+   The fill is `backwards`, not `both`: it still holds the opening frame until the animation starts, but it lets go once the card has landed.
+   `forwards` would pin `transform: scale(1)` on the card for the rest of the session, and a filling animation outranks an inline style — the sort transform dnd-kit writes to `style` would stop moving the card, so a widget added this session would sit frozen while the rest of the board slid around it. */
 .board-row--enter {
-  animation: card-enter var(--t-normal) var(--ease-out) both;
+  animation: card-enter var(--t-normal) backwards;
 }
 
 /* Light / Dark Mode mapping for HSL presets */
@@ -1305,7 +1311,7 @@ select:focus {
   padding: 12px 16px;
   position: fixed;
   z-index: 400;
-  animation: fade-in var(--t-fast) ease-out;
+  animation: fade-in var(--t-fast);
 }
 
 .board-notice__text {
@@ -1434,7 +1440,7 @@ select:focus {
   z-index: 1000;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  animation: fade-in var(--t-fast) ease-out;
+  animation: fade-in var(--t-fast);
 }
 
 @keyframes fade-in {
@@ -1451,7 +1457,7 @@ select:focus {
   max-block-size: calc(100vh - 48px);
   overflow: auto;
   padding: 36px 36px 32px;
-  animation: modal-enter var(--t-normal) var(--ease-out) both;
+  animation: modal-enter var(--t-normal) both;
 }
 
 .modal-dialog--narrow {

@@ -814,6 +814,11 @@ test("all widgets share one card size, even with a long quote", async ({
   await page.getByRole("button", { name: "Save quote" }).click()
   await expect(page.getByRole("heading", { name: "Long read" })).toBeVisible()
 
+  // The new card scales up as it enters, so it measures short until the entrance settles.
+  await cardByTitle(page, "Long read").evaluate((card) =>
+    Promise.all(card.getAnimations().map((animation) => animation.finished))
+  )
+
   const cards = page.locator(".board-row")
   const count = await cards.count()
   const heights = new Set<number>()
