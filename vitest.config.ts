@@ -6,6 +6,9 @@ import { defineConfig } from "vitest/config"
 export default defineConfig({
   test: {
     environment: "jsdom",
+    // Almost everything on the board is a date read in local time, so the suite's results otherwise depend on where it runs: DST assertions that hold on a contributor's machine are vacuous on CI, which is UTC and never changes offset.
+    // Pin one zone that observes DST so the whole suite means the same thing everywhere.
+    env: { TZ: "America/Chicago" },
     // `.claude` holds agent worktrees, full checkouts whose tests must not be collected into this repo's run.
     exclude: [
       "**/node_modules/**",

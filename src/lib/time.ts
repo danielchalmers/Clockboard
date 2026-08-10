@@ -27,7 +27,12 @@ export const dateTimeInputValueToIsoInstant = (
   const hour = Number(match[4]!)
   const minute = Number(match[5]!)
 
-  return new Date(year, month - 1, day, hour, minute, 0, 0).toISOString()
+  const local = new Date(year, month - 1, day, hour, minute, 0, 0)
+
+  // `new Date(year, ...)` reads a year under 100 as 1900-something, so a target typed as the year 50 would be stored as 1950; setting the year back puts it where it was typed.
+  local.setFullYear(year)
+
+  return local.toISOString()
 }
 
 export const isoInstantToDateTimeInputValue = (instant: string): string => {
@@ -88,6 +93,25 @@ export const formatTimeZoneName = (date: Date, timeZone: string): string => {
   return parts.find((part) => part.type === "timeZoneName")?.value || timeZone
 }
 
+const HOUR_MS = 3_600_000
+
+// How many days a month holds, asked without `new Date(year, ...)`, whose two-digit-year rule would read a year under 100 as 1900-something.
+const daysInMonth = (year: number, month: number): number => {
+  const probe = new Date()
+
+  // Day 0 of the following month is the last day of this one.
+  probe.setFullYear(year, month + 1, 0)
+
+  return probe.getDate()
+}
+
+// Land on the same day number in another month, or on that month's last day when it is too short to hold it.
+// Assigning the day straight through would overflow instead: Jan 31 plus a month reads as Feb 31, which `Date` rolls on to Mar 3, moving a monthly countdown off February altogether.
+// Clamping keeps the 31st on the 28th in February and back on the 31st in March, rather than drifting further every cycle, because each step is measured from the original target.
+const setMonthClamped = (date: Date, year: number, month: number): void => {
+  date.setFullYear(year, month, Math.min(date.getDate(), daysInMonth(year, month)))
+}
+
 // Move an instant forward by whole repeat steps, using calendar arithmetic so the time of day survives DST and a monthly countdown keeps its day number instead of drifting the way repeated single steps would.
 const advanceByRepeat = (
   base: Date,
@@ -101,22 +125,23 @@ const advanceByRepeat = (
   }
 
   if (repeat === "hourly") {
-    next.setHours(next.getHours() + steps)
+    // An hour is an hour. Stepping the local hour field instead would skip an occurrence every autumn, when a DST fall-back replays the same wall-clock hour and the second pass through it is never landed on.
+    next.setTime(next.getTime() + steps * HOUR_MS)
   } else if (repeat === "daily") {
     next.setDate(next.getDate() + steps)
   } else if (repeat === "weekly") {
     next.setDate(next.getDate() + steps * 7)
   } else if (repeat === "monthly") {
-    next.setMonth(next.getMonth() + steps)
+    setMonthClamped(next, next.getFullYear(), next.getMonth() + steps)
   } else {
-    next.setFullYear(next.getFullYear() + steps)
+    setMonthClamped(next, next.getFullYear() + steps, next.getMonth())
   }
 
   return next
 }
 
 const APPROXIMATE_STEP_MS: Record<Exclude<CountdownRepeat, "none">, number> = {
-  hourly: 3_600_000,
+  hourly: HOUR_MS,
   daily: 86_400_000,
   weekly: 604_800_000,
   monthly: 2_629_746_000,

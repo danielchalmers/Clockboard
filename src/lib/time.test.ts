@@ -121,6 +121,63 @@ describe("resolveCountdown", () => {
     expect(target - start).toBe(DAY)
   })
 
+  it("keeps a monthly target on its day number through a month too short to hold it", () => {
+    // The 31st has no February to land on, and rolling the overflow forward would put this countdown on March 3.
+    const target = new Date(2026, 0, 31, 9, 0, 0).toISOString()
+    const february = new Date(resolveCountdown(
+      countdownWidget(target, { repeat: "monthly" }),
+      new Date(2026, 1, 15, 12, 0, 0)
+    ).settings.targetAt)
+
+    expect(february.getMonth()).toBe(1)
+    expect(february.getDate()).toBe(28)
+    expect(february.getHours()).toBe(9)
+
+    // The clamp holds for one short month only; the day number comes back the moment a month is long enough.
+    const march = new Date(resolveCountdown(
+      countdownWidget(target, { repeat: "monthly" }),
+      new Date(2026, 2, 15, 12, 0, 0)
+    ).settings.targetAt)
+
+    expect(march.getMonth()).toBe(2)
+    expect(march.getDate()).toBe(31)
+  })
+
+  it("keeps a yearly target on February 29 in February", () => {
+    const target = new Date(2024, 1, 29, 9, 0, 0).toISOString()
+    const common = new Date(resolveCountdown(
+      countdownWidget(target, { repeat: "yearly" }),
+      new Date(2025, 0, 15, 12, 0, 0)
+    ).settings.targetAt)
+
+    expect(common.getMonth()).toBe(1)
+    expect(common.getDate()).toBe(28)
+
+    // The next leap year restores the 29th rather than staying clamped.
+    const leap = new Date(resolveCountdown(
+      countdownWidget(target, { repeat: "yearly" }),
+      new Date(2028, 0, 15, 12, 0, 0)
+    ).settings.targetAt)
+
+    expect(leap.getMonth()).toBe(1)
+    expect(leap.getDate()).toBe(29)
+  })
+
+  it("keeps hourly occurrences one real hour apart across a DST fall-back", () => {
+    // America/Chicago replays 01:00-02:00 on 2026-11-01; stepping the local hour field would never land on the second pass.
+    const target = new Date(2026, 10, 1, 0, 30, 0).toISOString()
+    const first = new Date(resolveCountdown(
+      countdownWidget(target, { repeat: "hourly" }),
+      new Date(2026, 10, 1, 0, 45, 0)
+    ).settings.targetAt)
+    const second = new Date(resolveCountdown(
+      countdownWidget(target, { repeat: "hourly" }),
+      new Date(first.getTime() + 15 * 60 * 1000)
+    ).settings.targetAt)
+
+    expect(second.getTime() - first.getTime()).toBe(60 * 60 * 1000)
+  })
+
   it("drops a start that cannot fill a span", () => {
     const backwards = countdownWidget("2026-01-11T00:00:00.000Z", {
       startAt: "2026-02-01T00:00:00.000Z"
