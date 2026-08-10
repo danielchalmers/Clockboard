@@ -39,10 +39,13 @@ export const getGreeting = (now: Date, name = ""): string => {
   return trimmed ? `${base}, ${trimmed}` : base
 }
 
+// The header redraws with every tick of the board's clock, and constructing a formatter is far pricier than formatting with one, so it is built once.
+// The locale can't change without a reload anyway.
+const headerDateFormat = new Intl.DateTimeFormat(undefined, {
+  weekday: "long",
+  month: "long",
+  day: "numeric"
+})
+
 // The friendly date line under the greeting, e.g. "Monday, July 7".
-export const getHeaderDate = (now: Date): string =>
-  new Intl.DateTimeFormat(undefined, {
-    weekday: "long",
-    month: "long",
-    day: "numeric"
-  }).format(now)
+export const getHeaderDate = (now: Date): string => headerDateFormat.format(now)
