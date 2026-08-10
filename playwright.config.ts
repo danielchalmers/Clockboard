@@ -1,5 +1,7 @@
 import { defineConfig } from "@playwright/test"
 
+const isCI = Boolean(process.env.CI)
+
 export default defineConfig({
   testDir: "./e2e",
   timeout: 30_000,
@@ -7,12 +9,24 @@ export default defineConfig({
     timeout: 5_000
   },
   fullyParallel: true,
-  // Each test launches its own full Chromium persistent context with the extension loaded; cap workers on CI so the runner does not run out of memory.
-  workers: process.env.CI ? 2 : undefined,
+  // A stray `test.only` must not turn a CI run green while quietly skipping the rest.
+  forbidOnly: isCI,
+  // One retry on CI absorbs runner noise without hiding it: Playwright reports a test that only passed on the retry as flaky.
+  // Locally it stays at zero, so a flake shows itself while you are in a position to look at it.
+  retries: isCI ? 1 : 0,
+  // Each worker runs one Chromium persistent context with the extension loaded (`e2e/fixtures.ts`), reused across its tests, so live browsers now match the worker count rather than the test count.
+  workers: isCI ? 4 : undefined,
+  // Stop early when something systemic breaks, instead of spending the runner on the same failure fifty times.
+  maxFailures: isCI ? 10 : 0,
+  globalTimeout: 20 * 60_000,
   globalSetup: "./e2e/global-setup.ts",
-  reporter: [["list"], ["html", { open: "never" }]],
+  reporter: isCI
+    ? [["github"], ["list"], ["html", { open: "never" }]]
+    : [["list"], ["html", { open: "never" }]],
   use: {
-    trace: "on-first-retry"
+    // Kept on failure rather than on retry: the first failure is the one worth having a trace for.
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure"
   },
   projects: [
     {
