@@ -19,11 +19,14 @@ const hasWidgets = (value: unknown): value is { widgets: unknown[] } =>
   Array.isArray((value as { widgets?: unknown }).widgets)
 
 // Keep only entries that look like widgets of a known kind, so a hand-edited or imported file with junk rows renders the valid widgets instead of blank cards.
+// A settings object has to be among them: normalization and the cards both read straight through it, so an entry missing one throws on the way in and takes the whole board with it rather than being dropped like the rest of the junk.
 const isValidWidget = (value: unknown): value is Widget =>
   typeof value === "object" &&
   value !== null &&
   typeof (value as Widget).id === "string" &&
-  (value as Widget).kind in widgetRegistry
+  (value as Widget).kind in widgetRegistry &&
+  typeof (value as Widget).settings === "object" &&
+  (value as Widget).settings !== null
 
 // Fill any missing or malformed fields with their defaults so a partial or hand-edited imported board still loads cleanly.
 const normalizeSettings = (value: unknown): DayboardSettings => {

@@ -31,6 +31,28 @@ describe("BoardRow", () => {
     expect(article).toHaveAttribute("data-color-preset", "rose")
   })
 
+  // The time zone is a free-text field, so a card can be saved with something Intl refuses to build a formatter for.
+  // Every clock formatter runs from this render, so an unguarded throw here blanks the whole board over one mistyped zone.
+  it("renders a clock card whose time zone is not a real one, saying so", () => {
+    const item: Widget = {
+      id: "typo",
+      kind: "clock",
+      title: "Nowhere",
+      colorPreset: "teal",
+      settings: {
+        timeZone: "Not/AZone"
+      }
+    }
+
+    render(<BoardRow item={item} now={new Date("2026-01-01T12:30:00.000Z")} />)
+
+    expect(screen.getByRole("heading", { name: "Nowhere" })).toBeInTheDocument()
+    expect(screen.getByLabelText("Nowhere time")).not.toBeEmptyDOMElement()
+    expect(
+      screen.getByText(/Not\/AZone — unrecognized, showing your local time/)
+    ).toBeInTheDocument()
+  })
+
   it("renders a drag-handle frame only when drag handle props are provided", () => {
     const item: Widget = {
       id: "utc",

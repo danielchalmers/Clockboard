@@ -111,6 +111,8 @@ describe("readDayboardState", () => {
         sampleState.widgets[0],
         { id: "x", kind: "totally-unknown", settings: {} },
         { kind: "clock" },
+        // A known kind with no settings is junk too: everything downstream reads through that object, so keeping the row would throw instead of rendering the rest of the board.
+        { id: "no-settings-habit", kind: "habit" },
         "nonsense"
       ]
     })
@@ -253,6 +255,22 @@ describe("serializeDayboardState / parseDayboardState", () => {
 
     expect(parsed.widgets).toEqual(sampleState.widgets)
     expect(parsed.settings).toEqual(sampleState.settings)
+  })
+
+  // The same normalization runs on an imported file, so a row the board would drop must not throw on the way through instead.
+  it("drops a settings-less widget from an imported file rather than throwing", async () => {
+    const { parseDayboardState } = await import("./storage")
+
+    const parsed = parseDayboardState(
+      JSON.stringify({
+        widgets: [
+          { id: "no-settings-habit", kind: "habit" },
+          ...sampleState.widgets
+        ]
+      })
+    )
+
+    expect(parsed.widgets).toEqual(sampleState.widgets)
   })
 
   it("rejects invalid JSON and non-board payloads", async () => {

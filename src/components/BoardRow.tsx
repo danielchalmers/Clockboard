@@ -17,6 +17,7 @@ import {
   getCountdownParts,
   getCountdownPercent,
   getCountdownProgress,
+  isKnownTimeZone,
   resolveCountdown
 } from "~/lib/time"
 import type {
@@ -617,10 +618,14 @@ export const BoardRow = forwardRef<HTMLElement, BoardRowProps>(function BoardRow
   const shell = { item, articleProps, dragHandleProps, className, style }
 
   if (item.kind === "clock") {
-    const detail =
-      item.settings.timeZone === Intl.DateTimeFormat().resolvedOptions().timeZone
+    const { timeZone } = item.settings
+    // The zone is free text, so a card can be saved with a name no browser knows, and the formatters answer that with local time.
+    // Say so on the card: the alternative is passing your own time off as somewhere else's, which is worse than a clock that admits it is lost.
+    const detail = !isKnownTimeZone(timeZone)
+      ? `${timeZone} — unrecognized, showing your local time`
+      : timeZone === Intl.DateTimeFormat().resolvedOptions().timeZone
         ? "Your current time zone"
-        : item.settings.timeZone
+        : timeZone
 
     return (
       <CardShell {...shell} detail={detail} ref={ref}>
@@ -628,8 +633,8 @@ export const BoardRow = forwardRef<HTMLElement, BoardRowProps>(function BoardRow
           {formatClockTime(now, item)}
         </p>
         <p className="board-row__meta">
-          {formatClockDate(now, item.settings.timeZone)}
-          <span>{formatTimeZoneName(now, item.settings.timeZone)}</span>
+          {formatClockDate(now, timeZone)}
+          <span>{formatTimeZoneName(now, timeZone)}</span>
         </p>
       </CardShell>
     )

@@ -56,16 +56,52 @@ export const isSameLocalDay = (a: Date, b: Date): boolean =>
 // Cache instances by their options so repeated renders (and ticking clocks) reuse one formatter.
 const formatterCache = new Map<string, Intl.DateTimeFormat>()
 
+// A clock's time zone is typed free-hand, so a card can be carrying a string that is not a real IANA zone, and asking Intl for a formatter on one throws a RangeError.
+// Every clock formatter is called from render, so that throw would take the whole board down rather than the one card; fall back to the local zone instead, and cache the fallback under the same key so a mistyped zone costs one failed construction rather than one per tick.
+const createFormatter = (
+  options: Intl.DateTimeFormatOptions
+): Intl.DateTimeFormat => {
+  try {
+    return new Intl.DateTimeFormat(undefined, options)
+  } catch {
+    // The zone is the only part of these options that comes from anyone's typing, so dropping it is the one thing left to try.
+    const { timeZone, ...withoutTimeZone } = options
+
+    return new Intl.DateTimeFormat(undefined, withoutTimeZone)
+  }
+}
+
 const getFormatter = (options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat => {
   const key = JSON.stringify(options)
   let formatter = formatterCache.get(key)
 
   if (!formatter) {
-    formatter = new Intl.DateTimeFormat(undefined, options)
+    formatter = createFormatter(options)
     formatterCache.set(key, formatter)
   }
 
   return formatter
+}
+
+// Whether the browser recognizes a saved zone at all, so a card can say it is showing local time instead of quietly passing local time off as somewhere else.
+// Cached alongside the formatters, and for the same reason: the check builds a formatter, and clocks ask on every tick.
+const knownTimeZones = new Map<string, boolean>()
+
+export const isKnownTimeZone = (timeZone: string): boolean => {
+  let known = knownTimeZones.get(timeZone)
+
+  if (known === undefined) {
+    try {
+      void new Intl.DateTimeFormat(undefined, { timeZone })
+      known = true
+    } catch {
+      known = false
+    }
+
+    knownTimeZones.set(timeZone, known)
+  }
+
+  return known
 }
 
 export const formatClockTime = (date: Date, widget: ClockWidget): string =>

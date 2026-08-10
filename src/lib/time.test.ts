@@ -2,15 +2,19 @@ import { describe, expect, it } from "vitest"
 
 import {
   dateTimeInputValueToIsoInstant,
+  formatClockDate,
+  formatClockTime,
   formatRelativeCountdown,
+  formatTimeZoneName,
   getCountdownParts,
   getCountdownPercent,
   getCountdownProgress,
+  isKnownTimeZone,
   isSameLocalDay,
   isoInstantToDateTimeInputValue,
   resolveCountdown
 } from "./time"
-import type { CountdownRepeat, CountdownWidget } from "./types"
+import type { ClockWidget, CountdownRepeat, CountdownWidget } from "./types"
 
 const countdownWidget = (
   targetAt: string,
@@ -53,6 +57,51 @@ describe("isSameLocalDay", () => {
     expect(
       isSameLocalDay(new Date(2025, 2, 2, 12, 0, 0), new Date(2026, 2, 2, 12, 0, 0))
     ).toBe(false)
+  })
+})
+
+describe("clock formatters", () => {
+  const clockWidget = (timeZone: string): ClockWidget => ({
+    id: "somewhere",
+    kind: "clock",
+    title: "Somewhere",
+    colorPreset: "slate",
+    settings: { timeZone }
+  })
+
+  const instant = new Date("2026-01-01T12:30:00.000Z")
+  const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  // Free text typed into the clock dialog, saved as-is, and not a zone any browser knows.
+  const UNKNOWN_ZONE = "Not/AZone"
+
+  it("reads the wall clock of the zone it is given", () => {
+    expect(formatClockTime(instant, clockWidget("UTC"))).toMatch(/12:30/)
+    expect(formatClockDate(instant, "UTC")).toMatch(/Thu, Jan 1, 2026/)
+    expect(formatTimeZoneName(instant, "UTC")).toBe("UTC")
+  })
+
+  // Intl throws a RangeError on a zone it does not recognize, and all three of these run from a card's render, so an unguarded throw takes the whole board down rather than the one clock.
+  it("falls back to local time on a zone the browser does not know", () => {
+    expect(() => new Intl.DateTimeFormat(undefined, { timeZone: UNKNOWN_ZONE }))
+      .toThrow()
+
+    expect(formatClockTime(instant, clockWidget(UNKNOWN_ZONE))).toBe(
+      formatClockTime(instant, clockWidget(localZone))
+    )
+    expect(formatClockDate(instant, UNKNOWN_ZONE)).toBe(
+      formatClockDate(instant, localZone)
+    )
+    // The name follows the time: it says where the clock is actually reading from, rather than lending the bad string the look of a real abbreviation.
+    expect(formatTimeZoneName(instant, UNKNOWN_ZONE)).toBe(
+      formatTimeZoneName(instant, localZone)
+    )
+  })
+
+  it("tells a known zone from an unknown one", () => {
+    expect(isKnownTimeZone("UTC")).toBe(true)
+    expect(isKnownTimeZone("Asia/Tokyo")).toBe(true)
+    expect(isKnownTimeZone(UNKNOWN_ZONE)).toBe(false)
+    expect(isKnownTimeZone("")).toBe(false)
   })
 })
 
