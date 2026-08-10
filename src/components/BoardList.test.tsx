@@ -28,6 +28,8 @@ const widgets: Widget[] = [
   }
 ]
 
+const now = new Date("2026-01-01T12:30:00.000Z")
+
 const renderActions = (item: Widget) => (
   <>
     <button aria-label={`Move ${item.title} back`} role="menuitem" type="button">
@@ -41,11 +43,7 @@ const renderActions = (item: Widget) => (
 
 const renderBoard = () =>
   render(
-    <BoardList
-      items={widgets}
-      now={new Date("2026-01-01T12:30:00.000Z")}
-      renderItemActions={renderActions}
-    />
+    <BoardList items={widgets} now={now} renderItemActions={renderActions} />
   )
 
 const openMenu = (
@@ -174,7 +172,7 @@ describe("a board left open across local midnight", () => {
 
 describe("BoardList", () => {
   it("shows a kind-agnostic empty state when there are no widgets", () => {
-    render(<BoardList items={[]} now={new Date("2026-01-01T12:30:00.000Z")} />)
+    render(<BoardList items={[]} now={now} />)
 
     expect(
       screen.getByRole("heading", { name: "A fresh start" })
@@ -185,7 +183,6 @@ describe("BoardList", () => {
   // Deleting the last card, or archiving it, empties the board while the component stays mounted.
   // Every hook has to run on that render too: one declared past the empty-state return is a hook fewer than the render before it, and React throws instead of showing the empty state.
   it("swaps to the empty state when the last card goes", () => {
-    const now = new Date("2026-01-01T12:30:00.000Z")
     const { rerender } = render(
       <BoardList items={widgets} now={now} renderItemActions={renderActions} />
     )
@@ -201,21 +198,18 @@ describe("BoardList", () => {
     ).toBeInTheDocument()
   })
 
-  it("makes each widget card draggable", () => {
-    const { container } = render(<BoardList items={widgets} now={new Date("2026-01-01T12:30:00.000Z")} />)
-
-    expect(container.querySelectorAll(".board-row--draggable")).toHaveLength(2)
-  })
-
-  it("exposes a drag-handle frame inside each draggable card", () => {
-    const { container } = render(<BoardList items={widgets} now={new Date("2026-01-01T12:30:00.000Z")} />)
+  it("makes each widget card draggable by its frame", () => {
+    const { container } = render(<BoardList items={widgets} now={now} />)
 
     const frames = container.querySelectorAll(".board-row__frame")
+    const cards = new Set(
+      [...frames].map((frame) => frame.closest(".board-row--draggable"))
+    )
 
     expect(frames).toHaveLength(2)
-    frames.forEach((frame) => {
-      expect(frame.closest(".board-row--draggable")).not.toBeNull()
-    })
+    // One draggable card per frame, so neither card is left without a handle of its own.
+    expect(cards.has(null)).toBe(false)
+    expect(cards.size).toBe(2)
   })
 
   it("opens a free-form popover menu under the cursor on right click", () => {
@@ -286,14 +280,6 @@ describe("BoardList", () => {
     }
   })
 
-  it("moves focus into the menu so keyboard users can reach it", () => {
-    const { container } = renderBoard()
-
-    openMenu(container, { clientX: 10, clientY: 10 })
-
-    expect(document.activeElement).toBe(screen.getByLabelText("Move Local time back"))
-  })
-
   it("moves focus between items with the arrow keys, Home, and End", () => {
     const { container } = renderBoard()
 
@@ -303,6 +289,7 @@ describe("BoardList", () => {
     const edit = screen.getByLabelText("Edit Local time")
     const panel = screen.getByLabelText("Actions for Local time")
 
+    // Opening the menu moves focus into it: it sits outside the card's tab order.
     expect(document.activeElement).toBe(moveUp)
 
     fireEvent.keyDown(panel, { key: "ArrowDown" })
@@ -318,6 +305,33 @@ describe("BoardList", () => {
     expect(document.activeElement).toBe(moveUp)
 
     fireEvent.keyDown(panel, { key: "End" })
+    expect(document.activeElement).toBe(edit)
+  })
+
+  // The panel is a popover parked outside the card, so a Tab the browser handled would drop focus somewhere unrelated to the card that was right-clicked, with the menu still open behind it.
+  it("keeps Tab and Shift+Tab cycling inside the menu", () => {
+    const { container } = renderBoard()
+
+    openMenu(container, { clientX: 10, clientY: 10 })
+
+    const moveUp = screen.getByLabelText("Move Local time back")
+    const edit = screen.getByLabelText("Edit Local time")
+    const panel = screen.getByLabelText("Actions for Local time")
+
+    const tab = (shiftKey = false) => {
+      const event = createEvent.keyDown(panel, { key: "Tab", shiftKey })
+      fireEvent(panel, event)
+      return event
+    }
+
+    // The default move is suppressed, not merely raced with the menu's own.
+    expect(tab().defaultPrevented).toBe(true)
+    expect(document.activeElement).toBe(edit)
+
+    tab()
+    expect(document.activeElement).toBe(moveUp)
+
+    tab(true)
     expect(document.activeElement).toBe(edit)
   })
 

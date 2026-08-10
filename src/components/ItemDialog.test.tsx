@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, within } from "@testing-library/react"
 import type { ComponentProps } from "react"
 import { describe, expect, it, vi } from "vitest"
 
@@ -65,6 +65,11 @@ const itemDialog = (props: Partial<ComponentProps<typeof ItemDialog>> = {}) => (
 
 const saved = (onSave: ReturnType<typeof vi.fn>) => onSave.mock.calls[0]![0]
 
+// Fields are labelled either by the span inside their wrapping label or by an aria-label, and this test cares about the roster of fields rather than any one of them.
+const fieldName = (field: Element) =>
+  field.getAttribute("aria-label") ??
+  field.closest("label")?.querySelector("span")?.textContent
+
 describe("ItemDialog", () => {
   it("saves the current edit when the backdrop is clicked", () => {
     const onSave = vi.fn()
@@ -83,6 +88,26 @@ describe("ItemDialog", () => {
     expect(onClose).not.toHaveBeenCalled()
     expect(onSave).toHaveBeenCalledTimes(1)
     expect(saved(onSave)).toMatchObject({ id: "clock-1", title: "Berlin" })
+  })
+
+  // The backdrop commits rather than discards, so it has to answer to the same validation the Save button does.
+  // Otherwise the easiest way out of the dialog is also the one that saves a nameless card, which then sits on the board with no heading to find it by.
+  it("will not commit a nameless item from the backdrop", () => {
+    const onSave = vi.fn()
+    const onClose = vi.fn()
+
+    render(itemDialog({ onClose, onSave }))
+
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "" } })
+
+    const backdrop = document.querySelector(".modal-backdrop") as HTMLElement
+    fireEvent.pointerDown(backdrop)
+
+    // Native validation blocks the submit, so the dialog stays open with the edit still in it.
+    expect(onSave).not.toHaveBeenCalled()
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByRole("dialog")).toBeInTheDocument()
+    expect(screen.getByLabelText("Name")).toBeRequired()
   })
 
   it("closes on Escape without saving, even when opened by a prop change", () => {
@@ -134,6 +159,39 @@ describe("ItemDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
 
     expect(saved(onSave).settings.timeZone).toBe("Europe/Berlin")
+  })
+
+  // A clock reads the system's own hour format, so an editor that offered seconds or a 12/24-hour choice would be a knob with nothing behind it.
+  it("offers no seconds or hour-format knobs on a clock", () => {
+    render(itemDialog())
+
+    expect(screen.getAllByRole("textbox").map(fieldName)).toEqual(["Name"])
+    // A native select would answer to combobox too, which is how an hour-format dropdown would show up here.
+    expect(screen.getAllByRole("combobox").map(fieldName)).toEqual([
+      "Time zone (type to search)"
+    ])
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument()
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
+  })
+
+  it("recolors an item from the preset picker", () => {
+    const onSave = vi.fn()
+
+    render(itemDialog({ onSave }))
+
+    const group = screen.getByRole("radiogroup", { name: "Widget color" })
+    expect(within(group).getByRole("radio", { name: "Slate" })).toBeChecked()
+
+    // The curated swatches are the whole color surface: no free color input and no hex box beside them.
+    expect(
+      screen.getByRole("dialog").querySelector('input[type="color"]')
+    ).toBeNull()
+    expect(screen.queryByRole("textbox", { name: /colou?r|hex/i })).toBeNull()
+
+    fireEvent.click(within(group).getByRole("radio", { name: "Rose" }))
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+
+    expect(saved(onSave).colorPreset).toBe("rose")
   })
 
   it("rewrites a quote list without disturbing its rotation", () => {
