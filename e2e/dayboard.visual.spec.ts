@@ -1,6 +1,7 @@
 import type { Page, TestInfo } from "@playwright/test"
 
 import { expect, test } from "./fixtures"
+import { cardByTitle } from "./helpers"
 import type { DayboardState } from "../src/lib/types"
 
 const STORAGE_KEY = "dayboard-state"
@@ -80,36 +81,9 @@ const storyState: DayboardState = {
   settings: { name: "" }
 }
 
-const freezeTime = async (page: Page) => {
-  await page.addInitScript((isoNow) => {
-    const fixedNow = new Date(isoNow).getTime()
-    const NativeDate = Date
-
-    const FixedDate = function (
-      this: Date,
-      ...args: unknown[]
-    ): Date | string {
-      if (!(this instanceof FixedDate)) {
-        return new NativeDate(fixedNow).toString()
-      }
-
-      return args.length === 0
-        ? new NativeDate(fixedNow)
-        : (Reflect.construct(NativeDate, args) as Date)
-    } as unknown as DateConstructor
-
-    FixedDate.now = () => fixedNow
-    FixedDate.parse = NativeDate.parse
-    FixedDate.UTC = NativeDate.UTC
-    ;(FixedDate as DateConstructor & { prototype: Date }).prototype =
-      NativeDate.prototype
-
-    window.Date = FixedDate
-  }, STORY_NOW)
-}
-
 const openStoryBoard = async (page: Page, extensionId: string) => {
-  await freezeTime(page)
+  // Every capture in the story has to read the same instant, or the four clock cards tick between the desktop shot and the dialogs later in the test.
+  await page.clock.setFixedTime(STORY_NOW)
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.goto(`chrome-extension://${extensionId}/newtab.html`)
   await page.evaluate(
@@ -117,8 +91,9 @@ const openStoryBoard = async (page: Page, extensionId: string) => {
     { key: STORAGE_KEY, state: storyState }
   )
   await page.reload()
+  // The browser is pinned to UTC, so STORY_NOW is a Friday afternoon on every machine and the greeting is a fixed string rather than a pattern.
   await expect(
-    page.getByRole("heading", { name: /Good (morning|afternoon|evening|night)/ })
+    page.getByRole("heading", { name: "Good afternoon" })
   ).toBeVisible()
   await expect(page.getByRole("heading", { name: "Austin" })).toBeVisible()
 }
@@ -143,11 +118,7 @@ const attachScreenshot = async (
 }
 
 const openWidgetMenu = async (page: Page, title: string) => {
-  const card = page
-    .locator(".board-row")
-    .filter({ has: page.getByRole("heading", { name: title }) })
-
-  await card.click({ button: "right" })
+  await cardByTitle(page, title).click({ button: "right" })
 }
 
 test("captures Dayboard product screenshots", async ({

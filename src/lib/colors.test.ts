@@ -2,9 +2,7 @@ import { describe, expect, it } from "vitest"
 import { COLOR_PRESETS, getPresetById, getPresetCssVars } from "./colors"
 
 describe("colors presets", () => {
-  it("defines exactly 12 accessible presets in spectral order", () => {
-    expect(COLOR_PRESETS.length).toBe(12)
-
+  it("defines twelve presets in spectral order with slate first", () => {
     const expectedPresetIds = [
       "slate",
       "rose",
@@ -32,18 +30,21 @@ describe("colors presets", () => {
     expect(fallback.id).toBe("slate")
   })
 
-  it("generates correct CSS variable custom property mappings", () => {
-    const cssVars = getPresetCssVars("emerald")
+  it("maps each preset theme value to its light and dark custom property", () => {
+    // The rule under test is which value lands on which property, so read the values
+    // back from the preset. Copying the palette here would fail this test on a tweak
+    // to a color that no widget behavior depends on.
+    const emerald = getPresetById("emerald")
 
-    expect(cssVars).toEqual({
-      "--card-bg-light": "hsl(158, 70%, 93%)",
-      "--card-tint-light": "hsl(160, 75%, 25%)",
-      "--card-border-light": "hsl(158, 55%, 80%)",
-      "--card-accent-light": "hsl(160, 90%, 32%)",
-      "--card-bg-dark": "hsl(160, 45%, 10%)",
-      "--card-tint-dark": "hsl(158, 55%, 62%)",
-      "--card-border-dark": "hsl(160, 40%, 18%)",
-      "--card-accent-dark": "hsl(158, 80%, 52%)"
+    expect(getPresetCssVars("emerald")).toEqual({
+      "--card-bg-light": emerald.light.bg,
+      "--card-tint-light": emerald.light.tint,
+      "--card-border-light": emerald.light.border,
+      "--card-accent-light": emerald.light.accent,
+      "--card-bg-dark": emerald.dark.bg,
+      "--card-tint-dark": emerald.dark.tint,
+      "--card-border-dark": emerald.dark.border,
+      "--card-accent-dark": emerald.dark.accent
     })
   })
 })

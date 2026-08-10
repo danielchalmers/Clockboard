@@ -1,13 +1,26 @@
+// @vitest-environment jsdom
+
 import { fireEvent, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { BoardRow } from "./BoardRow"
+import { playChime, primeChime } from "~/lib/chime"
 import { formatDayLabel, toDayKey } from "~/lib/habit"
 import { dailyQuoteIndex } from "~/lib/quotes"
 import { MAX_TASKS, type TodoTask } from "~/lib/todo"
 import type { Widget } from "~/lib/types"
 
+// Sound is the one thing a test cannot observe by rendering, so the chime module is stubbed for the whole file and asserted on by call.
+vi.mock("~/lib/chime", () => ({
+  playChime: vi.fn(),
+  primeChime: vi.fn()
+}))
+
 describe("BoardRow", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   it("renders a clock card with time, date metadata, and color-preset attribute", () => {
     const item: Widget = {
       id: "utc",
@@ -104,7 +117,10 @@ describe("BoardRow", () => {
     expect(screen.getByRole("heading", { name: "Deadline" })).toBeInTheDocument()
     expect(screen.getByText("right now")).toBeInTheDocument()
     expect(screen.queryByText(/UTC|GMT/)).not.toBeInTheDocument()
-    
+    // "right now" already says everything; a "from now" or "ago" line under it would only contradict itself.
+    expect(container.querySelector(".board-row__meta")).toBeNull()
+
+
     const article = container.querySelector("article")
     expect(article).toHaveAttribute("data-color-preset", "amber")
   })
@@ -166,6 +182,52 @@ describe("BoardRow", () => {
 
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument()
     expect(screen.getByText("5 days")).toBeInTheDocument()
+  })
+
+  it("reads a finished progress countdown as complete", () => {
+    const item: Widget = {
+      id: "sprint",
+      kind: "countdown",
+      title: "Sprint",
+      colorPreset: "sky",
+      settings: {
+        startAt: "2026-01-01T00:00:00.000Z",
+        targetAt: "2026-01-11T00:00:00.000Z"
+      }
+    }
+
+    const { container } = render(
+      <BoardRow item={item} now={new Date("2026-02-01T00:00:00.000Z")} />
+    )
+
+    expect(screen.getByText("100%")).toBeInTheDocument()
+    expect(
+      screen.getByRole("progressbar", { name: "Sprint progress" })
+    ).toHaveAttribute("aria-valuenow", "100")
+    // A full bar has its own closing word, so the line does not fall through to "21 days ago".
+    expect(container.querySelector(".board-row__meta")).toHaveTextContent(
+      "Complete"
+    )
+  })
+
+  it("splits a passed countdown into the span and an ago line", () => {
+    const item: Widget = {
+      id: "shipped",
+      kind: "countdown",
+      title: "Shipped",
+      colorPreset: "sky",
+      settings: { targetAt: "2026-01-01T00:00:00.000Z" }
+    }
+
+    const { container } = render(
+      <BoardRow item={item} now={new Date("2026-01-03T00:00:00.000Z")} />
+    )
+
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument()
+    expect(container.querySelector(".board-row__value")).toHaveTextContent(
+      "2 days"
+    )
+    expect(container.querySelector(".board-row__meta")).toHaveTextContent("ago")
   })
 
   // The habit tests all want the same card and differ only in which days are already marked; unlike the other kinds, none of them assert on the title or the preset.
@@ -590,6 +652,68 @@ describe("BoardRow", () => {
       ...item,
       settings: { ...item.settings, running: false, remainingMs: 0, endsAt: null }
     })
+  })
+
+  // Reaching zero settles every timer, but only a timer that asked for a chime is allowed to make a sound: an unasked-for one would be exactly the autoplay the product rules out.
+  it("stays silent when a finished timer did not opt into the chime", () => {
+    const item: Widget = {
+      id: "t",
+      kind: "timer",
+      title: "Tea",
+      colorPreset: "emerald",
+      settings: {
+        durationMs: 60_000,
+        running: true,
+        remainingMs: 60_000,
+        endsAt: 1000
+      }
+    }
+
+    render(<BoardRow item={item} now={new Date(50_000)} onWidgetChange={vi.fn()} />)
+
+    expect(vi.mocked(playChime)).not.toHaveBeenCalled()
+  })
+
+  it("sounds the chime once for a timer that opted in", () => {
+    const item: Widget = {
+      id: "t",
+      kind: "timer",
+      title: "Tea",
+      colorPreset: "emerald",
+      settings: {
+        durationMs: 60_000,
+        running: true,
+        remainingMs: 60_000,
+        endsAt: 1000,
+        chime: true
+      }
+    }
+
+    render(<BoardRow item={item} now={new Date(50_000)} onWidgetChange={vi.fn()} />)
+
+    expect(vi.mocked(playChime)).toHaveBeenCalledTimes(1)
+  })
+
+  it("does not warm up audio when starting a timer with no chime", () => {
+    const item: Widget = {
+      id: "t",
+      kind: "timer",
+      title: "Tea",
+      colorPreset: "emerald",
+      settings: {
+        durationMs: 60_000,
+        running: false,
+        remainingMs: 60_000,
+        endsAt: null,
+        chime: false
+      }
+    }
+
+    render(<BoardRow item={item} now={new Date(0)} onWidgetChange={vi.fn()} />)
+    fireEvent.click(screen.getByRole("button", { name: "Start" }))
+
+    // Priming builds an audio context off the user's gesture; a silent timer should never reach for one.
+    expect(vi.mocked(primeChime)).not.toHaveBeenCalled()
   })
 
   describe("with fake timers", () => {

@@ -3,7 +3,12 @@ import { readFileSync } from "node:fs"
 import type { Page } from "@playwright/test"
 
 import { expect, test } from "./fixtures"
-import { boxOf, cardByTitle } from "./helpers"
+import {
+  boxOf,
+  cardByTitle,
+  DEFAULT_BOARD_TITLES,
+  readWidgetSettings
+} from "./helpers"
 
 const openNewTab = async (page: Page, extensionId: string) => {
   await page.goto(`chrome-extension://${extensionId}/newtab.html`)
@@ -97,14 +102,7 @@ test("new tab page renders the default widgets and editing controls", async ({
   ).toHaveCount(0)
 
   const titles = page.locator(".board-row h2")
-  await expect(titles).toHaveText([
-    "🕒 Local time",
-    "🌅 Tomorrow morning",
-    "👋 Welcome",
-    "💬 Today's reminder",
-    "🚶 Daily walk",
-    "📅 This year"
-  ])
+  await expect(titles).toHaveText(DEFAULT_BOARD_TITLES)
 })
 
 test("centers the board in the viewport with no docking option", async ({
@@ -112,13 +110,9 @@ test("centers the board in the viewport with no docking option", async ({
   extensionId
 }) => {
   // A tall viewport keeps the short default board well within one screen.
-  await page.setViewportSize({ width: 1280, height: 1000 })
+  const viewport = { width: 1280, height: 1000 }
+  await page.setViewportSize(viewport)
   await openNewTab(page, extensionId)
-
-  const viewport = page.viewportSize()
-  if (!viewport) {
-    throw new Error("Unable to determine viewport size")
-  }
 
   // The board floats in the middle: clear of the omnibox suggestions that drop over the top of a new tab, without hugging the bottom.
   // There is no setting for this; it just works.
@@ -335,14 +329,9 @@ test("widget menu stays within the viewport when opened near the screen edge", a
   extensionId
 }) => {
   // A narrow viewport keeps the board single-column so a card spans to the right edge.
-  await page.setViewportSize({ width: 420, height: 800 })
+  const viewport = { width: 420, height: 800 }
+  await page.setViewportSize(viewport)
   await openNewTab(page, extensionId)
-
-  const viewport = page.viewportSize()
-
-  if (!viewport) {
-    throw new Error("Unable to determine viewport size")
-  }
 
   const card = cardByTitle(page, "🕒 Local time")
   const cardBox = await boxOf(card, "the widget card")
@@ -452,23 +441,10 @@ test("reordering changes the visible order and persists after reload", async ({
   await openNewTab(page, extensionId)
 
   const titles = page.locator(".board-row h2")
-  const defaultOrder = [
-    "🕒 Local time",
-    "🌅 Tomorrow morning",
-    "👋 Welcome",
-    "💬 Today's reminder",
-    "🚶 Daily walk",
-    "📅 This year"
-  ]
-  const swappedOrder = [
-    "🌅 Tomorrow morning",
-    "🕒 Local time",
-    "👋 Welcome",
-    "💬 Today's reminder",
-    "🚶 Daily walk",
-    "📅 This year"
-  ]
-  await expect(titles).toHaveText(defaultOrder)
+  const [clock, tomorrow, ...rest] = DEFAULT_BOARD_TITLES
+  const swappedOrder = [tomorrow, clock, ...rest]
+
+  await expect(titles).toHaveText(DEFAULT_BOARD_TITLES)
   await dragWidget(page, "🌅 Tomorrow morning", "🕒 Local time")
 
   await expect(titles).toHaveText(swappedOrder)
@@ -494,14 +470,8 @@ test("the menu's Move back reorders even after a widget was archived", async ({
   await addWidget(page, "clock", "New clock")
 
   const titles = page.locator(".board-list").first().locator("h2")
-  await expect(titles).toHaveText([
-    "🕒 Local time",
-    "🌅 Tomorrow morning",
-    "👋 Welcome",
-    "💬 Today's reminder",
-    "🚶 Daily walk",
-    "New clock"
-  ])
+  // "📅 This year" is archived, so the board is the first five defaults with the new card taking its place.
+  await expect(titles).toHaveText([...DEFAULT_BOARD_TITLES.slice(0, 5), "New clock"])
 
   // Moving the freshly added widget up steps above its visible neighbor instead of no-opping against the hidden archived widget beside it in storage.
   await openWidgetMenu(page, "New clock")
@@ -544,15 +514,7 @@ test("dragging across a widget body selects text instead of reordering", async (
   await openNewTab(page, extensionId)
 
   const titles = page.locator(".board-row h2")
-  const defaultOrder = [
-    "🕒 Local time",
-    "🌅 Tomorrow morning",
-    "👋 Welcome",
-    "💬 Today's reminder",
-    "🚶 Daily walk",
-    "📅 This year"
-  ]
-  await expect(titles).toHaveText(defaultOrder)
+  await expect(titles).toHaveText(DEFAULT_BOARD_TITLES)
 
   const heading = page.getByRole("heading", { name: "🕒 Local time" })
   const box = await boxOf(heading, "the widget heading")
@@ -566,7 +528,7 @@ test("dragging across a widget body selects text instead of reordering", async (
   await page.mouse.up()
 
   // The body is not a drag handle, so the order does not change...
-  await expect(titles).toHaveText(defaultOrder)
+  await expect(titles).toHaveText(DEFAULT_BOARD_TITLES)
 
   // ...and dragging over the text selects it instead.
   const selection = await page.evaluate(
@@ -582,15 +544,7 @@ test("the empty middle of a card is not a drag handle", async ({
   await openNewTab(page, extensionId)
 
   const titles = page.locator(".board-row h2")
-  const defaultOrder = [
-    "🕒 Local time",
-    "🌅 Tomorrow morning",
-    "👋 Welcome",
-    "💬 Today's reminder",
-    "🚶 Daily walk",
-    "📅 This year"
-  ]
-  await expect(titles).toHaveText(defaultOrder)
+  await expect(titles).toHaveText(DEFAULT_BOARD_TITLES)
 
   const card = cardByTitle(page, "🕒 Local time")
   const cardBox = await boxOf(card, "the card")
@@ -611,7 +565,7 @@ test("the empty middle of a card is not a drag handle", async ({
   await page.mouse.up()
 
   // And the order is unchanged.
-  await expect(titles).toHaveText(defaultOrder)
+  await expect(titles).toHaveText(DEFAULT_BOARD_TITLES)
 })
 
 test("only the draggable frame lights the card up on hover", async ({
@@ -684,22 +638,6 @@ test("the add menu closes on Escape and returns focus to its button", async ({
   await expect(trigger).toBeFocused()
 })
 
-test("add clock flow works from the new tab page", async ({
-  page,
-  extensionId
-}) => {
-  await openNewTab(page, extensionId)
-
-  await page.getByRole("button", { name: "Add widget" }).click()
-  await page.getByRole("button", { name: "Add clock" }).click()
-  await expect(page.getByRole("dialog", { name: "Add clock" })).toBeVisible()
-  await page.getByLabel("Name").fill("Paris")
-  await page.getByLabel("Time zone").fill("Europe/Paris")
-  await page.getByRole("button", { name: "Save clock" }).click()
-
-  await expect(page.getByRole("heading", { name: "Paris" })).toBeVisible()
-})
-
 test("multiple open tabs stay synchronized", async ({
   context,
   page,
@@ -724,6 +662,7 @@ test("multiple open tabs stay synchronized", async ({
   await page.getByLabel("Time zone").fill("Europe/Paris")
   await page.getByRole("button", { name: "Save clock" }).click()
 
+  await expect(page.getByRole("heading", { name: "Paris" })).toBeVisible()
   await expect(secondPage.getByRole("heading", { name: "Paris" })).toBeVisible()
   await expect(thirdPage.getByRole("heading", { name: "Paris" })).toBeVisible()
 
@@ -975,7 +914,7 @@ test("a habit dot fills in a day that was missed", async ({
   extensionId
 }) => {
   // Wednesday, so the week has days behind today to go back and fill in.
-  await page.clock.install({ time: new Date(2026, 2, 4, 10, 0, 0) })
+  await page.clock.install({ time: new Date("2026-03-04T10:00:00Z") })
   await openNewTab(page, extensionId)
 
   await addWidget(page, "habit", "Read")
@@ -1002,16 +941,7 @@ test("a habit dot fills in a day that was missed", async ({
   await expect(tuesday).toHaveAttribute("aria-pressed", "true")
   await expect(page.locator(".board-row--dragging")).toHaveCount(0)
 
-  const settings = await page.evaluate(async () => {
-    const stored = await chrome.storage.sync.get("dayboard-state")
-    const { widgets } = stored["dayboard-state"] as {
-      widgets: { title: string; settings: unknown }[]
-    }
-
-    return widgets.find((widget) => widget.title === "Read")?.settings
-  })
-
-  expect(settings).toEqual({ history: ["2026-03-02", "2026-03-03"] })
+  expect(await readWidgetSettings(page, "Read")).toEqual({ history: ["2026-03-02", "2026-03-03"] })
 })
 
 test("a todo list fills up on the card, persists, and clears again", async ({
@@ -1101,7 +1031,7 @@ test("a habit marked after midnight credits the new day", async ({
   extensionId
 }) => {
   // A new tab commonly sits open overnight, so the board has to roll over on its own: marking the habit must credit the day the user is actually in.
-  await page.clock.install({ time: new Date(2026, 2, 2, 23, 59, 0) })
+  await page.clock.install({ time: new Date("2026-03-02T23:59:00Z") })
   await openNewTab(page, extensionId)
 
   await addWidget(page, "habit", "Read")
@@ -1117,16 +1047,7 @@ test("a habit marked after midnight credits the new day", async ({
   await expect(card.getByRole("button", { name: "Done today ✓" })).toBeVisible()
 
   // The default board ships its own habit card, so read back the one added here.
-  const settings = await page.evaluate(async () => {
-    const stored = await chrome.storage.sync.get("dayboard-state")
-    const { widgets } = stored["dayboard-state"] as {
-      widgets: { title: string; settings: unknown }[]
-    }
-
-    return widgets.find((widget) => widget.title === "Read")?.settings
-  })
-
-  expect(settings).toEqual({ history: ["2026-03-03"] })
+  expect(await readWidgetSettings(page, "Read")).toEqual({ history: ["2026-03-03"] })
 })
 
 test("add and edit countdown works without a time-zone field", async ({
@@ -1291,16 +1212,6 @@ test("editing a recurring countdown's time keeps its other settings", async ({
   ).toContainText("repeats weekly")
 })
 
-test("edit dialog opens for an existing clock", async ({ page, extensionId }) => {
-  await openNewTab(page, extensionId)
-
-  await openWidgetMenu(page, "🕒 Local time")
-  await page.getByRole("menuitem", { name: "Edit 🕒 Local time" }).click()
-  await expect(page.getByRole("dialog", { name: "Edit clock" })).toBeVisible()
-  await expect(page.getByLabel("Name")).toHaveValue("🕒 Local time")
-  await expect(page.getByLabel("Time zone")).toBeVisible()
-})
-
 test("clicking the backdrop saves the edit dialog", async ({
   page,
   extensionId
@@ -1334,6 +1245,8 @@ test("pressing Escape closes the edit dialog and discards changes", async ({
   await openWidgetMenu(page, "🕒 Local time")
   await page.getByRole("menuitem", { name: "Edit 🕒 Local time" }).click()
   await expect(page.getByRole("dialog", { name: "Edit clock" })).toBeVisible()
+  // The dialog opens seeded with the widget's current title, so Escape has a real edit to discard.
+  await expect(page.getByLabel("Name")).toHaveValue("🕒 Local time")
 
   await page.getByLabel("Name").fill("Should not stick")
   await page.keyboard.press("Escape")
@@ -1452,11 +1365,6 @@ test("dragging a widget onto the archive zone archives it", async ({
 
   const card = cardByTitle(page, "🕒 Local time")
   const box = await boxOf(card, "the card being archived")
-  const viewport = page.viewportSize()
-
-  if (!viewport) {
-    throw new Error("Unable to determine viewport size")
-  }
 
   // Grab the draggable frame (top edge) and drag down onto the floating archive zone pinned near the bottom of the viewport.
   const grabX = box.x + box.width / 2
@@ -1646,14 +1554,8 @@ test("edit and delete controls still work after reordering", async ({
   await dragWidget(page, "🌅 Tomorrow morning", "🕒 Local time")
 
   const titles = page.locator(".board-row h2")
-  await expect(titles).toHaveText([
-    "🌅 Tomorrow morning",
-    "🕒 Local time",
-    "👋 Welcome",
-    "💬 Today's reminder",
-    "🚶 Daily walk",
-    "📅 This year"
-  ])
+  const [clock, tomorrow, ...rest] = DEFAULT_BOARD_TITLES
+  await expect(titles).toHaveText([tomorrow, clock, ...rest])
 
   await openWidgetMenu(page, "🌅 Tomorrow morning")
   await page.getByRole("menuitem", { name: "Edit 🌅 Tomorrow morning" }).click()

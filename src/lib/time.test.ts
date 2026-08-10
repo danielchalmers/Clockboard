@@ -4,6 +4,7 @@ import {
   dateTimeInputValueToIsoInstant,
   formatClockDate,
   formatClockTime,
+  formatCountdownTarget,
   formatRelativeCountdown,
   formatTimeZoneName,
   getCountdownParts,
@@ -156,6 +157,15 @@ describe("resolveCountdown", () => {
     expect(next.getTime() - now.getTime()).toBeLessThanOrEqual(60 * 60 * 1000)
   })
 
+  it("leaves an unreadable target alone rather than resolving it", () => {
+    // Stepping an Invalid Date forward would throw on toISOString, so the widget has
+    // to come back untouched and let the card report the problem instead.
+    const unreadable = countdownWidget("not a date", { repeat: "daily" })
+
+    expect(resolveCountdown(unreadable, now)).toBe(unreadable)
+    expect(resolveCountdown(unreadable, now).settings.targetAt).toBe("not a date")
+  })
+
   it("moves a repeating span's start with its target so the bar keeps its length", () => {
     const widget = countdownWidget(new Date(2026, 5, 17, 9, 0, 0).toISOString(), {
       startAt: new Date(2026, 5, 16, 9, 0, 0).toISOString(),
@@ -270,6 +280,18 @@ describe("getCountdownProgress", () => {
       getCountdownProgress(noStart, new Date("2026-02-01T00:00:00.000Z"))
     ).toBe(1)
   })
+
+  it("reads an unreadable target as an empty bar however far the start is", () => {
+    // A hand-edited or imported board can carry a target that does not parse. With no
+    // end to measure against, an empty bar is the honest answer rather than a full one.
+    const unreadable = countdownWidget("soon", {
+      startAt: "2026-01-01T00:00:00.000Z"
+    })
+
+    expect(
+      getCountdownProgress(unreadable, new Date("2027-01-01T00:00:00.000Z"))
+    ).toBe(0)
+  })
 })
 
 describe("getCountdownPercent", () => {
@@ -307,6 +329,13 @@ describe("datetime-local countdown conversions", () => {
       isoInstantToDateTimeInputValue(new Date(2026, 0, 2, 3, 4, 0, 0).toISOString())
     ).toBe("2026-01-02T03:04")
   })
+
+  it("leaves the input empty for a missing or unreadable instant", () => {
+    // The edit dialog runs every countdown through this to seed its field, including
+    // one with no start yet, so an empty control has to be the fallback for both.
+    expect(isoInstantToDateTimeInputValue("")).toBe("")
+    expect(isoInstantToDateTimeInputValue("soon")).toBe("")
+  })
 })
 
 describe("getCountdownParts", () => {
@@ -329,6 +358,24 @@ describe("getCountdownParts", () => {
     expect(parts.status).toBe("due")
     expect(parts.label).toBe("just now")
   })
+
+  it("reads an unreadable target as due rather than failing", () => {
+    const parts = getCountdownParts(
+      countdownWidget("soon"),
+      new Date("2026-01-01T00:00:00.000Z")
+    )
+
+    expect(parts.status).toBe("due")
+    expect(parts.label).toBe("less than a minute from now")
+  })
+})
+
+describe("formatCountdownTarget", () => {
+  it("says so plainly when the stored target cannot be read", () => {
+    // The only signal a corrupt countdown gives, since the relative label above reads
+    // as an ordinary imminent one.
+    expect(formatCountdownTarget(countdownWidget("soon"))).toBe("Invalid target")
+  })
 })
 
 describe("formatRelativeCountdown", () => {
@@ -341,6 +388,27 @@ describe("formatRelativeCountdown", () => {
   it("describes past targets without configuration", () => {
     expect(formatRelativeCountdown(-(3 * 3_600_000 + 12 * 60_000))).toBe(
       "3 hours, 12 minutes ago"
+    )
+  })
+
+  it("flips to counted minutes exactly at one minute", () => {
+    expect(formatRelativeCountdown(59_999)).toBe("less than a minute from now")
+    expect(formatRelativeCountdown(60_000)).toBe("1 minute from now")
+    expect(formatRelativeCountdown(-59_999)).toBe("just now")
+    expect(formatRelativeCountdown(-60_000)).toBe("1 minute ago")
+  })
+
+  it("treats the moment itself and an unreadable span as imminent", () => {
+    expect(formatRelativeCountdown(0)).toBe("less than a minute from now")
+    expect(formatRelativeCountdown(Number.NaN)).toBe("less than a minute from now")
+  })
+
+  it("skips an empty unit instead of leaving a gap", () => {
+    // Two days and nine minutes has no hours to show, and the minutes take the second
+    // slot rather than the card reading "2 days, 0 hours".
+    expect(formatRelativeCountdown(2 * 86_400_000)).toBe("2 days from now")
+    expect(formatRelativeCountdown(2 * 86_400_000 + 9 * 60_000)).toBe(
+      "2 days, 9 minutes from now"
     )
   })
 })

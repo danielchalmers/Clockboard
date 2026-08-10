@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { STORED_DAYS, toDayKey } from "./habit"
@@ -379,5 +381,47 @@ describe("watchDayboardState", () => {
 
     stopWatching()
     expect(removeListener).toHaveBeenCalledWith(listener)
+  })
+
+  it("ignores a sync write to some other key", async () => {
+    const { addListener } = stubChromeStorage()
+
+    const { watchDayboardState } = await import("./storage")
+    const handleChange = vi.fn()
+    watchDayboardState(handleChange)
+
+    const listener = addListener.mock.calls[0]?.[0]
+    listener?.({ "some-other-key": { newValue: {} } }, "sync")
+
+    expect(handleChange).not.toHaveBeenCalled()
+  })
+
+  it("falls back to a default board when another device clears the key", async () => {
+    const { addListener } = stubChromeStorage()
+
+    const { readCachedDayboardState, watchDayboardState } = await import(
+      "./storage"
+    )
+    const cachedWhenNotified: (DayboardState | null)[] = []
+    const handleChange = vi.fn<(next: DayboardState) => void>(() => {
+      cachedWhenNotified.push(readCachedDayboardState())
+    })
+    watchDayboardState(handleChange)
+
+    // Clearing sync storage elsewhere arrives as a change with an oldValue and no newValue.
+    const listener = addListener.mock.calls[0]?.[0]
+    listener?.({ [STORAGE_KEY]: { oldValue: sampleState } }, "sync")
+
+    const [next] = handleChange.mock.calls[0] as [DayboardState]
+    expect(next.widgets.map((widget) => widget.kind)).toEqual([
+      "clock",
+      "countdown",
+      "note",
+      "quote",
+      "habit",
+      "countdown"
+    ])
+    // The mirror is written before the listener runs, so a tab reloading in the middle of the sync hydrates to the same board rather than the one that was just cleared.
+    expect(cachedWhenNotified[0]).toEqual(next)
   })
 })
