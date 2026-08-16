@@ -68,6 +68,12 @@ export const ItemDialog = ({
 
   const submitLabel = mode === "add" ? `Save ${draft.kind}` : "Save changes"
 
+  // What the Starting from field shows right now: the raw string mid-edit, else the stored start.
+  const startValue =
+    draft.kind === "countdown"
+      ? startInput ?? isoInstantToDateTimeInputValue(draft.settings.startAt ?? "")
+      : ""
+
   const updateTitle = (title: string) => {
     setDraft((current) => (current ? { ...current, title } : current))
   }
@@ -256,18 +262,42 @@ export const ItemDialog = ({
 
                 <label className="form-label-group">
                   <span>Starting from</span>
-                  <input
-                    onChange={(event) => updateStartAt(event.currentTarget.value)}
-                    type="datetime-local"
-                    value={
-                      startInput ??
-                      isoInstantToDateTimeInputValue(draft.settings.startAt ?? "")
-                    }
-                  />
+                  <div className="input-adorned">
+                    <input
+                      onChange={(event) =>
+                        updateStartAt(event.currentTarget.value)
+                      }
+                      type="datetime-local"
+                      value={startValue}
+                    />
+                    {startValue !== "" ? (
+                      <button
+                        aria-label="Clear starting from"
+                        className="input-adorned__clear"
+                        onClick={() => updateStartAt("")}
+                        title="Clear"
+                        type="button">
+                        <svg
+                          aria-hidden="true"
+                          fill="none"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          width="14">
+                          <path
+                            d="M6 6l12 12M18 6 6 18"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeWidth="2"
+                          />
+                        </svg>
+                      </button>
+                    ) : null}
+                  </div>
                 </label>
                 <p className="form-note">
-                  The card fills a bar from here to the target. Clear it to show
-                  the time remaining instead.
+                  Optional. Set a start and the card becomes a progress bar
+                  filling from there to the target; leave it empty to show the
+                  time remaining.
                 </p>
               </>
             ) : null}

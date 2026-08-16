@@ -243,6 +243,28 @@ describe("ItemDialog", () => {
     expect(saved(onSave).settings.targetAt).toBe(countdownItem.settings.targetAt)
   })
 
+  it("clears a countdown's start from the field's clear button", () => {
+    const onSave = vi.fn()
+
+    render(itemDialog({ item: countdownItem, onSave }))
+
+    expect(screen.getByLabelText("Starting from")).toHaveValue("2026-01-01T09:00")
+
+    fireEvent.click(screen.getByRole("button", { name: "Clear starting from" }))
+
+    expect(screen.getByLabelText("Starting from")).toHaveValue("")
+    // With nothing left to clear, the button steps out of the way.
+    expect(
+      screen.queryByRole("button", { name: "Clear starting from" })
+    ).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+
+    expect(saved(onSave).settings.startAt).toBeUndefined()
+    // Clearing the start must not disturb the target.
+    expect(saved(onSave).settings.targetAt).toBe(countdownItem.settings.targetAt)
+  })
+
   it("keeps an hourly repeat on a countdown", () => {
     const onSave = vi.fn()
 

@@ -56,8 +56,7 @@ export interface CountdownWidget extends WidgetBase {
     targetAt: string
     /**
      * Span start for the progress bar (the target is the span end).
-     * Setting a start is what turns the card into a progress bar; clearing it goes back to the remaining-time text.
-     * New countdowns start from their creation time, so a bar is the default without asking.
+     * Setting a start is what turns the card into a progress bar; clearing it (the default for a new countdown) shows the remaining-time text.
      */
     startAt?: string
     /** When set, the target rolls forward to the next occurrence as it passes. */

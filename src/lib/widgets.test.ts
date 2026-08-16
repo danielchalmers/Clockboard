@@ -41,12 +41,12 @@ describe("createWidget", () => {
     expect(new Set(presets).size).toBeGreaterThan(1)
   })
 
-  it("starts a countdown's span at the moment it is added", () => {
+  it("leaves a new countdown's start empty, so the card shows time remaining", () => {
     const now = new Date(2026, 5, 19, 12, 34, 0)
     const countdown = createActualWidget("countdown", now)
 
-    // A start is what makes the card a progress bar, so a brand-new countdown fills toward its target without anyone choosing a display.
-    expect(countdown.settings.startAt).toBe(now.toISOString())
+    // A start is what makes the card a progress bar, and that is opt-in from the dialog's Starting from field rather than pre-filled.
+    expect(countdown.settings.startAt).toBeUndefined()
     expect(new Date(countdown.settings.targetAt).getTime()).toBeGreaterThan(
       now.getTime()
     )

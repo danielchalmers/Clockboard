@@ -1076,7 +1076,7 @@ test("add and edit countdown works without a time-zone field", async ({
   await expect(page.getByRole("heading", { name: "Launch day" })).toBeVisible()
 })
 
-test("a new countdown fills a progress bar from when it was added", async ({
+test("a countdown's start is empty by default and setting one makes a bar", async ({
   page,
   extensionId
 }) => {
@@ -1085,8 +1085,8 @@ test("a new countdown fills a progress bar from when it was added", async ({
   await page.getByRole("button", { name: "Add widget" }).click()
   await page.getByRole("button", { name: "Add countdown" }).click()
 
-  // The start is prefilled with the moment the widget was added, so the bar needs no setup at all.
-  await expect(page.getByLabel("Starting from")).not.toHaveValue("")
+  // The start is not prefilled: a new countdown shows the time remaining, and the progress bar is opt-in from this field.
+  await expect(page.getByLabel("Starting from")).toHaveValue("")
   await page.getByLabel("Name").fill("Project")
   await page.getByLabel("When").fill("2099-12-31T00:00")
   await page.getByLabel("Starting from").fill("2020-01-01T00:00")
@@ -1107,7 +1107,7 @@ test("a new countdown fills a progress bar from when it was added", async ({
   ).toBeVisible()
 })
 
-test("clearing a countdown's start goes back to the time remaining", async ({
+test("the clear button empties a countdown's start and goes back to the time remaining", async ({
   page,
   extensionId
 }) => {
@@ -1119,6 +1119,11 @@ test("clearing a countdown's start goes back to the time remaining", async ({
   await page.getByRole("button", { name: "Add countdown" }).click()
   await page.getByLabel("Name").fill("Project")
   await page.getByLabel("When").fill("2099-12-31T00:00")
+  // An empty start has no clear button to press; it appears once there is something to clear.
+  await expect(
+    page.getByRole("button", { name: "Clear starting from" })
+  ).toHaveCount(0)
+  await page.getByLabel("Starting from").fill("2020-01-01T00:00")
   await page.getByRole("button", { name: "Save countdown" }).click()
 
   const card = cardByTitle(page, "Project")
@@ -1126,7 +1131,8 @@ test("clearing a countdown's start goes back to the time remaining", async ({
 
   await openWidgetMenu(page, "Project")
   await page.getByRole("menuitem", { name: "Edit Project" }).click()
-  await page.getByLabel("Starting from").fill("")
+  await page.getByRole("button", { name: "Clear starting from" }).click()
+  await expect(page.getByLabel("Starting from")).toHaveValue("")
   await page.getByRole("button", { name: "Save changes" }).click()
 
   await expect(card.getByRole("progressbar")).toHaveCount(0)
@@ -1145,7 +1151,6 @@ test("a recurring countdown rolls forward to its next occurrence", async ({
   // A target well in the past; weekly repeat should surface a future occurrence.
   await page.getByLabel("When").fill("2020-01-06T09:00")
   await page.getByLabel("Repeats").selectOption("weekly")
-  await page.getByLabel("Starting from").fill("")
   await page.getByRole("button", { name: "Save countdown" }).click()
 
   const card = cardByTitle(page, "Standup")
@@ -1169,7 +1174,6 @@ test("an hourly countdown rolls forward within the hour", async ({
   // Years of missed occurrences still resolve to the coming hour.
   await page.getByLabel("When").fill("2020-01-06T09:15")
   await page.getByLabel("Repeats").selectOption("hourly")
-  await page.getByLabel("Starting from").fill("")
   await page.getByRole("button", { name: "Save countdown" }).click()
 
   const card = cardByTitle(page, "Stand up and stretch")

@@ -1273,6 +1273,31 @@ select:focus {
   outline: 0;
 }
 
+/* A field with a small control riding inside its right edge (sitting clear of a datetime field's native picker icon). */
+.input-adorned {
+  position: relative;
+}
+
+.input-adorned__clear {
+  align-items: center;
+  block-size: 26px;
+  border-radius: 8px;
+  color: var(--muted);
+  display: inline-flex;
+  inline-size: 26px;
+  inset-block-start: 50%;
+  inset-inline-end: 42px;
+  justify-content: center;
+  position: absolute;
+  transform: translateY(-50%);
+  transition: background-color var(--t-micro), color var(--t-fast);
+}
+
+.input-adorned__clear:hover {
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
 .form-note {
   color: var(--muted);
   font-size: 0.88rem;
