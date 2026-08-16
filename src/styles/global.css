@@ -447,11 +447,10 @@ details > summary::-webkit-details-marker {
 }
 
 /* ── Kind chips ────────────────────────────────────────────────────────────
-   Each widget kind wears its own hue in the edit dialog, where the chip stands for one particular card.
-   The hues echo the card presets. */
+   Every kind chip — in the add menu and in the item dialog alike — takes the browser's accent: one calm color everywhere, with the glyph left to say which kind it is. */
 
 .menu-chip {
-  --chip: hsl(220, 25%, 50%);
+  --chip: var(--accent);
   align-items: center;
   background: color-mix(in srgb, var(--chip) 15%, transparent);
   border-radius: 10px;
@@ -467,31 +466,6 @@ details > summary::-webkit-details-marker {
   block-size: 44px;
   inline-size: 44px;
   border-radius: 14px;
-}
-
-/* The add menu is a list of actions, not a set of existing cards, so its chips drop the per-kind hues and take the browser's accent: one calm color for the whole menu, with the glyph left to say which kind each row is. */
-.add-menu__panel .menu-chip {
-  --chip: var(--accent);
-}
-
-.menu-chip--clock { --chip: hsl(208, 95%, 46%); }
-.menu-chip--countdown { --chip: hsl(243, 80%, 56%); }
-.menu-chip--note { --chip: hsl(160, 90%, 32%); }
-.menu-chip--quote { --chip: hsl(275, 80%, 52%); }
-.menu-chip--stopwatch { --chip: hsl(186, 95%, 31%); }
-.menu-chip--timer { --chip: hsl(14, 85%, 50%); }
-.menu-chip--habit { --chip: hsl(33, 95%, 42%); }
-.menu-chip--todo { --chip: hsl(134, 70%, 36%); }
-
-@media (prefers-color-scheme: dark) {
-  .menu-chip--clock { --chip: hsl(204, 95%, 62%); }
-  .menu-chip--countdown { --chip: hsl(238, 90%, 72%); }
-  .menu-chip--note { --chip: hsl(158, 80%, 52%); }
-  .menu-chip--quote { --chip: hsl(275, 85%, 70%); }
-  .menu-chip--stopwatch { --chip: hsl(183, 85%, 52%); }
-  .menu-chip--timer { --chip: hsl(14, 90%, 66%); }
-  .menu-chip--habit { --chip: hsl(40, 95%, 60%); }
-  .menu-chip--todo { --chip: hsl(134, 75%, 58%); }
 }
 
 /* ── Board Layout ──────────────────────────────────────────────────────── */

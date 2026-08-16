@@ -275,7 +275,7 @@ export function NewTabPage() {
                     type="button">
                     <span
                       aria-hidden="true"
-                      className={`menu-chip menu-chip--${kind}`}>
+                      className="menu-chip">
                       <WidgetIcon kind={kind} size={18} />
                     </span>
                     <span className="menu-button__text">

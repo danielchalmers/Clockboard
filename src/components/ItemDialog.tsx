@@ -178,7 +178,7 @@ export const ItemDialog = ({
         <div className="modal-dialog__header modal-dialog__header--with-badge">
           <span
             aria-hidden="true"
-            className={`menu-chip menu-chip--${draft.kind} menu-chip--large`}>
+            className="menu-chip menu-chip--large">
             <WidgetIcon kind={draft.kind} size={22} />
           </span>
           <h2 className="modal-dialog__title" id="item-dialog-title">
