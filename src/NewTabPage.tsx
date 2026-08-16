@@ -386,6 +386,22 @@ export function NewTabPage() {
                       onClick={() => setShowArchived((shown) => !shown)}
                       type="button">
                       {showArchived ? "Hide archived" : "Show archived"}
+                      {/* The chevron says this is a disclosure; flipping it is the open/closed state made visible. */}
+                      <svg
+                        aria-hidden="true"
+                        className="archive-toggle__chevron"
+                        fill="none"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        width="14">
+                        <path
+                          d="m6 9 6 6 6-6"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                        />
+                      </svg>
                     </button>
                     {showArchived ? (
                       <BoardList

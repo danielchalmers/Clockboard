@@ -520,15 +520,27 @@ details > summary::-webkit-details-marker {
 
 /* The archive is a footnote to the board, not a second section of it: the toggle sits back in the quiet ink at a small size and only steps forward to the normal text color once you are actually pointing at it. */
 .archive-toggle {
+  align-items: center;
   border: 1px solid transparent;
   border-radius: 999px;
   color: var(--quiet);
+  display: inline-flex;
   font-size: 0.82rem;
   font-weight: 450;
+  gap: 5px;
   justify-self: center;
   min-block-size: 34px;
   padding: 6px 16px;
   transition: background-color var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+
+/* Down while the archive is tucked away, up once it is out. */
+.archive-toggle__chevron {
+  transition: transform var(--t-fast);
+}
+
+.archive-toggle[aria-expanded="true"] .archive-toggle__chevron {
+  transform: rotate(180deg);
 }
 
 .archive-toggle:hover {
