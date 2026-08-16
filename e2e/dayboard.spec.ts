@@ -1312,7 +1312,7 @@ test("archiving from the menu hides a widget and it can be restored", async ({
   await expect(
     page.locator(".board-list").first().getByText("🌅 Tomorrow morning")
   ).toHaveCount(0)
-  const toggle = page.getByRole("button", { name: "Show archived (1)" })
+  const toggle = page.getByRole("button", { name: "Show archived" })
   await expect(toggle).toBeVisible()
 
   // Reveal it, then restore it back to the board.
@@ -1388,7 +1388,7 @@ test("dragging a widget onto the archive zone archives it", async ({
   await expect(
     page.locator(".board-list").first().getByText("🕒 Local time")
   ).toHaveCount(0)
-  await expect(page.getByRole("button", { name: "Show archived (1)" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Show archived" })).toBeVisible()
 })
 
 test("a card dragged toward the archive follows the cursor instead of snapping back", async ({
@@ -1441,7 +1441,7 @@ test("dragging an archived widget onto a board card restores it into that slot",
   // Archive then reveal the archived section.
   await openWidgetMenu(page, "🌅 Tomorrow morning")
   await page.getByRole("menuitem", { name: "Archive 🌅 Tomorrow morning" }).click()
-  await page.getByRole("button", { name: "Show archived (1)" }).click()
+  await page.getByRole("button", { name: "Show archived" }).click()
 
   const box = await boxOf(cardByTitle(page, "🌅 Tomorrow morning"), "the archived card")
 
@@ -1510,7 +1510,7 @@ test("dragging an archived widget onto an empty board restores it", async ({
     page.getByRole("heading", { name: "A fresh start" })
   ).toBeVisible()
 
-  await page.getByRole("button", { name: "Show archived (1)" }).click()
+  await page.getByRole("button", { name: "Show archived" }).click()
 
   const box = await boxOf(cardByTitle(page, last!), "the archived card")
 

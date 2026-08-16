@@ -385,9 +385,7 @@ export function NewTabPage() {
                       className="archive-toggle"
                       onClick={() => setShowArchived((shown) => !shown)}
                       type="button">
-                      {showArchived
-                        ? "Hide archived"
-                        : `Show archived (${archivedWidgets.length})`}
+                      {showArchived ? "Hide archived" : "Show archived"}
                     </button>
                     {showArchived ? (
                       <BoardList

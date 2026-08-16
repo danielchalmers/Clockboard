@@ -115,7 +115,8 @@ test("the archived toggle flips its label and tucks the list away again", async 
 
   // One locator for both states, since the label is the thing under test and an exact name would stop matching the moment it flips.
   const toggle = page.getByRole("button", { name: /archived/ })
-  await expect(toggle).toHaveAccessibleName("Show archived (1)")
+  // No count in the label: a tally beside "Show archived" is a little pull on the eye every time the tab opens.
+  await expect(toggle).toHaveAccessibleName("Show archived")
   await expect(toggle).toHaveAttribute("aria-expanded", "false")
 
   await toggle.click()
@@ -126,6 +127,6 @@ test("the archived toggle flips its label and tucks the list away again", async 
   // The toggle is a two-way disclosure: clicking again puts the archive back out of sight, which is what keeps the active board the focus.
   await toggle.click()
   await expect(page.getByText("🌅 Tomorrow morning")).toHaveCount(0)
-  await expect(toggle).toHaveAccessibleName("Show archived (1)")
+  await expect(toggle).toHaveAccessibleName("Show archived")
   await expect(toggle).toHaveAttribute("aria-expanded", "false")
 })
