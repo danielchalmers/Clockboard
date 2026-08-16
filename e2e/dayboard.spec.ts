@@ -645,6 +645,56 @@ test("the add menu closes on Escape and returns focus to its button", async ({
   await expect(trigger).toBeFocused()
 })
 
+test("clicking the time zone box offers every zone, not just matches", async ({
+  page,
+  extensionId
+}) => {
+  await openNewTab(page, extensionId)
+
+  await page.getByRole("button", { name: "Add widget" }).click()
+  await page.getByRole("button", { name: "Add clock" }).click()
+
+  const field = page.getByLabel("Time zone")
+  await field.click()
+
+  // The whole list opens on a plain click: the system option leads it, and zones from anywhere are on offer rather than only ones matching the box's contents.
+  const listbox = page.locator(".tz-field__listbox")
+  await expect(listbox).toBeVisible()
+  await expect(
+    listbox.getByRole("option", { name: "System time zone" })
+  ).toBeVisible()
+  await expect(listbox.getByRole("option", { name: "Asia/Tokyo" })).toHaveCount(1)
+  await expect(listbox.getByRole("option", { name: "Europe/Berlin" })).toHaveCount(1)
+
+  // Typing narrows it; choosing fills the box.
+  await field.pressSequentially("tokyo")
+  await expect(listbox.getByRole("option")).toHaveCount(1)
+  await listbox.getByRole("option", { name: "Asia/Tokyo" }).click()
+  await expect(field).toHaveValue("Asia/Tokyo")
+  await expect(listbox).toHaveCount(0)
+
+  // Clicking the filled box brings back the whole list, with the current zone marked.
+  await field.click()
+  await expect(
+    listbox.getByRole("option", { name: "Europe/Berlin" })
+  ).toHaveCount(1)
+  await expect(listbox.getByRole("option", { name: "Asia/Tokyo" })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  )
+
+  // Escape puts the list away without taking the dialog with it.
+  await page.keyboard.press("Escape")
+  await expect(listbox).toHaveCount(0)
+  await expect(page.getByRole("dialog", { name: "Add clock" })).toBeVisible()
+
+  await page.getByLabel("Name").fill("Tokyo")
+  await page.getByRole("button", { name: "Save clock" }).click()
+  expect(await readWidgetSettings(page, "Tokyo")).toEqual({
+    timeZone: "Asia/Tokyo"
+  })
+})
+
 test("multiple open tabs stay synchronized", async ({
   context,
   page,

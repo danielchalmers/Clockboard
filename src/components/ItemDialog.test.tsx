@@ -153,7 +153,7 @@ describe("ItemDialog", () => {
 
     render(itemDialog({ onSave }))
 
-    fireEvent.change(screen.getByLabelText("Time zone (type to search)"), {
+    fireEvent.change(screen.getByLabelText("Time zone"), {
       target: { value: "Europe/Berlin" }
     })
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
@@ -166,7 +166,7 @@ describe("ItemDialog", () => {
 
     render(itemDialog({ onSave }))
 
-    const field = screen.getByLabelText("Time zone (type to search)")
+    const field = screen.getByLabelText("Time zone")
     // No zone is a real choice (the system clock), so the field must not demand one.
     expect(field).not.toBeRequired()
 
@@ -183,7 +183,7 @@ describe("ItemDialog", () => {
     expect(screen.getAllByRole("textbox").map(fieldName)).toEqual(["Name"])
     // A native select would answer to combobox too, which is how an hour-format dropdown would show up here.
     expect(screen.getAllByRole("combobox").map(fieldName)).toEqual([
-      "Time zone (type to search)"
+      "Time zone"
     ])
     expect(screen.queryByRole("switch")).not.toBeInTheDocument()
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()

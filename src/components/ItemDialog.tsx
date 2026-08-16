@@ -3,7 +3,6 @@ import { useMemo, useRef, useState } from "react"
 import { useModalFocus } from "~/hooks/useModalFocus"
 import {
   dateTimeInputValueToIsoInstant,
-  getTimeZoneOptions,
   isoInstantToDateTimeInputValue
 } from "~/lib/time"
 import { quotesToText, textToQuotes } from "~/lib/quotes"
@@ -17,6 +16,7 @@ import type {
 } from "~/lib/types"
 import { widgetRegistry } from "~/lib/widgets"
 import { ColorPresetPicker } from "~/components/ColorPresetPicker"
+import { TimeZoneField } from "~/components/TimeZoneField"
 import { WidgetIcon } from "~/components/WidgetIcon"
 
 interface ItemDialogProps {
@@ -26,8 +26,6 @@ interface ItemDialogProps {
   onClose: () => void
   onSave: (item: Widget) => void
 }
-
-const timeZones = getTimeZoneOptions()
 
 export const ItemDialog = ({
   isOpen,
@@ -217,18 +215,10 @@ export const ItemDialog = ({
             />
 
             {draft.kind === "clock" ? (
-              <label className="form-label-group">
-                {/* It looks like a plain text box, but it is backed by the full IANA list, which is worth saying or you would type a city and lose.
-                    Left empty, the clock simply follows the system, so the field is not required. */}
-                <span>Time zone (type to search)</span>
-                <input
-                  list="dayboard-time-zones"
-                  onChange={(event) => updateTimeZone(event.currentTarget.value)}
-                  type="text"
-                  value={draft.settings.timeZone}
-                  placeholder="System time zone"
-                />
-              </label>
+              <TimeZoneField
+                onChange={updateTimeZone}
+                value={draft.settings.timeZone}
+              />
             ) : null}
 
             {draft.kind === "countdown" ? (
@@ -430,12 +420,6 @@ export const ItemDialog = ({
             </button>
           </div>
         </form>
-
-        <datalist id="dayboard-time-zones">
-          {timeZones.map((timeZone) => (
-            <option key={timeZone} value={timeZone} />
-          ))}
-        </datalist>
       </section>
     </div>
   )
