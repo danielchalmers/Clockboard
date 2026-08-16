@@ -20,7 +20,7 @@ const dragWidget = async (page: Page, sourceTitle: string, targetTitle: string) 
   const sourceBox = await boxOf(cardByTitle(page, sourceTitle), "the dragged card")
   const targetBox = await boxOf(cardByTitle(page, targetTitle), "the drop target card")
 
-  // Grab the draggable frame (the padded top edge), not the body, which is no longer a drag handle.
+  // Grab the card background near the top edge, clear of the title text (text in front of the frame selects rather than drags).
   // Move by the center-to-center delta so the card still lands on the target's position regardless of where it was grabbed.
   const grabX = sourceBox.x + sourceBox.width / 2
   const grabY = sourceBox.y + 12
@@ -537,7 +537,7 @@ test("dragging across a widget body selects text instead of reordering", async (
   expect(selection.length).toBeGreaterThan(0)
 })
 
-test("the empty middle of a card is not a drag handle", async ({
+test("the empty middle of a card is a drag handle too", async ({
   page,
   extensionId
 }) => {
@@ -550,21 +550,20 @@ test("the empty middle of a card is not a drag handle", async ({
   const cardBox = await boxOf(card, "the card")
   const headerBox = await boxOf(card.locator(".board-row__header"), "the card header")
 
-  // A point in the empty gap between the header and the body, interior space that the drag frame's donut hole now excludes.
-  // Pressing and moving here must not start a drag (only the surrounding edge is a handle).
+  // A point in the empty gap between the header and the body: card background, so pressing and moving here grabs the card, not just the padded edge.
   const x = cardBox.x + cardBox.width / 2
   const y = headerBox.y + headerBox.height + 12
 
   await page.mouse.move(x, y)
   await page.mouse.down()
-  await page.mouse.move(x, y + 80, { steps: 12 })
+  await page.mouse.move(x, y + 24, { steps: 6 })
 
-  // No card entered the dragging state, so the press did not grab anything.
-  await expect(page.locator(".board-row--dragging")).toHaveCount(0)
+  // The card entered the dragging state from its background.
+  await expect(page.locator(".board-row--dragging")).toHaveCount(1)
 
+  // Released over its own slot, so nothing reorders.
   await page.mouse.up()
-
-  // And the order is unchanged.
+  await expect(page.locator(".board-row--dragging")).toHaveCount(0)
   await expect(titles).toHaveText(DEFAULT_BOARD_TITLES)
 })
 
