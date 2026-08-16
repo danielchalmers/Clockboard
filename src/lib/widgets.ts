@@ -1,6 +1,5 @@
 import { randomColorPreset } from "./colors"
 import {
-  DEFAULT_TIME_ZONE,
   type ClockWidget,
   type CountdownWidget,
   type NoteWidget,
@@ -30,10 +29,11 @@ const createBase = <K extends WidgetKind>(kind: K, title: string) => ({
   colorPreset: randomColorPreset()
 })
 
+// An empty zone follows the system clock, so a new card is right wherever the device is until a zone is chosen.
 const createClockWidget = (): ClockWidget => ({
   ...createBase("clock", "New clock"),
   settings: {
-    timeZone: DEFAULT_TIME_ZONE
+    timeZone: ""
   }
 })
 

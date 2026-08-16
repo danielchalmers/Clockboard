@@ -161,6 +161,21 @@ describe("ItemDialog", () => {
     expect(saved(onSave).settings.timeZone).toBe("Europe/Berlin")
   })
 
+  it("clears a clock's time zone so it follows the system clock", () => {
+    const onSave = vi.fn()
+
+    render(itemDialog({ onSave }))
+
+    const field = screen.getByLabelText("Time zone (type to search)")
+    // No zone is a real choice (the system clock), so the field must not demand one.
+    expect(field).not.toBeRequired()
+
+    fireEvent.change(field, { target: { value: "" } })
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+
+    expect(saved(onSave).settings.timeZone).toBe("")
+  })
+
   // A clock reads the system's own hour format, so an editor that offered seconds or a 12/24-hour choice would be a knob with nothing behind it.
   it("offers no seconds or hour-format knobs on a clock", () => {
     render(itemDialog())

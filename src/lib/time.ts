@@ -104,16 +104,21 @@ export const isKnownTimeZone = (timeZone: string): boolean => {
   return known
 }
 
+// The zone the device is in right now, asked fresh on every call rather than once at module load.
+// An empty zone on a clock means "follow the system", and following means noticing: resolving here is what lets an open tab pick up the machine changing zones (travel, DST regions), because the resolved name keys a fresh cached formatter.
+export const getSystemTimeZone = (): string =>
+  Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
+
 export const formatClockTime = (date: Date, widget: ClockWidget): string =>
   getFormatter({
-    timeZone: widget.settings.timeZone,
+    timeZone: widget.settings.timeZone || getSystemTimeZone(),
     hour: "numeric",
     minute: "2-digit"
   }).format(date)
 
 export const formatClockDate = (date: Date, timeZone: string): string =>
   getFormatter({
-    timeZone,
+    timeZone: timeZone || getSystemTimeZone(),
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -122,7 +127,7 @@ export const formatClockDate = (date: Date, timeZone: string): string =>
 
 export const formatTimeZoneName = (date: Date, timeZone: string): string => {
   const parts = getFormatter({
-    timeZone,
+    timeZone: timeZone || getSystemTimeZone(),
     timeZoneName: "short"
   }).formatToParts(date)
 

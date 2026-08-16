@@ -44,6 +44,26 @@ describe("BoardRow", () => {
     expect(article).toHaveAttribute("data-color-preset", "rose")
   })
 
+  it("renders a clock with no zone as the system clock, and says so", () => {
+    const item: Widget = {
+      id: "here",
+      kind: "clock",
+      title: "Here",
+      colorPreset: "sky",
+      settings: {
+        timeZone: ""
+      }
+    }
+
+    render(<BoardRow item={item} now={new Date("2026-01-01T12:30:00.000Z")} />)
+
+    // The card names the arrangement, not whatever zone the device happens to be in today.
+    expect(screen.getByText("System time zone")).toBeInTheDocument()
+    // And it does not read as a mistyped zone.
+    expect(screen.queryByText(/unrecognized/)).toBeNull()
+    expect(screen.getByLabelText("Here time")).not.toBeEmptyDOMElement()
+  })
+
   // The time zone is a free-text field, so a card can be saved with something Intl refuses to build a formatter for.
   // Every clock formatter runs from this render, so an unguarded throw here blanks the whole board over one mistyped zone.
   it("renders a clock card whose time zone is not a real one, saying so", () => {

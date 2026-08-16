@@ -14,6 +14,7 @@ import {
   formatClockTime,
   formatCountdownTarget,
   formatTimeZoneName,
+  getSystemTimeZone,
   getCountdownParts,
   getCountdownPercent,
   getCountdownProgress,
@@ -619,13 +620,17 @@ export const BoardRow = forwardRef<HTMLElement, BoardRowProps>(function BoardRow
 
   if (item.kind === "clock") {
     const { timeZone } = item.settings
-    // The zone is free text, so a card can be saved with a name no browser knows, and the formatters answer that with local time.
+    // An empty zone follows the system clock, so the card says that rather than naming the zone it happens to be in today.
+    // Otherwise the zone is free text, so a card can be saved with a name no browser knows, and the formatters answer that with local time.
     // Say so on the card: the alternative is passing your own time off as somewhere else's, which is worse than a clock that admits it is lost.
-    const detail = !isKnownTimeZone(timeZone)
-      ? `${timeZone} — unrecognized, showing your local time`
-      : timeZone === Intl.DateTimeFormat().resolvedOptions().timeZone
-        ? "Your current time zone"
-        : timeZone
+    const detail =
+      timeZone === ""
+        ? "System time zone"
+        : !isKnownTimeZone(timeZone)
+          ? `${timeZone} — unrecognized, showing your local time`
+          : timeZone === getSystemTimeZone()
+            ? "Your current time zone"
+            : timeZone
 
     return (
       <CardShell {...shell} detail={detail} ref={ref}>

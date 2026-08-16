@@ -41,6 +41,10 @@ describe("createWidget", () => {
     expect(new Set(presets).size).toBeGreaterThan(1)
   })
 
+  it("leaves a new clock's zone empty, so it follows the system clock", () => {
+    expect(createActualWidget("clock").settings.timeZone).toBe("")
+  })
+
   it("leaves a new countdown's start empty, so the card shows time remaining", () => {
     const now = new Date(2026, 5, 19, 12, 34, 0)
     const countdown = createActualWidget("countdown", now)

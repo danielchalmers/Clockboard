@@ -98,6 +98,18 @@ describe("clock formatters", () => {
     )
   })
 
+  it("reads the system clock when the zone is left empty", () => {
+    expect(formatClockTime(instant, clockWidget(""))).toBe(
+      formatClockTime(instant, clockWidget(localZone))
+    )
+    expect(formatClockDate(instant, "")).toBe(
+      formatClockDate(instant, localZone)
+    )
+    expect(formatTimeZoneName(instant, "")).toBe(
+      formatTimeZoneName(instant, localZone)
+    )
+  })
+
   it("tells a known zone from an unknown one", () => {
     expect(isKnownTimeZone("UTC")).toBe(true)
     expect(isKnownTimeZone("Asia/Tokyo")).toBe(true)

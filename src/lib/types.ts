@@ -38,6 +38,10 @@ export interface WidgetBase {
 export interface ClockWidget extends WidgetBase {
   kind: "clock"
   settings: {
+    /**
+     * IANA zone name, or empty to follow the system clock.
+     * An empty zone is the default for a new clock: the card reads whatever zone the device is in right now, so it changes with the machine when traveling.
+     */
     timeZone: string
   }
 }
@@ -154,9 +158,6 @@ export interface DayboardState {
   settings: DayboardSettings
 }
 
-export const DEFAULT_TIME_ZONE =
-  Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
-
 // The first-run board.
 // It is intentionally pre-styled with a varied, calm mix of widget kinds and curated colors so a brand-new tab feels customized at a glance and shows what the board can do, rather than a blank two-card placeholder.
 // Each title opens with an emoji, both because it warms up the first board and because it shows that a title is free text you can put anything in.
@@ -179,7 +180,8 @@ export const createDefaultWidgets = (now = new Date()): Widget[] => {
       title: "🕒 Local time",
       colorPreset: "sky",
       settings: {
-        timeZone: DEFAULT_TIME_ZONE
+        // Empty means the system clock: the first-run card genuinely is local time, wherever the device goes.
+        timeZone: ""
       }
     },
     {

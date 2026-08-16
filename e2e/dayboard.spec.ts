@@ -103,6 +103,14 @@ test("new tab page renders the default widgets and editing controls", async ({
 
   const titles = page.locator(".board-row h2")
   await expect(titles).toHaveText(DEFAULT_BOARD_TITLES)
+
+  // The first-run clock pins no zone: it follows the system clock, so it stays right when the device changes zones.
+  await expect(
+    cardByTitle(page, "🕒 Local time").getByText("System time zone")
+  ).toBeVisible()
+  expect(await readWidgetSettings(page, "🕒 Local time")).toEqual({
+    timeZone: ""
+  })
 })
 
 test("centers the board in the viewport with no docking option", async ({

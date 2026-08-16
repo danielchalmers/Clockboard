@@ -218,15 +218,15 @@ export const ItemDialog = ({
 
             {draft.kind === "clock" ? (
               <label className="form-label-group">
-                {/* It looks like a plain text box, but it is backed by the full IANA list, which is worth saying or you would type a city and lose. */}
+                {/* It looks like a plain text box, but it is backed by the full IANA list, which is worth saying or you would type a city and lose.
+                    Left empty, the clock simply follows the system, so the field is not required. */}
                 <span>Time zone (type to search)</span>
                 <input
                   list="dayboard-time-zones"
                   onChange={(event) => updateTimeZone(event.currentTarget.value)}
-                  required
                   type="text"
                   value={draft.settings.timeZone}
-                  placeholder="Select time zone..."
+                  placeholder="System time zone"
                 />
               </label>
             ) : null}
