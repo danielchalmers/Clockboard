@@ -17,6 +17,7 @@ export interface ColorPresetDefinition {
 // One neutral anchor plus eleven hues spaced around the wheel, ordered spectrally so the picker reads as a gradient.
 // The palette is pastel in the pigment-plus-white sense: light mode keeps each hue's saturation and raises lightness, so washes read as milky color rather than gray.
 // Dark mode inverts where the pastel lives: grounds are dusty near-neutrals (a whisper of hue over charcoal) and the accents are the milky chips — light and clearly hued — so dots and buttons carry the pastel feeling.
+// Dark tints and accents are tuned to at least 4.5:1 against their ground (most sit well above), so meta text and chips stay crisp on the dark washes.
 // Tints are the exception in both modes — they set body text, so they stay contrast-first.
 export const COLOR_PRESETS: ColorPresetDefinition[] = [
   {
@@ -29,10 +30,10 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
       accent: "hsl(220, 22%, 44%)"
     },
     dark: {
-      bg: "hsl(220, 12%, 15%)",
-      tint: "hsl(220, 12%, 72%)",
-      border: "hsl(220, 14%, 25%)",
-      accent: "hsl(220, 24%, 82%)"
+      bg: "hsl(220, 12%, 14%)",
+      tint: "hsl(220, 14%, 75%)",
+      border: "hsl(220, 14%, 27%)",
+      accent: "hsl(220, 26%, 84%)"
     }
   },
   {
@@ -45,10 +46,10 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
       accent: "hsl(347, 80%, 67%)"
     },
     dark: {
-      bg: "hsl(347, 20%, 15%)",
-      tint: "hsl(347, 42%, 77%)",
-      border: "hsl(347, 22%, 26%)",
-      accent: "hsl(347, 70%, 79%)"
+      bg: "hsl(347, 20%, 13%)",
+      tint: "hsl(347, 55%, 80%)",
+      border: "hsl(347, 24%, 28%)",
+      accent: "hsl(347, 75%, 80%)"
     }
   },
   {
@@ -61,10 +62,10 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
       accent: "hsl(14, 80%, 65%)"
     },
     dark: {
-      bg: "hsl(14, 20%, 15%)",
-      tint: "hsl(14, 42%, 76%)",
-      border: "hsl(14, 22%, 26%)",
-      accent: "hsl(14, 68%, 77%)"
+      bg: "hsl(14, 20%, 13%)",
+      tint: "hsl(14, 50%, 78%)",
+      border: "hsl(14, 24%, 27%)",
+      accent: "hsl(14, 72%, 78%)"
     }
   },
   {
@@ -77,10 +78,10 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
       accent: "hsl(35, 80%, 55%)"
     },
     dark: {
-      bg: "hsl(36, 22%, 15%)",
-      tint: "hsl(38, 48%, 74%)",
-      border: "hsl(36, 24%, 25%)",
-      accent: "hsl(42, 70%, 75%)"
+      bg: "hsl(36, 20%, 13%)",
+      tint: "hsl(38, 55%, 78%)",
+      border: "hsl(36, 24%, 27%)",
+      accent: "hsl(42, 75%, 78%)"
     }
   },
   {
@@ -93,10 +94,10 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
       accent: "hsl(46, 75%, 48%)"
     },
     dark: {
-      bg: "hsl(50, 20%, 14%)",
-      tint: "hsl(52, 45%, 72%)",
-      border: "hsl(50, 22%, 24%)",
-      accent: "hsl(54, 65%, 72%)"
+      bg: "hsl(50, 18%, 12%)",
+      tint: "hsl(52, 50%, 76%)",
+      border: "hsl(50, 22%, 26%)",
+      accent: "hsl(54, 70%, 75%)"
     }
   },
   {
@@ -109,10 +110,10 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
       accent: "hsl(134, 50%, 58%)"
     },
     dark: {
-      bg: "hsl(132, 18%, 14%)",
-      tint: "hsl(130, 36%, 74%)",
-      border: "hsl(132, 20%, 24%)",
-      accent: "hsl(134, 50%, 74%)"
+      bg: "hsl(132, 16%, 12%)",
+      tint: "hsl(130, 40%, 78%)",
+      border: "hsl(132, 20%, 26%)",
+      accent: "hsl(134, 55%, 76%)"
     }
   },
   {
@@ -125,10 +126,10 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
       accent: "hsl(160, 60%, 48%)"
     },
     dark: {
-      bg: "hsl(160, 20%, 13%)",
-      tint: "hsl(158, 38%, 72%)",
-      border: "hsl(160, 22%, 23%)",
-      accent: "hsl(158, 50%, 72%)"
+      bg: "hsl(160, 20%, 12%)",
+      tint: "hsl(158, 45%, 76%)",
+      border: "hsl(160, 24%, 26%)",
+      accent: "hsl(158, 55%, 74%)"
     }
   },
   {
@@ -141,10 +142,10 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
       accent: "hsl(186, 60%, 48%)"
     },
     dark: {
-      bg: "hsl(185, 22%, 13%)",
-      tint: "hsl(183, 38%, 72%)",
-      border: "hsl(185, 24%, 23%)",
-      accent: "hsl(183, 52%, 72%)"
+      bg: "hsl(185, 22%, 12%)",
+      tint: "hsl(183, 45%, 76%)",
+      border: "hsl(185, 26%, 26%)",
+      accent: "hsl(183, 55%, 74%)"
     }
   },
   {
@@ -157,10 +158,10 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
       accent: "hsl(208, 78%, 64%)"
     },
     dark: {
-      bg: "hsl(208, 24%, 15%)",
-      tint: "hsl(206, 45%, 76%)",
-      border: "hsl(208, 26%, 26%)",
-      accent: "hsl(204, 70%, 77%)"
+      bg: "hsl(208, 24%, 13%)",
+      tint: "hsl(206, 50%, 79%)",
+      border: "hsl(208, 28%, 28%)",
+      accent: "hsl(204, 75%, 79%)"
     }
   },
   {
@@ -173,10 +174,10 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
       accent: "hsl(243, 72%, 70%)"
     },
     dark: {
-      bg: "hsl(242, 20%, 16%)",
-      tint: "hsl(240, 48%, 80%)",
-      border: "hsl(242, 22%, 27%)",
-      accent: "hsl(238, 68%, 81%)"
+      bg: "hsl(242, 20%, 14%)",
+      tint: "hsl(240, 52%, 82%)",
+      border: "hsl(242, 24%, 29%)",
+      accent: "hsl(238, 72%, 82%)"
     }
   },
   {
@@ -189,10 +190,10 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
       accent: "hsl(275, 70%, 68%)"
     },
     dark: {
-      bg: "hsl(275, 20%, 16%)",
-      tint: "hsl(275, 42%, 79%)",
-      border: "hsl(275, 22%, 26%)",
-      accent: "hsl(275, 62%, 80%)"
+      bg: "hsl(275, 20%, 14%)",
+      tint: "hsl(275, 46%, 81%)",
+      border: "hsl(275, 24%, 28%)",
+      accent: "hsl(275, 65%, 81%)"
     }
   },
   {
@@ -205,10 +206,10 @@ export const COLOR_PRESETS: ColorPresetDefinition[] = [
       accent: "hsl(316, 72%, 64%)"
     },
     dark: {
-      bg: "hsl(315, 20%, 15%)",
-      tint: "hsl(315, 42%, 77%)",
-      border: "hsl(315, 22%, 25%)",
-      accent: "hsl(315, 64%, 78%)"
+      bg: "hsl(315, 20%, 13%)",
+      tint: "hsl(315, 48%, 79%)",
+      border: "hsl(315, 24%, 27%)",
+      accent: "hsl(315, 68%, 79%)"
     }
   }
 ]
