@@ -49,14 +49,9 @@ export const SettingsDialog = ({
         role="dialog"
         tabIndex={-1}>
         <div className="modal-dialog__header">
-          <div>
-            <h2 className="modal-dialog__title" id="settings-dialog-title">
-              Options
-            </h2>
-            <p className="modal-dialog__subtitle">
-              These apply to every Dayboard tab.
-            </p>
-          </div>
+          <h2 className="modal-dialog__title" id="settings-dialog-title">
+            Options
+          </h2>
         </div>
 
         <div className="settings-sections">
