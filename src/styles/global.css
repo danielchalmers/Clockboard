@@ -9,15 +9,16 @@
      It used to reach 800, which on the system fallback matched the black cut of the family and made the big numbers on the cards look stamped rather than set. */
   --font-sans: "Outfit", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
-  /* Warm paper neutrals (light fallbacks): a touch of warmth instead of the flat gray of a stock new tab. */
-  --bg: hsl(40, 30%, 97%);
-  --text: hsl(240, 12%, 10%);
-  --muted: hsl(240, 6%, 42%);
-  --quiet: hsl(240, 5%, 62%);
-  --line: rgba(30, 25, 15, 0.08);
-  --line-strong: rgba(30, 25, 15, 0.14);
-  --surface: #ffffff;
-  --surface-strong: hsl(40, 20%, 94%);
+  /* Warm paper neutrals (light fallbacks): a touch of warmth instead of the flat gray of a stock new tab.
+     The ink and grays sit in the same warm family as the paper rather than the old cool slate, so text never reads blue against it. */
+  --bg: hsl(38, 33%, 96%);
+  --text: hsl(30, 16%, 11%);
+  --muted: hsl(32, 9%, 42%);
+  --quiet: hsl(33, 8%, 60%);
+  --line: rgba(55, 40, 20, 0.09);
+  --line-strong: rgba(55, 40, 20, 0.15);
+  --surface: #fffdf9;
+  --surface-strong: hsl(38, 22%, 93%);
   --accent: Highlight;
   --accent-text: HighlightText;
   /* Pressed states stay in the accent's own family, shaded toward black rather than blended with the page ink, which used to turn a colored accent gray under the pointer. */
@@ -61,14 +62,16 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: hsl(240, 14%, 7%);
-    --text: hsl(240, 10%, 96%);
-    --muted: hsl(240, 8%, 66%);
-    --quiet: hsl(240, 6%, 40%);
-    --line: rgba(255, 255, 255, 0.06);
-    --line-strong: rgba(255, 255, 255, 0.12);
-    --surface: hsl(240, 12%, 10%);
-    --surface-strong: hsl(240, 10%, 15%);
+    /* Warm charcoal, not cool slate: dark mode mirrors the warm paper of light mode instead of flipping to a blue-gray that reads like a different product.
+       The hairlines carry the same candlelight tint so borders don't cool the cards back down. */
+    --bg: hsl(27, 15%, 8%);
+    --text: hsl(35, 22%, 94%);
+    --muted: hsl(33, 11%, 67%);
+    --quiet: hsl(30, 8%, 46%);
+    --line: rgba(255, 236, 214, 0.08);
+    --line-strong: rgba(255, 236, 214, 0.14);
+    --surface: hsl(27, 13%, 12%);
+    --surface-strong: hsl(27, 12%, 16%);
 
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
     --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.15);
